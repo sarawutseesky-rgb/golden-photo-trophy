@@ -25,6 +25,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { checkAdmin } from "@/lib/profile.functions";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const navItems = [
   { title: "Feed", url: "/", icon: Home },
@@ -43,15 +44,19 @@ export function AppSidebar() {
   const { user } = useAuth();
   const checkAdminFn = useServerFn(checkAdmin);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setIsAdmin(false);
+      setIsCheckingAdmin(false);
       return;
     }
+    setIsCheckingAdmin(true);
     checkAdminFn()
       .then((r) => setIsAdmin(r.isAdmin))
-      .catch(() => setIsAdmin(false));
+      .catch(() => setIsAdmin(false))
+      .finally(() => setIsCheckingAdmin(false));
   }, [user, checkAdminFn]);
 
   const isActive = (path: string) => currentPath === path;
@@ -90,7 +95,15 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {isAdmin && (
+              {isCheckingAdmin && (
+                <SidebarMenuItem data-testid="admin-loading">
+                  <div className="flex items-center gap-2 px-2 py-1.5">
+                    <Skeleton className="h-4 w-4 shrink-0 rounded" />
+                    {!collapsed && <Skeleton className="h-4 w-16" />}
+                  </div>
+                </SidebarMenuItem>
+              )}
+              {!isCheckingAdmin && isAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
