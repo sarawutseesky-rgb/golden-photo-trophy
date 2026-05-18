@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Shield,
   PanelLeft,
+  RefreshCw,
 } from "lucide-react";
 
 import {
@@ -23,7 +24,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
 import { checkAdmin } from "@/lib/profile.functions";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -45,19 +46,32 @@ export function AppSidebar() {
   const checkAdminFn = useServerFn(checkAdmin);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
+  const [adminCheckError, setAdminCheckError] = useState(false);
+
+  const runAdminCheck = useCallback(() => {
+    setIsCheckingAdmin(true);
+    setAdminCheckError(false);
+    checkAdminFn()
+      .then((r) => {
+        setIsAdmin(r.isAdmin);
+        setAdminCheckError(false);
+      })
+      .catch(() => {
+        setIsAdmin(false);
+        setAdminCheckError(true);
+      })
+      .finally(() => setIsCheckingAdmin(false));
+  }, [checkAdminFn]);
 
   useEffect(() => {
     if (!user) {
       setIsAdmin(false);
       setIsCheckingAdmin(false);
+      setAdminCheckError(false);
       return;
     }
-    setIsCheckingAdmin(true);
-    checkAdminFn()
-      .then((r) => setIsAdmin(r.isAdmin))
-      .catch(() => setIsAdmin(false))
-      .finally(() => setIsCheckingAdmin(false));
-  }, [user, checkAdminFn]);
+    runAdminCheck();
+  }, [user, runAdminCheck]);
 
   const isActive = (path: string) => currentPath === path;
 
@@ -122,6 +136,18 @@ export function AppSidebar() {
                       <Shield className="h-4 w-4 shrink-0" />
                       <span>Admin</span>
                     </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {!isCheckingAdmin && adminCheckError && (
+                <SidebarMenuItem data-testid="admin-retry">
+                  <SidebarMenuButton
+                    onClick={runAdminCheck}
+                    tooltip={collapsed ? "ลองตรวจสอบอีกครั้ง" : undefined}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <RefreshCw className="h-4 w-4 shrink-0" />
+                    <span>ลองตรวจสอบอีกครั้ง</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
