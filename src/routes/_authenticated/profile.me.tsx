@@ -6,6 +6,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { updateProfile } from "@/lib/profile.functions";
 import { compressImage } from "@/lib/image-compress";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/profile/me")({
   head: () => ({ meta: [{ title: "Edit Profile — StarShot" }] }),
@@ -22,6 +32,7 @@ function EditProfilePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -59,6 +70,18 @@ function EditProfilePage() {
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const doRemoveAvatar = () => {
+    setShowRemoveDialog(false);
+    setPreviewUrl(null);
+    setAvatarUrl(null);
+    if (user) {
+      supabase.storage
+        .from("photos")
+        .remove([`${user.id}/avatar.jpg`])
+        .catch(() => {});
     }
   };
 
@@ -143,16 +166,7 @@ function EditProfilePage() {
               {(avatarUrl || previewUrl) && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setPreviewUrl(null);
-                    setAvatarUrl(null);
-                    if (user) {
-                      supabase.storage
-                        .from("photos")
-                        .remove([`${user.id}/avatar.jpg`])
-                        .catch(() => {});
-                    }
-                  }}
+                  onClick={() => setShowRemoveDialog(true)}
                   className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
                 >
                   Remove avatar
@@ -209,6 +223,27 @@ function EditProfilePage() {
           )}
         </div>
       </form>
+
+      {/* Remove avatar confirmation */}
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove avatar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your profile picture will be removed and replaced with the default avatar. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowRemoveDialog(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={doRemoveAvatar}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
