@@ -32,6 +32,7 @@ function EditProfilePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -73,15 +74,22 @@ function EditProfilePage() {
     }
   };
 
-  const doRemoveAvatar = () => {
-    setShowRemoveDialog(false);
-    setPreviewUrl(null);
-    setAvatarUrl(null);
-    if (user) {
-      supabase.storage
-        .from("photos")
-        .remove([`${user.id}/avatar.jpg`])
-        .catch(() => {});
+  const doRemoveAvatar = async () => {
+    setRemovingAvatar(true);
+    try {
+      if (user) {
+        await supabase.storage
+          .from("photos")
+          .remove([`${user.id}/avatar.jpg`]);
+      }
+      setPreviewUrl(null);
+      setAvatarUrl(null);
+      setShowRemoveDialog(false);
+      toast.success("Avatar removed");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove avatar");
+    } finally {
+      setRemovingAvatar(false);
     }
   };
 
@@ -225,7 +233,7 @@ function EditProfilePage() {
       </form>
 
       {/* Remove avatar confirmation */}
-      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+      <AlertDialog open={showRemoveDialog} onOpenChange={(open) => { if (!removingAvatar) setShowRemoveDialog(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove avatar?</AlertDialogTitle>
@@ -234,12 +242,15 @@ function EditProfilePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowRemoveDialog(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={removingAvatar} onClick={() => setShowRemoveDialog(false)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
+              disabled={removingAvatar}
               onClick={doRemoveAvatar}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
             >
-              Remove
+              {removingAvatar ? "Removing…" : "Remove"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
