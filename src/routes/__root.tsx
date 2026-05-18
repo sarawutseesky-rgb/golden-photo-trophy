@@ -12,8 +12,10 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/app/Header";
+import { AppSidebar } from "@/components/app/AppSidebar";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 function NotFoundComponent() {
   return (
