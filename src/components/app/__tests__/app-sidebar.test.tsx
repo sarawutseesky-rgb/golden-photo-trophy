@@ -232,7 +232,7 @@ describe("AppSidebar — Admin menu visibility", () => {
     const retryItem = screen.getByTestId("admin-retry");
     let btn = retryItem.querySelector("[aria-busy]") as HTMLElement | null;
     expect(btn?.getAttribute("aria-busy")).toBe("false");
-    expect(btn?.hasAttribute("disabled")).toBe(true === false ? true : btn?.hasAttribute("disabled"));
+    expect(btn?.hasAttribute("disabled")).toBe(false);
 
     // Click retry → pending state
     fireEvent.click(screen.getByText("ลองตรวจสอบอีกครั้ง"));
