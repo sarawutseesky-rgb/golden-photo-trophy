@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Star, Share2, Flag, ArrowLeft } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, reportPhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment } from "@/lib/votes.functions";
@@ -200,9 +200,18 @@ function PhotoDetail() {
 
           {!isOwner && user && (
             <div className="mt-3">
-              <div className="text-xs text-muted-foreground">
-                {hasVoted ? `You rated ${myVote!.score}★` : "Tap a star to rate"}
-              </div>
+              {hasVoted ? (
+                <div
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--gold)]"
+                  data-testid="voted-badge"
+                  aria-live="polite"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  คุณโหวตแล้ว · {myVote!.score}★
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
+              )}
               <div className="mt-1 flex gap-1" onMouseLeave={() => setHover(null)}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
