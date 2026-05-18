@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin.functions";
 import { Image, Users, Flag, ShieldAlert, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const AUTO_REFRESH_MS = 60_000;
+const AUTO_REFRESH_STORAGE_KEY = "admin-dashboard:auto-refresh";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/dashboard")({
   head: () => ({
@@ -45,7 +46,30 @@ function StatCard({
 
 function AdminDashboard() {
   const stats = useServerFn(getAdminStats);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+
+  // Hydrate from localStorage on mount (SSR-safe: runs in browser only)
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(AUTO_REFRESH_STORAGE_KEY);
+      if (saved === "true") setAutoRefresh(true);
+    } catch {
+      // ignore (private mode, disabled storage, etc.)
+    }
+  }, []);
+
+  // Persist on change
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        AUTO_REFRESH_STORAGE_KEY,
+        autoRefresh ? "true" : "false"
+      );
+    } catch {
+      // ignore
+    }
+  }, [autoRefresh]);
+
   const { data, isLoading, isFetching, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: () => stats(),
