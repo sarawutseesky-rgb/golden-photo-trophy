@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bell, Star, Upload, LogOut, User } from "lucide-react";
+import { Bell, Star, Upload, LogOut, User, Shield } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
 import { unreadCount } from "@/lib/notifications.functions";
+import { checkAdmin } from "@/lib/profile.functions";
 
 export function Header() {
   const { user, signOut } = useAuth();
