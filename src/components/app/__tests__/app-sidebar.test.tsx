@@ -191,7 +191,7 @@ describe("AppSidebar — Admin menu visibility", () => {
     });
     expect(screen.queryByText("Admin")).toBeNull();
 
-    fireEvent.click(screen.getByTestId("admin-retry"));
+    fireEvent.click(screen.getByText("ลองตรวจสอบอีกครั้ง"));
 
     // After retry resolves → Admin shown, retry gone
     await waitFor(() => {
