@@ -32,6 +32,7 @@ function EditProfilePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
