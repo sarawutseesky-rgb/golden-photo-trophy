@@ -9,9 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrendingRouteImport } from './routes/trending'
+import { Route as TopRouteImport } from './routes/top'
+import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicCronRankRouteImport } from './routes/api/public/cron/rank'
 
+const TrendingRoute = TrendingRouteImport.update({
+  id: '/trending',
+  path: '/trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TopRoute = TopRouteImport.update({
+  id: '/top',
+  path: '/top',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HallOfFameRoute = HallOfFameRouteImport.update({
+  id: '/hall-of-fame',
+  path: '/hall-of-fame',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,32 +43,76 @@ const ApiPublicCronRankRoute = ApiPublicCronRankRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/top': typeof TopRoute
+  '/trending': typeof TrendingRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/top': typeof TopRoute
+  '/trending': typeof TrendingRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/top': typeof TopRoute
+  '/trending': typeof TrendingRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/cron/rank'
+  fullPaths:
+    | '/'
+    | '/hall-of-fame'
+    | '/top'
+    | '/trending'
+    | '/api/public/cron/rank'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/cron/rank'
-  id: '__root__' | '/' | '/api/public/cron/rank'
+  to: '/' | '/hall-of-fame' | '/top' | '/trending' | '/api/public/cron/rank'
+  id:
+    | '__root__'
+    | '/'
+    | '/hall-of-fame'
+    | '/top'
+    | '/trending'
+    | '/api/public/cron/rank'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HallOfFameRoute: typeof HallOfFameRoute
+  TopRoute: typeof TopRoute
+  TrendingRoute: typeof TrendingRoute
   ApiPublicCronRankRoute: typeof ApiPublicCronRankRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trending': {
+      id: '/trending'
+      path: '/trending'
+      fullPath: '/trending'
+      preLoaderRoute: typeof TrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/top': {
+      id: '/top'
+      path: '/top'
+      fullPath: '/top'
+      preLoaderRoute: typeof TopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hall-of-fame': {
+      id: '/hall-of-fame'
+      path: '/hall-of-fame'
+      fullPath: '/hall-of-fame'
+      preLoaderRoute: typeof HallOfFameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -70,8 +132,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HallOfFameRoute: HallOfFameRoute,
+  TopRoute: TopRoute,
+  TrendingRoute: TrendingRoute,
   ApiPublicCronRankRoute: ApiPublicCronRankRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
