@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin.functions";
-import { Image, Users, Flag, ShieldAlert } from "lucide-react";
+import { Image, Users, Flag, ShieldAlert, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/dashboard")({
   head: () => ({
@@ -41,7 +42,7 @@ function StatCard({
 
 function AdminDashboard() {
   const stats = useServerFn(getAdminStats);
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: () => stats(),
   });
@@ -53,14 +54,34 @@ function AdminDashboard() {
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             ภาพรวมสถิติของแพลตฟอร์ม
+            {dataUpdatedAt > 0 && (
+              <span className="ml-2 text-xs">
+                · อัปเดตล่าสุด {new Date(dataUpdatedAt).toLocaleTimeString()}
+              </span>
+            )}
           </p>
         </div>
-        <Link
-          to="/admin"
-          className="rounded border border-border px-3 py-1.5 text-sm hover:bg-accent"
-        >
-          ดู Reports
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            aria-busy={isFetching}
+            data-testid="refresh-stats"
+            className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", isFetching && "animate-spin")}
+            />
+            {isFetching ? "กำลังรีเฟรช..." : "รีเฟรช"}
+          </button>
+          <Link
+            to="/admin"
+            className="rounded border border-border px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            ดู Reports
+          </Link>
+        </div>
       </div>
 
       {isError && (
