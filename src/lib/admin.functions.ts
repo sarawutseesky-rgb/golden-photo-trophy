@@ -43,3 +43,27 @@ export const resolveReport = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const getAdminStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const [photos, users, pending, removed] = await Promise.all([
+      context.supabase.from("photos").select("id", { count: "exact", head: true }),
+      context.supabase.from("profiles").select("id", { count: "exact", head: true }),
+      context.supabase
+        .from("reports")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      context.supabase
+        .from("photos")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "removed"),
+    ]);
+    return {
+      photos: photos.count ?? 0,
+      users: users.count ?? 0,
+      pendingReports: pending.count ?? 0,
+      removedPhotos: removed.count ?? 0,
+    };
+  });
