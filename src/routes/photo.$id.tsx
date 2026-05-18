@@ -39,6 +39,16 @@ function PhotoDetail() {
 
   const [hover, setHover] = useState<number | null>(null);
   const [text, setText] = useState("");
+  const [debug, setDebug] = useState(false);
+  const [debugLog, setDebugLog] = useState<
+    Array<{ t: number; action: string; avg: number; count: number; latencyMs?: number }>
+  >([]);
+
+  const logDebug = (action: string, avg: number, count: number, latencyMs?: number) => {
+    setDebugLog((prev) =>
+      [{ t: Date.now(), action, avg, count, latencyMs }, ...prev].slice(0, 8),
+    );
+  };
 
   useEffect(() => {
     const ch = supabase
@@ -82,17 +92,29 @@ function PhotoDetail() {
         distribution: dist,
         photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
       });
+      if (debug) logDebug(`vote ${score}★ (optimistic)`, newAvg, newCount);
     }
+    const t0 = performance.now();
     try {
       await vote({ data: { photo_id: id, score } });
       toast.success(`You rated ${score}★`);
       qc.invalidateQueries({ queryKey: photoKey });
       qc.invalidateQueries({ queryKey: voteKey });
+      if (debug) {
+        const cur = qc.getQueryData<any>(photoKey);
+        logDebug(
+          `vote ${score}★ (server ok)`,
+          Number(cur?.photo?.avg_score ?? 0),
+          Number(cur?.photo?.vote_count ?? 0),
+          Math.round(performance.now() - t0),
+        );
+      }
     } catch (e: any) {
       // Roll back optimistic update on failure
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
       toast.error(e.message);
+      if (debug) logDebug(`vote ${score}★ (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
     }
   };
 
@@ -114,16 +136,28 @@ function PhotoDetail() {
         distribution: dist,
         photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
       });
+      if (debug) logDebug(`unvote (optimistic)`, newAvg, newCount);
     }
+    const t0 = performance.now();
     try {
       await unvote({ data: { photo_id: id } });
       toast.success("ยกเลิกการโหวตแล้ว");
       qc.invalidateQueries({ queryKey: photoKey });
       qc.invalidateQueries({ queryKey: voteKey });
+      if (debug) {
+        const cur = qc.getQueryData<any>(photoKey);
+        logDebug(
+          `unvote (server ok)`,
+          Number(cur?.photo?.avg_score ?? 0),
+          Number(cur?.photo?.vote_count ?? 0),
+          Math.round(performance.now() - t0),
+        );
+      }
     } catch (e: any) {
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
       toast.error(e.message);
+      if (debug) logDebug(`unvote (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
     }
   };
 
