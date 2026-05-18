@@ -9,38 +9,252 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrendingRouteImport } from './routes/trending'
+import { Route as TopRouteImport } from './routes/top'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileIdRouteImport } from './routes/profile.$id'
+import { Route as PhotoIdRouteImport } from './routes/photo.$id'
+import { Route as AuthenticatedUploadRouteImport } from './routes/_authenticated/upload'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
+import { Route as AuthenticatedProfileMeRouteImport } from './routes/_authenticated/profile.me'
+import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
+import { Route as ApiPublicCronRankRouteImport } from './routes/api/public/cron/rank'
 
+const TrendingRoute = TrendingRouteImport.update({
+  id: '/trending',
+  path: '/trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TopRoute = TopRouteImport.update({
+  id: '/top',
+  path: '/top',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HallOfFameRoute = HallOfFameRouteImport.update({
+  id: '/hall-of-fame',
+  path: '/hall-of-fame',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIdRoute = ProfileIdRouteImport.update({
+  id: '/profile/$id',
+  path: '/profile/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhotoIdRoute = PhotoIdRouteImport.update({
+  id: '/photo/$id',
+  path: '/photo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedUploadRoute = AuthenticatedUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProfileMeRoute = AuthenticatedProfileMeRouteImport.update({
+  id: '/profile/me',
+  path: '/profile/me',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const ApiPublicCronRankRoute = ApiPublicCronRankRouteImport.update({
+  id: '/api/public/cron/rank',
+  path: '/api/public/cron/rank',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/top': typeof TopRoute
+  '/trending': typeof TrendingRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/upload': typeof AuthenticatedUploadRoute
+  '/photo/$id': typeof PhotoIdRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/admin': typeof AuthenticatedAdminAdminRoute
+  '/profile/me': typeof AuthenticatedProfileMeRoute
+  '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/top': typeof TopRoute
+  '/trending': typeof TrendingRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/upload': typeof AuthenticatedUploadRoute
+  '/photo/$id': typeof PhotoIdRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/admin': typeof AuthenticatedAdminAdminRoute
+  '/profile/me': typeof AuthenticatedProfileMeRoute
+  '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/top': typeof TopRoute
+  '/trending': typeof TrendingRoute
+  '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/upload': typeof AuthenticatedUploadRoute
+  '/photo/$id': typeof PhotoIdRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRoute
+  '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
+  '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/hall-of-fame'
+    | '/login'
+    | '/signup'
+    | '/top'
+    | '/trending'
+    | '/notifications'
+    | '/upload'
+    | '/photo/$id'
+    | '/profile/$id'
+    | '/admin'
+    | '/profile/me'
+    | '/api/public/cron/rank'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/hall-of-fame'
+    | '/login'
+    | '/signup'
+    | '/top'
+    | '/trending'
+    | '/notifications'
+    | '/upload'
+    | '/photo/$id'
+    | '/profile/$id'
+    | '/admin'
+    | '/profile/me'
+    | '/api/public/cron/rank'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/hall-of-fame'
+    | '/login'
+    | '/signup'
+    | '/top'
+    | '/trending'
+    | '/_authenticated/_admin'
+    | '/_authenticated/notifications'
+    | '/_authenticated/upload'
+    | '/photo/$id'
+    | '/profile/$id'
+    | '/_authenticated/_admin/admin'
+    | '/_authenticated/profile/me'
+    | '/api/public/cron/rank'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  HallOfFameRoute: typeof HallOfFameRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  TopRoute: typeof TopRoute
+  TrendingRoute: typeof TrendingRoute
+  PhotoIdRoute: typeof PhotoIdRoute
+  ProfileIdRoute: typeof ProfileIdRoute
+  ApiPublicCronRankRoute: typeof ApiPublicCronRankRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trending': {
+      id: '/trending'
+      path: '/trending'
+      fullPath: '/trending'
+      preLoaderRoute: typeof TrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/top': {
+      id: '/top'
+      path: '/top'
+      fullPath: '/top'
+      preLoaderRoute: typeof TopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hall-of-fame': {
+      id: '/hall-of-fame'
+      path: '/hall-of-fame'
+      fullPath: '/hall-of-fame'
+      preLoaderRoute: typeof HallOfFameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +262,106 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$id': {
+      id: '/profile/$id'
+      path: '/profile/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof ProfileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/photo/$id': {
+      id: '/photo/$id'
+      path: '/photo/$id'
+      fullPath: '/photo/$id'
+      preLoaderRoute: typeof PhotoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/upload': {
+      id: '/_authenticated/upload'
+      path: '/upload'
+      fullPath: '/upload'
+      preLoaderRoute: typeof AuthenticatedUploadRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_admin': {
+      id: '/_authenticated/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/profile/me': {
+      id: '/_authenticated/profile/me'
+      path: '/profile/me'
+      fullPath: '/profile/me'
+      preLoaderRoute: typeof AuthenticatedProfileMeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_admin/admin': {
+      id: '/_authenticated/_admin/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminAdminRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/public/cron/rank': {
+      id: '/api/public/cron/rank'
+      path: '/api/public/cron/rank'
+      fullPath: '/api/public/cron/rank'
+      preLoaderRoute: typeof ApiPublicCronRankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAdminRoute: typeof AuthenticatedAdminAdminRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAdminRoute: AuthenticatedAdminAdminRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedUploadRoute: typeof AuthenticatedUploadRoute
+  AuthenticatedProfileMeRoute: typeof AuthenticatedProfileMeRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedUploadRoute: AuthenticatedUploadRoute,
+  AuthenticatedProfileMeRoute: AuthenticatedProfileMeRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  HallOfFameRoute: HallOfFameRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  TopRoute: TopRoute,
+  TrendingRoute: TrendingRoute,
+  PhotoIdRoute: PhotoIdRoute,
+  ProfileIdRoute: ProfileIdRoute,
+  ApiPublicCronRankRoute: ApiPublicCronRankRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
