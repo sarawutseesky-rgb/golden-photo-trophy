@@ -10,7 +10,9 @@ export function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const fetchUnread = useServerFn(unreadCount);
+  const checkAdminFn = useServerFn(checkAdmin);
   const [count, setCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) return;
