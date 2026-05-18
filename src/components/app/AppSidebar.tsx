@@ -62,7 +62,7 @@ export function AppSidebar() {
       className="border-r border-border bg-card/50"
     >
       <SidebarContent>
-        <SidebarGroup defaultOpen>
+        <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Navigation
           </SidebarGroupLabel>
