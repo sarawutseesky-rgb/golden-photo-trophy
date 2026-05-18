@@ -216,13 +216,23 @@ function PhotoDetail() {
           {!isOwner && user && (
             <div className="mt-3">
               {hasVoted ? (
-                <div
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--gold)]"
-                  data-testid="voted-badge"
-                  aria-live="polite"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  คุณโหวตแล้ว · {myVote!.score}★
+                <div className="flex flex-wrap items-center gap-2">
+                  <div
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--gold)]"
+                    data-testid="voted-badge"
+                    aria-live="polite"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    คุณโหวตแล้ว · {myVote!.score}★
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUnvote}
+                    data-testid="unvote-button"
+                    className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    ยกเลิกโหวต
+                  </button>
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
