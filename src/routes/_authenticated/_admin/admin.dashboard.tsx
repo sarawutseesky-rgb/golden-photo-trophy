@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin.functions";
-import { Image, Users, Flag, ShieldAlert, RefreshCw } from "lucide-react";
+import { Image, Users, Flag, ShieldAlert, RefreshCw, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -70,6 +70,15 @@ function AdminDashboard() {
     }
   }, [autoRefresh]);
 
+  const resetAutoRefresh = () => {
+    setAutoRefresh(false);
+    try {
+      window.localStorage.removeItem(AUTO_REFRESH_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  };
+
   const { data, isLoading, isFetching, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: () => stats(),
@@ -105,6 +114,17 @@ function AdminDashboard() {
             />
             <span>รีเฟรชอัตโนมัติทุก 60 วินาที</span>
           </label>
+          <button
+            type="button"
+            onClick={resetAutoRefresh}
+            disabled={!autoRefresh}
+            data-testid="reset-auto-refresh"
+            title="ปิดการรีเฟรชอัตโนมัติและล้างค่าที่บันทึกไว้"
+            className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            รีเซ็ต
+          </button>
           <button
             type="button"
             onClick={() => refetch()}
