@@ -358,8 +358,19 @@ function PhotoDetail() {
                   className="mt-2 rounded-md border border-dashed border-border bg-muted/30 p-2 text-[11px]"
                   data-testid="debug-panel"
                 >
-                  <div className="mb-1 font-mono text-muted-foreground">
-                    cache → avg {Number(p.avg_score).toFixed(2)} · count {p.vote_count}
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="font-mono text-muted-foreground">
+                      cache → avg {Number(p.avg_score).toFixed(2)} · count {p.vote_count}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDebugLog([])}
+                      disabled={debugLog.length === 0}
+                      data-testid="clear-debug-log"
+                      className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline"
+                    >
+                      ล้าง log
+                    </button>
                   </div>
                   {debugLog.length === 0 ? (
                     <div className="text-muted-foreground">กดโหวตหรือยกเลิกเพื่อดู log</div>
