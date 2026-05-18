@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Star, Share2, Flag, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { getPhoto, reportPhoto } from "@/lib/photos.functions";
+import { getPhoto, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
+import Lightbox from "yet-another-react-lightbox";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import "yet-another-react-lightbox/styles.css";
 
 export const Route = createFileRoute("/photo/$id")({
   head: () => ({ meta: [{ title: "Photo — StarShot" }] }),
@@ -23,12 +26,15 @@ function PhotoDetail() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const fetchPhoto = useServerFn(getPhoto);
   const fetchVote = useServerFn(getMyVote);
   const vote = useServerFn(castVote);
   const unvote = useServerFn(removeVote);
   const comment = useServerFn(addComment);
   const report = useServerFn(reportPhoto);
+  const editPhoto = useServerFn(updatePhoto);
+  const removePhoto = useServerFn(deletePhoto);
 
   const { data, isLoading } = useQuery({ queryKey: ["photo", id], queryFn: () => fetchPhoto({ data: { id } }) });
   const { data: myVote } = useQuery({
@@ -48,6 +54,12 @@ function PhotoDetail() {
   const [hover, setHover] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [debug, setDebug] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [saving, setSaving] = useState(false);
   const [debugLog, setDebugLog] = useState<
     Array<{ t: number; action: string; avg: number; count: number; latencyMs?: number }>
   >([]);
@@ -193,6 +205,46 @@ function PhotoDetail() {
     }
   };
 
+  const openEdit = () => {
+    setEditTitle(p.title ?? "");
+    setEditDesc(p.description ?? "");
+    setEditTags((p.tags ?? []).join(", "));
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const tags = editTags
+        .split(",")
+        .map((t) => t.trim().replace(/^#/, ""))
+        .filter(Boolean)
+        .slice(0, 8);
+      await editPhoto({
+        data: { id, title: editTitle.trim(), description: editDesc.trim(), tags },
+      });
+      toast.success("บันทึกแล้ว");
+      setEditOpen(false);
+      qc.invalidateQueries({ queryKey: ["photo", id] });
+    } catch (err: any) {
+      toast.error(err.message ?? "บันทึกไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("ลบรูปนี้ถาวร? ดำเนินการนี้ย้อนกลับไม่ได้")) return;
+    try {
+      await removePhoto({ data: { id } });
+      toast.success("ลบรูปแล้ว");
+      navigate({ to: "/" });
+    } catch (e: any) {
+      toast.error(e.message ?? "ลบไม่สำเร็จ");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
@@ -208,9 +260,39 @@ function PhotoDetail() {
       </nav>
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">
         <div className="space-y-4">
-        <img src={p.image_url} alt={p.title} className="w-full rounded-xl border border-border" />
+        <button
+          type="button"
+          onClick={() => setLightboxOpen(true)}
+          className="group relative block w-full overflow-hidden rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+          aria-label="เปิดดูรูปขนาดเต็ม"
+        >
+          <img src={p.image_url} alt={p.title} className="w-full transition group-hover:opacity-95" />
+          <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-background/70 px-2 py-1 text-[10px] uppercase tracking-wide text-foreground/80 opacity-0 backdrop-blur transition group-hover:opacity-100">
+            คลิกเพื่อขยาย
+          </span>
+        </button>
         <div>
-          <h1 className="text-2xl font-bold">{p.title}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h1 className="text-2xl font-bold">{p.title}</h1>
+            {isOwner && (
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={openEdit}
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> แก้ไข
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="inline-flex items-center gap-1 rounded-md border border-destructive/40 px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> ลบ
+                </button>
+              </div>
+            )}
+          </div>
           {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
           {p.tags?.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -460,6 +542,91 @@ function PhotoDetail() {
         </div>
         </aside>
       </div>
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        slides={[{ src: p.image_url, alt: p.title }]}
+        plugins={[Zoom]}
+        carousel={{ finite: true }}
+        render={{ buttonPrev: () => null, buttonNext: () => null }}
+        zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
+        controller={{ closeOnBackdropClick: true }}
+      />
+      {editOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur"
+          onClick={() => !saving && setEditOpen(false)}
+        >
+          <form
+            onSubmit={handleEditSave}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-xl"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">แก้ไขรูป</h2>
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                disabled={saving}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="ปิด"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">ชื่อรูป</label>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  maxLength={120}
+                  required
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">คำบรรยาย</label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  maxLength={1000}
+                  rows={3}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                  แท็ก (คั่นด้วย , สูงสุด 8)
+                </label>
+                <input
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  placeholder="เด็ก, ครอบครัว"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                disabled={saving}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !editTitle.trim()}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {saving ? "กำลังบันทึก..." : "บันทึก"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
