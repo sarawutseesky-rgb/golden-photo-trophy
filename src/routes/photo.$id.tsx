@@ -550,7 +550,6 @@ function PhotoDetail() {
         carousel={{ finite: true }}
         zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
         controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
-        keyboard={{ closeOnEscape: true, navigation: true }}
         labels={{
           Previous: "ก่อนหน้า",
           Next: "ถัดไป",
