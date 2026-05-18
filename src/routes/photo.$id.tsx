@@ -345,6 +345,41 @@ function PhotoDetail() {
                 </span>{" "}
                 โหวต
               </div>
+              <button
+                type="button"
+                onClick={() => setDebug((d) => !d)}
+                data-testid="toggle-debug"
+                className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+              >
+                {debug ? "ปิดโหมดดีบัก" : "โหมดดีบัก"}
+              </button>
+              {debug && (
+                <div
+                  className="mt-2 rounded-md border border-dashed border-border bg-muted/30 p-2 text-[11px]"
+                  data-testid="debug-panel"
+                >
+                  <div className="mb-1 font-mono text-muted-foreground">
+                    cache → avg {Number(p.avg_score).toFixed(2)} · count {p.vote_count}
+                  </div>
+                  {debugLog.length === 0 ? (
+                    <div className="text-muted-foreground">กดโหวตหรือยกเลิกเพื่อดู log</div>
+                  ) : (
+                    <ul className="space-y-0.5 font-mono">
+                      {debugLog.map((e) => (
+                        <li key={e.t} className="flex justify-between gap-2">
+                          <span>
+                            {new Date(e.t).toLocaleTimeString()} · {e.action}
+                          </span>
+                          <span className="tabular-nums">
+                            {e.avg.toFixed(2)}★ / {e.count}
+                            {e.latencyMs != null && ` · ${e.latencyMs}ms`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
