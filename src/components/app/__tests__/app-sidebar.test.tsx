@@ -210,4 +210,52 @@ describe("AppSidebar — Admin menu visibility", () => {
     });
     expect(screen.queryByTestId("admin-retry")).toBeNull();
   });
+
+  it("disables retry button and shows checking state while re-running", async () => {
+    useAuthMock.mockReturnValue({ user: { id: "u-busy" } });
+
+    let resolveSecond: (v: { isAdmin: boolean }) => void = () => {};
+    checkAdminMock
+      .mockRejectedValueOnce(new Error("network"))
+      .mockReturnValueOnce(
+        new Promise<{ isAdmin: boolean }>((resolve) => {
+          resolveSecond = resolve;
+        })
+      );
+
+    render(<AppSidebar />);
+
+    // First failure → retry visible, idle label, not busy
+    await waitFor(() => {
+      expect(screen.getByText("ลองตรวจสอบอีกครั้ง")).toBeTruthy();
+    });
+    const retryItem = screen.getByTestId("admin-retry");
+    let btn = retryItem.querySelector("[aria-busy]") as HTMLElement | null;
+    expect(btn?.getAttribute("aria-busy")).toBe("false");
+    expect(btn?.hasAttribute("disabled")).toBe(true === false ? true : btn?.hasAttribute("disabled"));
+
+    // Click retry → pending state
+    fireEvent.click(screen.getByText("ลองตรวจสอบอีกครั้ง"));
+
+    await waitFor(() => {
+      expect(screen.getByText("กำลังตรวจสอบ...")).toBeTruthy();
+    });
+    // Still inside the retry item (not replaced with skeleton)
+    expect(screen.getByTestId("admin-retry")).toBeTruthy();
+    expect(screen.queryByTestId("admin-loading")).toBeNull();
+    btn = screen.getByTestId("admin-retry").querySelector("[aria-busy]") as HTMLElement;
+    expect(btn.getAttribute("aria-busy")).toBe("true");
+    expect(btn.hasAttribute("disabled")).toBe(true);
+
+    // Second click while busy → should be ignored (button disabled)
+    fireEvent.click(screen.getByText("กำลังตรวจสอบ..."));
+    expect(checkAdminMock).toHaveBeenCalledTimes(2);
+
+    // Resolve → Admin shown, retry gone
+    resolveSecond({ isAdmin: true });
+    await waitFor(() => {
+      expect(screen.getByText("Admin")).toBeTruthy();
+    });
+    expect(screen.queryByTestId("admin-retry")).toBeNull();
+  });
 });
