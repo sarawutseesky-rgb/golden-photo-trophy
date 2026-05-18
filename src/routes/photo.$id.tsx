@@ -542,23 +542,25 @@ function PhotoDetail() {
         </div>
         </aside>
       </div>
-      <Lightbox
-        open={lightboxOpen}
-        close={() => setLightboxOpen(false)}
-        slides={[{ src: p.image_url, alt: p.title }]}
-        plugins={[Zoom]}
-        carousel={{ finite: true }}
-        zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
-        controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
-        labels={{
-          Previous: "ก่อนหน้า",
-          Next: "ถัดไป",
-          Close: "ปิด (Esc)",
-          "Zoom in": "ซูมเข้า",
-          "Zoom out": "ซูมออก",
-        }}
-        animation={{ fade: 200, swipe: 300 }}
-      />
+      {lightboxOpen && (
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          slides={[{ src: p.image_url, alt: p.title }]}
+          plugins={[Zoom]}
+          carousel={{ finite: true }}
+          zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
+          controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
+          labels={{
+            Previous: "ก่อนหน้า",
+            Next: "ถัดไป",
+            Close: "ปิด (Esc)",
+            "Zoom in": "ซูมเข้า",
+            "Zoom out": "ซูมออก",
+          }}
+          animation={{ fade: 200, swipe: 300 }}
+        />
+      )}
       {editOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur"
