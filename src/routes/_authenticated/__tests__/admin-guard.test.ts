@@ -35,7 +35,7 @@ describe("/admin route guard (beforeLoad)", () => {
     }
     expect(thrown).toBeDefined();
     expect(isRedirect(thrown)).toBe(true);
-    expect((thrown as { to: string }).to).toBe("/");
+    expect((thrown as Response & { options: { to: string } }).options.to).toBe("/");
   });
 
   it("redirects to / when checkAdmin throws (e.g. unauthenticated)", async () => {
@@ -48,7 +48,7 @@ describe("/admin route guard (beforeLoad)", () => {
     }
     expect(thrown).toBeDefined();
     expect(isRedirect(thrown)).toBe(true);
-    expect((thrown as { to: string }).to).toBe("/");
+    expect((thrown as Response & { options: { to: string } }).options.to).toBe("/");
   });
 
   it("redirects on subsequent visits too (simulates refresh)", async () => {
@@ -62,7 +62,7 @@ describe("/admin route guard (beforeLoad)", () => {
         thrown = e;
       }
       expect(isRedirect(thrown)).toBe(true);
-      expect((thrown as { to: string }).to).toBe("/");
+      expect((thrown as Response & { options: { to: string } }).options.to).toBe("/");
     }
   });
 });
