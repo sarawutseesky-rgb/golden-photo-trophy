@@ -85,7 +85,9 @@ function EditProfilePage() {
       setPreviewUrl(null);
       setAvatarUrl(null);
       setShowRemoveDialog(false);
-      toast.success("Avatar removed");
+      toast.success("Avatar removed", {
+        description: "Your profile picture has been reset to the default avatar.",
+      });
     } catch (err: any) {
       toast.error(err.message || "Failed to remove avatar");
     } finally {
