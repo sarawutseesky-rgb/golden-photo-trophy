@@ -56,6 +56,14 @@ export function Header() {
           <Link to="/trending" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Trending
           </Link>
+          {isAdmin && (
+            <Link to="/admin" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+              <span className="inline-flex items-center gap-1">
+                <Shield className="h-3.5 w-3.5" />
+                Admin
+              </span>
+            </Link>
+          )}
         </nav>
         <div className="flex items-center gap-2">
           {user ? (
