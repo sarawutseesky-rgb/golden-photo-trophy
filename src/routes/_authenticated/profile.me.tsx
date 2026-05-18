@@ -89,7 +89,10 @@ function EditProfilePage() {
         description: "Your profile picture has been reset to the default avatar.",
       });
     } catch (err: any) {
-      toast.error(err.message || "Failed to remove avatar");
+      const reason = err.message || "An unknown error occurred";
+      toast.error("Failed to remove avatar", {
+        description: `Reason: ${reason}. Please try again in a moment. If the problem persists, check your connection or contact support.`,
+      });
     } finally {
       setRemovingAvatar(false);
     }
