@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Star, Share2, Flag, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, reportPhoto } from "@/lib/photos.functions";
-import { castVote, getMyVote, addComment } from "@/lib/votes.functions";
+import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
 import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
@@ -26,6 +26,7 @@ function PhotoDetail() {
   const fetchPhoto = useServerFn(getPhoto);
   const fetchVote = useServerFn(getMyVote);
   const vote = useServerFn(castVote);
+  const unvote = useServerFn(removeVote);
   const comment = useServerFn(addComment);
   const report = useServerFn(reportPhoto);
 
@@ -67,6 +68,20 @@ function PhotoDetail() {
       toast.success(`You rated ${score}★`);
       // Reveal owner immediately by seeding the cache before refetch resolves
       qc.setQueryData(["my-vote", id, user.id], { score });
+      qc.invalidateQueries({ queryKey: ["photo", id] });
+      qc.invalidateQueries({ queryKey: ["my-vote", id, user.id] });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleUnvote = async () => {
+    if (!user) return;
+    try {
+      await unvote({ data: { photo_id: id } });
+      toast.success("ยกเลิกการโหวตแล้ว");
+      // Clear cached vote immediately so badge/owner hide right away
+      qc.setQueryData(["my-vote", id, user.id], { score: null });
       qc.invalidateQueries({ queryKey: ["photo", id] });
       qc.invalidateQueries({ queryKey: ["my-vote", id, user.id] });
     } catch (e: any) {
