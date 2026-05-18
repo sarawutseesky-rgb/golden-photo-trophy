@@ -11,6 +11,8 @@ import { StarRow } from "@/components/app/StarRow";
 import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { th } from "date-fns/locale";
 
 export const Route = createFileRoute("/photo/$id")({
   head: () => ({ meta: [{ title: "Photo — StarShot" }] }),
@@ -142,7 +144,10 @@ function PhotoDetail() {
             {(data.comments as any[]).map((c) => (
               <li key={c.id} className="rounded-lg border border-border bg-card p-3">
                 <div className="text-xs text-muted-foreground">
-                  {c.profiles?.display_name ?? "Anonymous"} · {new Date(c.created_at).toLocaleDateString()}
+                  {c.profiles?.display_name ?? "Anonymous"} ·{" "}
+                  <span title={new Date(c.created_at).toLocaleString()}>
+                    {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: th })}
+                  </span>
                 </div>
                 <p className="mt-1 text-sm">{c.content}</p>
               </li>
@@ -162,7 +167,12 @@ function PhotoDetail() {
             <div className="h-10 w-10 rounded-full bg-muted" />
             <div>
               <div className="font-semibold">{p.profiles?.display_name}</div>
-              <div className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</div>
+              <div
+                className="text-xs text-muted-foreground"
+                title={new Date(p.created_at).toLocaleString()}
+              >
+                {formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: th })}
+              </div>
             </div>
           </Link>
         </div>
