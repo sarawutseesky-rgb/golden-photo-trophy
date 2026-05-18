@@ -6,6 +6,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { updateProfile } from "@/lib/profile.functions";
 import { compressImage } from "@/lib/image-compress";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/profile/me")({
   head: () => ({ meta: [{ title: "Edit Profile — StarShot" }] }),
