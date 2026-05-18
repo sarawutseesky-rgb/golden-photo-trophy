@@ -205,6 +205,46 @@ function PhotoDetail() {
     }
   };
 
+  const openEdit = () => {
+    setEditTitle(p.title ?? "");
+    setEditDesc(p.description ?? "");
+    setEditTags((p.tags ?? []).join(", "));
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const tags = editTags
+        .split(",")
+        .map((t) => t.trim().replace(/^#/, ""))
+        .filter(Boolean)
+        .slice(0, 8);
+      await editPhoto({
+        data: { id, title: editTitle.trim(), description: editDesc.trim(), tags },
+      });
+      toast.success("บันทึกแล้ว");
+      setEditOpen(false);
+      qc.invalidateQueries({ queryKey: ["photo", id] });
+    } catch (err: any) {
+      toast.error(err.message ?? "บันทึกไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("ลบรูปนี้ถาวร? ดำเนินการนี้ย้อนกลับไม่ได้")) return;
+    try {
+      await removePhoto({ data: { id } });
+      toast.success("ลบรูปแล้ว");
+      navigate({ to: "/" });
+    } catch (e: any) {
+      toast.error(e.message ?? "ลบไม่สำเร็จ");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
@@ -220,9 +260,39 @@ function PhotoDetail() {
       </nav>
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">
         <div className="space-y-4">
-        <img src={p.image_url} alt={p.title} className="w-full rounded-xl border border-border" />
+        <button
+          type="button"
+          onClick={() => setLightboxOpen(true)}
+          className="group relative block w-full overflow-hidden rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+          aria-label="เปิดดูรูปขนาดเต็ม"
+        >
+          <img src={p.image_url} alt={p.title} className="w-full transition group-hover:opacity-95" />
+          <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-background/70 px-2 py-1 text-[10px] uppercase tracking-wide text-foreground/80 opacity-0 backdrop-blur transition group-hover:opacity-100">
+            คลิกเพื่อขยาย
+          </span>
+        </button>
         <div>
-          <h1 className="text-2xl font-bold">{p.title}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h1 className="text-2xl font-bold">{p.title}</h1>
+            {isOwner && (
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={openEdit}
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> แก้ไข
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="inline-flex items-center gap-1 rounded-md border border-destructive/40 px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> ลบ
+                </button>
+              </div>
+            )}
+          </div>
           {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
           {p.tags?.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
