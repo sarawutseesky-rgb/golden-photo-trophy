@@ -9,6 +9,12 @@ import { routeTree } from "./routeTree.gen";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+const LOG = "[auth-401]";
+function dlog(...args: unknown[]) {
+  // eslint-disable-next-line no-console
+  console.warn(LOG, ...args);
+}
+
 function isUnauthorizedError(error: unknown): boolean {
   if (!error) return false;
   const msg =
@@ -43,10 +49,14 @@ let lastFailedMutation:
 
 function retryLastFailedMutation() {
   if (!lastFailedMutation) {
+    dlog("retry: no pending mutation");
     toast.info("ไม่มีคำขอที่ค้างให้รีลอง");
     return;
   }
   if (Date.now() < circuitOpenUntil) {
+    dlog("retry: blocked by circuit breaker", {
+      openForMs: circuitOpenUntil - Date.now(),
+    });
     toast.error("ระบบหยุดรีลองชั่วคราว", {
       description: "พบ 401 ต่อเนื่อง กรุณาเข้าสู่ระบบใหม่",
       action: {
@@ -61,6 +71,7 @@ function retryLastFailedMutation() {
   const { mutation, variables } = lastFailedMutation;
   const attempts = retryCounts.get(mutation) ?? 0;
   if (attempts >= MAX_AUTO_RETRIES) {
+    dlog("retry: max attempts reached", { mutationKey: mutation.options.mutationKey, attempts });
     toast.error("รีลองครบจำนวนแล้ว", {
       description: "กรุณาเข้าสู่ระบบใหม่",
       action: {
@@ -74,33 +85,41 @@ function retryLastFailedMutation() {
     return;
   }
   retryCounts.set(mutation, attempts + 1);
+  dlog("retry: executing", { mutationKey: mutation.options.mutationKey, attempt: attempts + 1 });
   lastFailedMutation = null;
   const toastId = "retry-mutation";
   toast.loading("กำลังรีลองคำขอ...", { id: toastId });
   mutation
     .execute(variables as never)
     .then(() => {
+      dlog("retry: success", { mutationKey: mutation.options.mutationKey });
       toast.success("คำขอสำเร็จ", { id: toastId });
       retryCounts.delete(mutation);
     })
-    .catch((e) =>
+    .catch((e) => {
+      dlog("retry: failed", { mutationKey: mutation.options.mutationKey, error: e });
       toast.error("รีลองไม่สำเร็จ", {
         id: toastId,
         description: e instanceof Error ? e.message : undefined,
-      }),
-    );
+      });
+    });
 }
 
 async function tryRefreshSession(
   queryClient: QueryClient,
 ): Promise<boolean> {
-  if (refreshing) return false;
+  if (refreshing) {
+    dlog("refresh: already in flight, skipping");
+    return false;
+  }
   refreshing = true;
+  dlog("refresh: starting");
   const toastId = "auth-refresh";
   toast.loading("กำลังรีเฟรชเซสชัน...", { id: toastId });
   try {
     const { data, error } = await supabase.auth.refreshSession();
     if (error || !data.session) {
+      dlog("refresh: failed", { error });
       toast.error("รีเฟรชเซสชันไม่สำเร็จ", {
         id: toastId,
         description: "กรุณาเข้าสู่ระบบใหม่",
@@ -113,6 +132,9 @@ async function tryRefreshSession(
       });
       return false;
     }
+    dlog("refresh: success, invalidating queries", {
+      hasPendingMutation: !!lastFailedMutation,
+    });
     toast.success("รีเฟรชเซสชันสำเร็จ", { id: toastId });
     await queryClient.invalidateQueries();
     if (lastFailedMutation) {
@@ -128,6 +150,7 @@ async function tryRefreshSession(
     }
     return true;
   } catch (e) {
+    dlog("refresh: threw", e);
     toast.error("รีเฟรชเซสชันไม่สำเร็จ", {
       id: toastId,
       description: e instanceof Error ? e.message : undefined,
@@ -149,7 +172,16 @@ function makeErrorHandler(queryClient: QueryClient) {
       burst401 = 1;
     }
     last401At = now;
+    dlog("401 detected", {
+      burst: burst401,
+      windowMs: BURST_WINDOW_MS,
+      limit: BURST_LIMIT,
+      mutationKey: mutation?.options.mutationKey,
+      mutationAttempts: mutation ? retryCounts.get(mutation) ?? 0 : undefined,
+      error,
+    });
     if (burst401 >= BURST_LIMIT) {
+      dlog("circuit: OPEN for 60s (burst limit hit)", { burst: burst401 });
       circuitOpenUntil = now + 60_000;
       burst401 = 0;
       lastFailedMutation = null;
@@ -169,6 +201,7 @@ function makeErrorHandler(queryClient: QueryClient) {
     if (mutation) {
       const attempts = retryCounts.get(mutation) ?? 0;
       if (attempts >= MAX_AUTO_RETRIES) {
+        dlog("mutation 401: capped, not enqueuing", { mutationKey: mutation.options.mutationKey, attempts });
         toast.error("คำขอนี้ล้มเหลวซ้ำ", {
           id: "auth-401",
           description: "ไม่รีลองอัตโนมัติแล้ว กรุณาเข้าสู่ระบบใหม่",
