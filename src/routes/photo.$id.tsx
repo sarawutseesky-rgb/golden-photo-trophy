@@ -63,28 +63,66 @@ function PhotoDetail() {
 
   const handleVote = async (score: number) => {
     if (!user) return toast.error("Sign in to vote");
+    const photoKey = ["photo", id];
+    const voteKey = ["my-vote", id, user.id];
+    const prevPhoto = qc.getQueryData<any>(photoKey);
+    const prevVote = qc.getQueryData<any>(voteKey);
+    // Optimistic update — apply new vote to cached aggregates
+    qc.setQueryData(voteKey, { score });
+    if (prevPhoto?.photo) {
+      const dist = [...prevPhoto.distribution];
+      const oldScore = prevVote?.score as number | null | undefined;
+      if (oldScore && oldScore >= 1 && oldScore <= 5) dist[oldScore - 1] = Math.max(0, dist[oldScore - 1] - 1);
+      dist[score - 1] += 1;
+      const newCount = dist.reduce((a, b) => a + b, 0);
+      const sum = dist.reduce((acc, c, i) => acc + c * (i + 1), 0);
+      const newAvg = newCount > 0 ? Number((sum / newCount).toFixed(2)) : 0;
+      qc.setQueryData(photoKey, {
+        ...prevPhoto,
+        distribution: dist,
+        photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
+      });
+    }
     try {
       await vote({ data: { photo_id: id, score } });
       toast.success(`You rated ${score}★`);
-      // Reveal owner immediately by seeding the cache before refetch resolves
-      qc.setQueryData(["my-vote", id, user.id], { score });
-      qc.invalidateQueries({ queryKey: ["photo", id] });
-      qc.invalidateQueries({ queryKey: ["my-vote", id, user.id] });
+      qc.invalidateQueries({ queryKey: photoKey });
+      qc.invalidateQueries({ queryKey: voteKey });
     } catch (e: any) {
+      // Roll back optimistic update on failure
+      qc.setQueryData(photoKey, prevPhoto);
+      qc.setQueryData(voteKey, prevVote);
       toast.error(e.message);
     }
   };
 
   const handleUnvote = async () => {
     if (!user) return;
+    const photoKey = ["photo", id];
+    const voteKey = ["my-vote", id, user.id];
+    const prevPhoto = qc.getQueryData<any>(photoKey);
+    const prevVote = qc.getQueryData<any>(voteKey);
+    qc.setQueryData(voteKey, { score: null });
+    if (prevPhoto?.photo && prevVote?.score) {
+      const dist = [...prevPhoto.distribution];
+      dist[prevVote.score - 1] = Math.max(0, dist[prevVote.score - 1] - 1);
+      const newCount = dist.reduce((a, b) => a + b, 0);
+      const sum = dist.reduce((acc, c, i) => acc + c * (i + 1), 0);
+      const newAvg = newCount > 0 ? Number((sum / newCount).toFixed(2)) : 0;
+      qc.setQueryData(photoKey, {
+        ...prevPhoto,
+        distribution: dist,
+        photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
+      });
+    }
     try {
       await unvote({ data: { photo_id: id } });
       toast.success("ยกเลิกการโหวตแล้ว");
-      // Clear cached vote immediately so badge/owner hide right away
-      qc.setQueryData(["my-vote", id, user.id], { score: null });
-      qc.invalidateQueries({ queryKey: ["photo", id] });
-      qc.invalidateQueries({ queryKey: ["my-vote", id, user.id] });
+      qc.invalidateQueries({ queryKey: photoKey });
+      qc.invalidateQueries({ queryKey: voteKey });
     } catch (e: any) {
+      qc.setQueryData(photoKey, prevPhoto);
+      qc.setQueryData(voteKey, prevVote);
       toast.error(e.message);
     }
   };
