@@ -542,6 +542,91 @@ function PhotoDetail() {
         </div>
         </aside>
       </div>
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        slides={[{ src: p.image_url, alt: p.title }]}
+        plugins={[Zoom]}
+        carousel={{ finite: true }}
+        render={{ buttonPrev: () => null, buttonNext: () => null }}
+        zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
+        controller={{ closeOnBackdropClick: true }}
+      />
+      {editOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur"
+          onClick={() => !saving && setEditOpen(false)}
+        >
+          <form
+            onSubmit={handleEditSave}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-xl"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">แก้ไขรูป</h2>
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                disabled={saving}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="ปิด"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">ชื่อรูป</label>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  maxLength={120}
+                  required
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">คำบรรยาย</label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  maxLength={1000}
+                  rows={3}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                  แท็ก (คั่นด้วย , สูงสุด 8)
+                </label>
+                <input
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  placeholder="เด็ก, ครอบครัว"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                disabled={saving}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !editTitle.trim()}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {saving ? "กำลังบันทึก..." : "บันทึก"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
