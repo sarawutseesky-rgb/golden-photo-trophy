@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Star, Share2, Flag, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { getPhoto, reportPhoto } from "@/lib/photos.functions";
+import { getPhoto, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
+import Lightbox from "yet-another-react-lightbox";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import "yet-another-react-lightbox/styles.css";
 
 export const Route = createFileRoute("/photo/$id")({
   head: () => ({ meta: [{ title: "Photo — StarShot" }] }),
@@ -23,12 +26,15 @@ function PhotoDetail() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const fetchPhoto = useServerFn(getPhoto);
   const fetchVote = useServerFn(getMyVote);
   const vote = useServerFn(castVote);
   const unvote = useServerFn(removeVote);
   const comment = useServerFn(addComment);
   const report = useServerFn(reportPhoto);
+  const editPhoto = useServerFn(updatePhoto);
+  const removePhoto = useServerFn(deletePhoto);
 
   const { data, isLoading } = useQuery({ queryKey: ["photo", id], queryFn: () => fetchPhoto({ data: { id } }) });
   const { data: myVote } = useQuery({
@@ -48,6 +54,12 @@ function PhotoDetail() {
   const [hover, setHover] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [debug, setDebug] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [saving, setSaving] = useState(false);
   const [debugLog, setDebugLog] = useState<
     Array<{ t: number; action: string; avg: number; count: number; latencyMs?: number }>
   >([]);
