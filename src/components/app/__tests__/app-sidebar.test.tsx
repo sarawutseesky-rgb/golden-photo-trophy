@@ -45,6 +45,11 @@ vi.mock("@/components/ui/sidebar", () => {
   };
 });
 
+vi.mock("@/components/ui/skeleton", () => ({
+  Skeleton: ({ children, ...rest }: React.PropsWithChildren<Record<string, unknown>>) =>
+    React.createElement("div", { "data-skeleton": true, ...rest }, children),
+}));
+
 import { AppSidebar } from "@/components/app/AppSidebar";
 
 describe("AppSidebar — Admin menu visibility", () => {
@@ -92,5 +97,36 @@ describe("AppSidebar — Admin menu visibility", () => {
       expect(checkAdminMock).toHaveBeenCalled();
     });
     expect(screen.queryByText("Admin")).toBeNull();
+  });
+
+  it("shows loading skeleton while checkAdmin is pending, then hides it after resolve", async () => {
+    useAuthMock.mockReturnValue({ user: { id: "u-3" } });
+    let resolveFn: (v: { isAdmin: boolean }) => void = () => {};
+    checkAdminMock.mockReturnValue(
+      new Promise<{ isAdmin: boolean }>((resolve) => {
+        resolveFn = resolve;
+      })
+    );
+    render(<AppSidebar />);
+    // Loading visible immediately
+    await waitFor(() => {
+      expect(screen.getByTestId("admin-loading")).toBeTruthy();
+    });
+    expect(screen.queryByText("Admin")).toBeNull();
+
+    resolveFn({ isAdmin: true });
+    await waitFor(() => {
+      expect(screen.getByText("Admin")).toBeTruthy();
+    });
+    expect(screen.queryByTestId("admin-loading")).toBeNull();
+  });
+
+  it("does NOT show loading skeleton when user is signed out", async () => {
+    useAuthMock.mockReturnValue({ user: null });
+    render(<AppSidebar />);
+    await waitFor(() => {
+      expect(screen.getByText("Feed")).toBeTruthy();
+    });
+    expect(screen.queryByTestId("admin-loading")).toBeNull();
   });
 });
