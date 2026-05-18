@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Star, Share2, Flag } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, reportPhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment } from "@/lib/votes.functions";
@@ -95,8 +95,20 @@ function PhotoDetail() {
   };
 
   return (
-    <div className="grid gap-8 md:grid-cols-[1fr_320px]">
-      <div className="space-y-4">
+    <div className="space-y-4">
+      <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          กลับไปหน้า Feed
+        </Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">{p.title}</span>
+      </nav>
+      <div className="grid gap-8 md:grid-cols-[1fr_320px]">
+        <div className="space-y-4">
         <img src={p.image_url} alt={p.title} className="w-full rounded-xl border border-border" />
         <div>
           <h1 className="text-2xl font-bold">{p.title}</h1>
@@ -138,9 +150,9 @@ function PhotoDetail() {
             {data.comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet.</p>}
           </ul>
         </section>
-      </div>
+        </div>
 
-      <aside className="space-y-4">
+        <aside className="space-y-4">
         <div className="rounded-xl border border-border bg-card p-4">
           <Link
             to="/profile/$id"
@@ -247,7 +259,8 @@ function PhotoDetail() {
             <Flag className="h-3.5 w-3.5" /> Report
           </button>
         </div>
-      </aside>
+        </aside>
+      </div>
     </div>
   );
 }
