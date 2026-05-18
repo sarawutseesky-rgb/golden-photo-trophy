@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bell, Star, Upload, LogOut, User, Shield } from "lucide-react";
+import { Bell, Star, Upload, LogOut, User, Shield, PanelLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
 import { unreadCount } from "@/lib/notifications.functions";
 import { checkAdmin } from "@/lib/profile.functions";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -39,10 +40,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-          <Star className="h-5 w-5 fill-[var(--gold)] text-[var(--gold)]" />
-          <span>StarShot</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="-ml-1 hidden md:inline-flex" />
+          <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <Star className="h-5 w-5 fill-[var(--gold)] text-[var(--gold)]" />
+            <span>StarShot</span>
+          </Link>
+        </div>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <Link to="/" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Feed

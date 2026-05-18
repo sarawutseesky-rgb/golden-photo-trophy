@@ -12,8 +12,10 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/app/Header";
+import { AppSidebar } from "@/components/app/AppSidebar";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 function NotFoundComponent() {
   return (
@@ -130,13 +132,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen bg-background text-foreground">
-          <Header />
-          <main className="mx-auto max-w-6xl px-4 py-6">
-            <Outlet />
-          </main>
-        </div>
-        <Toaster />
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full bg-background text-foreground">
+            <AppSidebar />
+            <div className="flex-1 flex flex-col">
+              <Header />
+              <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">
+                <Outlet />
+              </main>
+            </div>
+          </div>
+          <Toaster />
+        </SidebarProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
