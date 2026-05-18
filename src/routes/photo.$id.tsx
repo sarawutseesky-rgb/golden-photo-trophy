@@ -65,6 +65,8 @@ function PhotoDetail() {
     try {
       await vote({ data: { photo_id: id, score } });
       toast.success(`You rated ${score}★`);
+      // Reveal owner immediately by seeding the cache before refetch resolves
+      qc.setQueryData(["my-vote", id, user.id], { score });
       qc.invalidateQueries({ queryKey: ["photo", id] });
       qc.invalidateQueries({ queryKey: ["my-vote", id, user.id] });
     } catch (e: any) {
