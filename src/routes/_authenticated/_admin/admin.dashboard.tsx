@@ -4,6 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin.functions";
 import { Image, Users, Flag, ShieldAlert, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+
+const AUTO_REFRESH_MS = 60_000;
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/dashboard")({
   head: () => ({
@@ -42,9 +45,12 @@ function StatCard({
 
 function AdminDashboard() {
   const stats = useServerFn(getAdminStats);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const { data, isLoading, isFetching, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: () => stats(),
+    refetchInterval: autoRefresh ? AUTO_REFRESH_MS : false,
+    refetchIntervalInBackground: false,
   });
 
   return (
@@ -62,6 +68,19 @@ function AdminDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <label
+            className="inline-flex items-center gap-2 rounded border border-border px-3 py-1.5 text-sm cursor-pointer select-none hover:bg-accent"
+            data-testid="auto-refresh-toggle-label"
+          >
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              data-testid="auto-refresh-toggle"
+              className="h-3.5 w-3.5 cursor-pointer accent-primary"
+            />
+            <span>รีเฟรชอัตโนมัติทุก 60 วินาที</span>
+          </label>
           <button
             type="button"
             onClick={() => refetch()}
