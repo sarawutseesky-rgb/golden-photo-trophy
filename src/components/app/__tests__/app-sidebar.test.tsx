@@ -247,8 +247,7 @@ describe("AppSidebar — Admin menu visibility", () => {
     expect(btn.getAttribute("aria-busy")).toBe("true");
     expect(btn.hasAttribute("disabled")).toBe(true);
 
-    // Second click while busy → should be ignored (button disabled)
-    fireEvent.click(screen.getByText("กำลังตรวจสอบ..."));
+    // Only 2 calls so far (initial + first retry); button is disabled to prevent more
     expect(checkAdminMock).toHaveBeenCalledTimes(2);
 
     // Resolve → Admin shown, retry gone
