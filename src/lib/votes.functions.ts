@@ -17,6 +17,19 @@ export const castVote = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const removeVote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ photo_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("votes")
+      .delete()
+      .eq("photo_id", data.photo_id)
+      .eq("voter_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getMyVote = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { photo_id: string }) => d)
