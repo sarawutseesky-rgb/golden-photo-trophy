@@ -129,4 +129,51 @@ describe("AppSidebar — Admin menu visibility", () => {
     });
     expect(screen.queryByTestId("admin-loading")).toBeNull();
   });
+
+  it("hides skeleton and Admin menu when checkAdmin rejects, and keeps them hidden", async () => {
+    useAuthMock.mockReturnValue({ user: { id: "u-err" } });
+    let rejectFn: (e: unknown) => void = () => {};
+    checkAdminMock.mockReturnValueOnce(
+      new Promise<{ isAdmin: boolean }>((_resolve, reject) => {
+        rejectFn = reject;
+      })
+    );
+    render(<AppSidebar />);
+
+    // Skeleton visible while pending
+    await waitFor(() => {
+      expect(screen.getByTestId("admin-loading")).toBeTruthy();
+    });
+
+    rejectFn(new Error("boom"));
+
+    // After rejection: skeleton gone, Admin not shown
+    await waitFor(() => {
+      expect(screen.queryByTestId("admin-loading")).toBeNull();
+    });
+    expect(screen.queryByText("Admin")).toBeNull();
+
+    // Stays hidden over time (no retry until user changes)
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByTestId("admin-loading")).toBeNull();
+    expect(screen.queryByText("Admin")).toBeNull();
+    expect(checkAdminMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-checks admin on next login after a previous error", async () => {
+    // First mount: signed out
+    useAuthMock.mockReturnValue({ user: null });
+    const { rerender } = render(<AppSidebar />);
+    expect(checkAdminMock).not.toHaveBeenCalled();
+
+    // Login as admin → effect re-runs because user changed
+    checkAdminMock.mockResolvedValueOnce({ isAdmin: true });
+    useAuthMock.mockReturnValue({ user: { id: "new-login" } });
+    rerender(<AppSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Admin")).toBeTruthy();
+    });
+    expect(checkAdminMock).toHaveBeenCalledTimes(1);
+  });
 });
