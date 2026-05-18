@@ -50,7 +50,6 @@ export function AppSidebar() {
 
   const runAdminCheck = useCallback(() => {
     setIsCheckingAdmin(true);
-    setAdminCheckError(false);
     checkAdminFn()
       .then((r) => {
         setIsAdmin(r.isAdmin);
