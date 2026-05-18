@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedProfileMeRouteImport } from './routes/_authenticated/profile.me'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
 import { Route as ApiPublicCronRankRouteImport } from './routes/api/public/cron/rank'
+import { Route as AuthenticatedAdminAdminUsersRouteImport } from './routes/_authenticated/_admin/admin.users'
 import { Route as AuthenticatedAdminAdminDashboardRouteImport } from './routes/_authenticated/_admin/admin.dashboard'
 
 const TrendingRoute = TrendingRouteImport.update({
@@ -100,6 +101,12 @@ const ApiPublicCronRankRoute = ApiPublicCronRankRouteImport.update({
   path: '/api/public/cron/rank',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminAdminUsersRoute =
+  AuthenticatedAdminAdminUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => AuthenticatedAdminAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminDashboardRoute =
   AuthenticatedAdminAdminDashboardRouteImport.update({
     id: '/dashboard',
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/admin/dashboard': typeof AuthenticatedAdminAdminDashboardRoute
+  '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRoutesByTo {
@@ -137,6 +145,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/admin/dashboard': typeof AuthenticatedAdminAdminDashboardRoute
+  '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRoutesById {
@@ -156,6 +165,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRouteWithChildren
   '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
   '/_authenticated/_admin/admin/dashboard': typeof AuthenticatedAdminAdminDashboardRoute
+  '/_authenticated/_admin/admin/users': typeof AuthenticatedAdminAdminUsersRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
 export interface FileRouteTypes {
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/profile/me'
     | '/admin/dashboard'
+    | '/admin/users'
     | '/api/public/cron/rank'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/profile/me'
     | '/admin/dashboard'
+    | '/admin/users'
     | '/api/public/cron/rank'
   id:
     | '__root__'
@@ -208,6 +220,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin'
     | '/_authenticated/profile/me'
     | '/_authenticated/_admin/admin/dashboard'
+    | '/_authenticated/_admin/admin/users'
     | '/api/public/cron/rank'
   fileRoutesById: FileRoutesById
 }
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronRankRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/_admin/admin/users': {
+      id: '/_authenticated/_admin/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminAdminRoute
+    }
     '/_authenticated/_admin/admin/dashboard': {
       id: '/_authenticated/_admin/admin/dashboard'
       path: '/dashboard'
@@ -343,12 +363,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminAdminRouteChildren {
   AuthenticatedAdminAdminDashboardRoute: typeof AuthenticatedAdminAdminDashboardRoute
+  AuthenticatedAdminAdminUsersRoute: typeof AuthenticatedAdminAdminUsersRoute
 }
 
 const AuthenticatedAdminAdminRouteChildren: AuthenticatedAdminAdminRouteChildren =
   {
     AuthenticatedAdminAdminDashboardRoute:
       AuthenticatedAdminAdminDashboardRoute,
+    AuthenticatedAdminAdminUsersRoute: AuthenticatedAdminAdminUsersRoute,
   }
 
 const AuthenticatedAdminAdminRouteWithChildren =
