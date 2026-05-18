@@ -123,7 +123,7 @@ function EditProfilePage() {
               </div>
             )}
           </div>
-          <div>
+          <div className="flex flex-col gap-2">
             <input
               ref={fileRef}
               type="file"
@@ -131,15 +131,35 @@ function EditProfilePage() {
               className="hidden"
               onChange={onPickFile}
             />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
-            >
-              Change avatar
-            </button>
-            <p className="mt-1 text-xs text-muted-foreground">JPG or PNG, max 2 MB</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
+              >
+                Change avatar
+              </button>
+              {(avatarUrl || previewUrl) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewUrl(null);
+                    setAvatarUrl(null);
+                    if (user) {
+                      supabase.storage
+                        .from("photos")
+                        .remove([`${user.id}/avatar.jpg`])
+                        .catch(() => {});
+                    }
+                  }}
+                  className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  Remove avatar
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">JPG or PNG, max 2 MB</p>
           </div>
         </div>
 
