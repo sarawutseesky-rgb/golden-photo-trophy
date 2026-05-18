@@ -1,0 +1,253 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Star, Share2, Flag } from "lucide-react";
+import { toast } from "sonner";
+import { getPhoto, reportPhoto } from "@/lib/photos.functions";
+import { castVote, getMyVote, addComment } from "@/lib/votes.functions";
+import { useAuth } from "@/lib/auth-context";
+import { StarRow } from "@/components/app/StarRow";
+import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/photo/$id")({
+  head: () => ({ meta: [{ title: "Photo — StarShot" }] }),
+  component: PhotoDetail,
+});
+
+function PhotoDetail() {
+  const { id } = Route.useParams();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const fetchPhoto = useServerFn(getPhoto);
+  const fetchVote = useServerFn(getMyVote);
+  const vote = useServerFn(castVote);
+  const comment = useServerFn(addComment);
+  const report = useServerFn(reportPhoto);
+
+  const { data, isLoading } = useQuery({ queryKey: ["photo", id], queryFn: () => fetchPhoto({ data: { id } }) });
+  const { data: myVote } = useQuery({
+    queryKey: ["my-vote", id, user?.id],
+    queryFn: () => fetchVote({ data: { photo_id: id } }),
+    enabled: !!user,
+  });
+
+  const [hover, setHover] = useState<number | null>(null);
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    const ch = supabase
+      .channel(`photo:${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "votes", filter: `photo_id=eq.${id}` }, () => {
+        qc.invalidateQueries({ queryKey: ["photo", id] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [id, qc]);
+
+  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+  if (!data?.photo) return <div className="py-12 text-center text-muted-foreground">Photo not found.</div>;
+
+  const p = data.photo as any;
+  const isOwner = user?.id === p.user_id;
+  const hasVoted = myVote?.score != null;
+  const total = data.distribution.reduce((a: number, b: number) => a + b, 0) || 1;
+  const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
+
+  const handleVote = async (score: number) => {
+    if (!user) return toast.error("Sign in to vote");
+    try {
+      await vote({ data: { photo_id: id, score } });
+      toast.success(`You rated ${score}★`);
+      qc.invalidateQueries({ queryKey: ["photo", id] });
+      qc.invalidateQueries({ queryKey: ["my-vote", id, user.id] });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !text.trim()) return;
+    try {
+      await comment({ data: { photo_id: id, content: text.trim() } });
+      setText("");
+      qc.invalidateQueries({ queryKey: ["photo", id] });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!user) return toast.error("Sign in to report");
+    const reason = prompt("Why are you reporting this photo?");
+    if (!reason) return;
+    try {
+      await report({ data: { photo_id: id, reason } });
+      toast.success("Reported. Thanks for keeping the community safe.");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  return (
+    <div className="grid gap-8 md:grid-cols-[1fr_320px]">
+      <div className="space-y-4">
+        <img src={p.image_url} alt={p.title} className="w-full rounded-xl border border-border" />
+        <div>
+          <h1 className="text-2xl font-bold">{p.title}</h1>
+          {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
+          {p.tags?.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {p.tags.map((t: string) => (
+                <span key={t} className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Comments</h2>
+          {user && !isOwner && (
+            <form onSubmit={handleComment} className="mb-4 flex gap-2">
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Say something nice…"
+                maxLength={500}
+                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              <button className="rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground">Post</button>
+            </form>
+          )}
+          <ul className="space-y-3">
+            {(data.comments as any[]).map((c) => (
+              <li key={c.id} className="rounded-lg border border-border bg-card p-3">
+                <div className="text-xs text-muted-foreground">
+                  {c.profiles?.display_name ?? "Anonymous"} · {new Date(c.created_at).toLocaleDateString()}
+                </div>
+                <p className="mt-1 text-sm">{c.content}</p>
+              </li>
+            ))}
+            {data.comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet.</p>}
+          </ul>
+        </section>
+      </div>
+
+      <aside className="space-y-4">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <Link
+            to="/profile/$id"
+            params={{ id: p.user_id }}
+            className="flex items-center gap-3 text-sm hover:text-[var(--gold)]"
+          >
+            <div className="h-10 w-10 rounded-full bg-muted" />
+            <div>
+              <div className="font-semibold">{p.profiles?.display_name}</div>
+              <div className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</div>
+            </div>
+          </Link>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Rating</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold">{Number(p.avg_score).toFixed(1)}</span>
+            <span className="text-sm text-muted-foreground">/ 5 · {p.vote_count} votes</span>
+          </div>
+
+          {!isOwner && user && (
+            <div className="mt-3">
+              <div className="text-xs text-muted-foreground">
+                {hasVoted ? `You rated ${myVote!.score}★` : "Tap a star to rate"}
+              </div>
+              <div className="mt-1 flex gap-1" onMouseLeave={() => setHover(null)}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    disabled={hasVoted}
+                    onMouseEnter={() => setHover(n)}
+                    onClick={() => handleVote(n)}
+                    className="disabled:cursor-not-allowed"
+                    aria-label={`Rate ${n} stars`}
+                  >
+                    <Star
+                      className={cn(
+                        "h-7 w-7 transition",
+                        (hover ?? myVote?.score ?? 0) >= n
+                          ? "fill-[var(--gold)] text-[var(--gold)]"
+                          : "text-muted-foreground/40",
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 space-y-1">
+            {[5, 4, 3, 2, 1].map((s) => {
+              const c = data.distribution[s - 1];
+              return (
+                <div key={s} className="flex items-center gap-2 text-xs">
+                  <span className="w-4 text-muted-foreground">{s}★</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded bg-muted">
+                    <div
+                      className="h-full bg-[var(--gold)]"
+                      style={{ width: `${(c / total) * 100}%` }}
+                    />
+                  </div>
+                  <span className="w-6 text-right text-muted-foreground">{c}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Milestone stars</div>
+          <StarRow count={p.milestone_stars} size={22} />
+          {progress && (
+            <div className="mt-3 text-xs text-muted-foreground">
+              {progress.holding
+                ? `Held #1 for ${progress.elapsedDays.toFixed(1)}d · next ★ at ${progress.nextDays}d`
+                : `Reach #1 (min 10 votes) to start the clock toward ${THRESHOLDS_DAYS[p.milestone_stars]}d for your next ★`}
+              {progress.holding && (
+                <div className="mt-1 h-1.5 overflow-hidden rounded bg-muted">
+                  <div
+                    className="h-full bg-[var(--gold)]"
+                    style={{ width: `${Math.min(100, (progress.elapsedDays / progress.nextDays) * 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast.success("Link copied");
+            }}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
+          >
+            <Share2 className="h-3.5 w-3.5" /> Share
+          </button>
+          <button
+            onClick={handleReport}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
+          >
+            <Flag className="h-3.5 w-3.5" /> Report
+          </button>
+        </div>
+      </aside>
+    </div>
+  );
+}
