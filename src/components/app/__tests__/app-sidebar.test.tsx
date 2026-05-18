@@ -257,4 +257,54 @@ describe("AppSidebar — Admin menu visibility", () => {
     });
     expect(screen.queryByTestId("admin-retry")).toBeNull();
   });
+
+  it("re-enables retry and keeps label after a second failure (no skeleton)", async () => {
+    useAuthMock.mockReturnValue({ user: { id: "u-fail-again" } });
+
+    let rejectSecond: (e: unknown) => void = () => {};
+    checkAdminMock
+      .mockRejectedValueOnce(new Error("first"))
+      .mockReturnValueOnce(
+        new Promise<{ isAdmin: boolean }>((_resolve, reject) => {
+          rejectSecond = reject;
+        })
+      );
+
+    render(<AppSidebar />);
+
+    // First failure → retry visible
+    await waitFor(() => {
+      expect(screen.getByText("ลองตรวจสอบอีกครั้ง")).toBeTruthy();
+    });
+
+    // Click retry → pending
+    fireEvent.click(screen.getByText("ลองตรวจสอบอีกครั้ง"));
+    await waitFor(() => {
+      expect(screen.getByText("กำลังตรวจสอบ...")).toBeTruthy();
+    });
+
+    // Second failure
+    rejectSecond(new Error("second"));
+
+    // Back to idle retry state: enabled, idle label, no skeleton, Admin hidden
+    await waitFor(() => {
+      expect(screen.getByText("ลองตรวจสอบอีกครั้ง")).toBeTruthy();
+    });
+    const btn = screen
+      .getByTestId("admin-retry")
+      .querySelector("[aria-busy]") as HTMLElement;
+    expect(btn.getAttribute("aria-busy")).toBe("false");
+    expect(btn.hasAttribute("disabled")).toBe(false);
+    expect(screen.queryByTestId("admin-loading")).toBeNull();
+    expect(screen.queryByText("Admin")).toBeNull();
+    expect(screen.queryByText("กำลังตรวจสอบ...")).toBeNull();
+
+    // And it remains clickable for another retry
+    checkAdminMock.mockResolvedValueOnce({ isAdmin: true });
+    fireEvent.click(screen.getByText("ลองตรวจสอบอีกครั้ง"));
+    await waitFor(() => {
+      expect(screen.getByText("Admin")).toBeTruthy();
+    });
+    expect(checkAdminMock).toHaveBeenCalledTimes(3);
+  });
 });
