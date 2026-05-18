@@ -119,6 +119,7 @@ function EditProfilePage() {
   if (!user) return null;
 
   const currentAvatar = previewUrl ?? avatarUrl;
+  const formDisabled = saving || removingAvatar;
 
   return (
     <div className="mx-auto max-w-lg space-y-6 py-8">
@@ -166,7 +167,7 @@ function EditProfilePage() {
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                disabled={uploading}
+                disabled={uploading || formDisabled}
                 className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
               >
                 Change avatar
@@ -175,7 +176,8 @@ function EditProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowRemoveDialog(true)}
-                  className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                  disabled={formDisabled}
+                  className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
                 >
                   Remove avatar
                 </button>
@@ -193,7 +195,8 @@ function EditProfilePage() {
             maxLength={60}
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            disabled={formDisabled}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
           />
         </div>
 
@@ -205,7 +208,8 @@ function EditProfilePage() {
             rows={3}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            disabled={formDisabled}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
             placeholder="Tell others about yourself…"
           />
           <div className="mt-1 text-right text-xs text-muted-foreground">{bio.length}/500</div>
@@ -215,16 +219,17 @@ function EditProfilePage() {
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
-            disabled={saving}
+            disabled={formDisabled}
             className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save changes"}
+            {saving ? "Saving…" : removingAvatar ? "Removing…" : "Save changes"}
           </button>
           {previewUrl && (
             <button
               type="button"
               onClick={() => setPreviewUrl(null)}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              disabled={formDisabled}
+              className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
             >
               Cancel new avatar
             </button>
