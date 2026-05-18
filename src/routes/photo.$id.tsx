@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X } from "lucide-react";
@@ -13,9 +13,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
-import Lightbox from "yet-another-react-lightbox";
-import Zoom from "yet-another-react-lightbox/plugins/zoom";
-import "yet-another-react-lightbox/styles.css";
+import { ClientOnly } from "@tanstack/react-router";
+const LightboxClient = lazy(async () => {
+  const [{ default: Lightbox }, { default: Zoom }] = await Promise.all([
+    import("yet-another-react-lightbox"),
+    import("yet-another-react-lightbox/plugins/zoom"),
+    import("yet-another-react-lightbox/styles.css"),
+  ]);
+  return {
+    default: (props: React.ComponentProps<typeof Lightbox>) => (
+      <Lightbox {...props} plugins={[Zoom, ...(props.plugins ?? [])]} />
+    ),
+  };
+});
 
 export const Route = createFileRoute("/photo/$id")({
   head: () => ({ meta: [{ title: "Photo — StarShot" }] }),
@@ -543,23 +553,26 @@ function PhotoDetail() {
         </aside>
       </div>
       {lightboxOpen && (
-        <Lightbox
-          open={lightboxOpen}
-          close={() => setLightboxOpen(false)}
-          slides={[{ src: p.image_url, alt: p.title }]}
-          plugins={[Zoom]}
-          carousel={{ finite: true }}
-          zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
-          controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
-          labels={{
-            Previous: "ก่อนหน้า",
-            Next: "ถัดไป",
-            Close: "ปิด (Esc)",
-            "Zoom in": "ซูมเข้า",
-            "Zoom out": "ซูมออก",
-          }}
-          animation={{ fade: 200, swipe: 300 }}
-        />
+        <ClientOnly fallback={null}>
+          <Suspense fallback={null}>
+            <LightboxClient
+              open={lightboxOpen}
+              close={() => setLightboxOpen(false)}
+              slides={[{ src: p.image_url, alt: p.title }]}
+              carousel={{ finite: true }}
+              zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
+              controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
+              labels={{
+                Previous: "ก่อนหน้า",
+                Next: "ถัดไป",
+                Close: "ปิด (Esc)",
+                "Zoom in": "ซูมเข้า",
+                "Zoom out": "ซูมออก",
+              }}
+              animation={{ fade: 200, swipe: 300 }}
+            />
+          </Suspense>
+        </ClientOnly>
       )}
       {editOpen && (
         <div
