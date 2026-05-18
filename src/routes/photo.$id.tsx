@@ -14,8 +14,6 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
-import type { LightboxProps } from "yet-another-react-lightbox";
-
 const LightboxClient = lazy(async () => {
   const [{ default: Lightbox }, { default: Zoom }] = await Promise.all([
     import("yet-another-react-lightbox"),
@@ -23,7 +21,7 @@ const LightboxClient = lazy(async () => {
     import("yet-another-react-lightbox/styles.css"),
   ]);
   return {
-    default: (props: Omit<LightboxProps, "plugins"> & { plugins?: LightboxProps["plugins"] }) => (
+    default: (props: React.ComponentProps<typeof Lightbox>) => (
       <Lightbox {...props} plugins={[Zoom, ...(props.plugins ?? [])]} />
     ),
   };
