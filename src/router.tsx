@@ -2,6 +2,7 @@ import { QueryCache, MutationCache, QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 function isUnauthorizedError(error: unknown): boolean {
   if (!error) return false;
@@ -17,17 +18,63 @@ function isUnauthorizedError(error: unknown): boolean {
   return status === 401;
 }
 
-function handleGlobalError(error: unknown) {
+let refreshing = false;
+
+async function tryRefreshSession(
+  queryClient: QueryClient,
+): Promise<boolean> {
+  if (refreshing) return false;
+  refreshing = true;
+  const toastId = "auth-refresh";
+  toast.loading("กำลังรีเฟรชเซสชัน...", { id: toastId });
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session) {
+      toast.error("รีเฟรชเซสชันไม่สำเร็จ", {
+        id: toastId,
+        description: "กรุณาเข้าสู่ระบบใหม่",
+        action: {
+          label: "เข้าสู่ระบบ",
+          onClick: () => {
+            window.location.href = "/login";
+          },
+        },
+      });
+      return false;
+    }
+    toast.success("รีเฟรชเซสชันสำเร็จ", { id: toastId });
+    await queryClient.invalidateQueries();
+    return true;
+  } catch (e) {
+    toast.error("รีเฟรชเซสชันไม่สำเร็จ", {
+      id: toastId,
+      description: e instanceof Error ? e.message : undefined,
+    });
+    return false;
+  } finally {
+    refreshing = false;
+  }
+}
+
+function makeErrorHandler(queryClient: QueryClient) {
+  return (error: unknown) => {
   if (isUnauthorizedError(error)) {
     toast.error("เซสชันหมดอายุ", {
-      description: "กรุณาเข้าสู่ระบบใหม่เพื่อดำเนินการต่อ",
+        description: "ลองรีเฟรชเซสชัน หรือเข้าสู่ระบบใหม่",
       id: "auth-401",
+        duration: 10000,
       action: {
-        label: "เข้าสู่ระบบ",
-        onClick: () => {
-          window.location.href = "/login";
-        },
+          label: "รีเฟรชเซสชัน",
+          onClick: () => {
+            void tryRefreshSession(queryClient);
+          },
       },
+        cancel: {
+          label: "เข้าสู่ระบบ",
+          onClick: () => {
+            window.location.href = "/login";
+          },
+        },
     });
     return;
   }
@@ -36,12 +83,15 @@ function handleGlobalError(error: unknown) {
     description:
       error instanceof Error ? error.message : "ลองอีกครั้งภายหลัง",
   });
+  };
 }
 
 export const getRouter = () => {
-  const queryClient = new QueryClient({
-    queryCache: new QueryCache({ onError: handleGlobalError }),
-    mutationCache: new MutationCache({ onError: handleGlobalError }),
+  let queryClient: QueryClient;
+  const onError = (error: unknown) => makeErrorHandler(queryClient)(error);
+  queryClient = new QueryClient({
+    queryCache: new QueryCache({ onError }),
+    mutationCache: new MutationCache({ onError }),
   });
 
   const router = createRouter({
@@ -59,19 +109,30 @@ export const getRouter = () => {
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {unauthorized
-                ? "เซสชันของคุณหมดอายุ กรุณาเข้าสู่ระบบใหม่"
+                ? "เซสชันของคุณหมดอายุ ลองรีเฟรชเซสชันก่อนเข้าสู่ระบบใหม่"
                 : error instanceof Error
                   ? error.message
                   : "ลองรีเฟรชหรือกลับหน้าแรก"}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               {unauthorized ? (
-                <a
-                  href="/login"
-                  className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  เข้าสู่ระบบ
-                </a>
+                <>
+                  <button
+                    onClick={async () => {
+                      const ok = await tryRefreshSession(queryClient);
+                      if (ok) reset();
+                    }}
+                    className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    รีเฟรชเซสชัน
+                  </button>
+                  <a
+                    href="/login"
+                    className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                  >
+                    เข้าสู่ระบบ
+                  </a>
+                </>
               ) : (
                 <button
                   onClick={() => reset()}
