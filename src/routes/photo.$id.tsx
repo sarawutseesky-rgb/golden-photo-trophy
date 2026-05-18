@@ -548,9 +548,16 @@ function PhotoDetail() {
         slides={[{ src: p.image_url, alt: p.title }]}
         plugins={[Zoom]}
         carousel={{ finite: true }}
-        render={{ buttonPrev: () => null, buttonNext: () => null }}
         zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
-        controller={{ closeOnBackdropClick: true }}
+        controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
+        labels={{
+          Previous: "ก่อนหน้า",
+          Next: "ถัดไป",
+          Close: "ปิด (Esc)",
+          "Zoom in": "ซูมเข้า",
+          "Zoom out": "ซูมออก",
+        }}
+        animation={{ fade: 200, swipe: 300 }}
       />
       {editOpen && (
         <div
