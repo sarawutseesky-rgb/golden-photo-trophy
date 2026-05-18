@@ -1,4 +1,9 @@
-import { QueryCache, MutationCache, QueryClient } from "@tanstack/react-query";
+import {
+  QueryCache,
+  MutationCache,
+  QueryClient,
+  type Mutation,
+} from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { toast } from "sonner";
@@ -19,6 +24,29 @@ function isUnauthorizedError(error: unknown): boolean {
 }
 
 let refreshing = false;
+let lastFailedMutation:
+  | { mutation: Mutation<unknown, unknown, unknown, unknown>; variables: unknown }
+  | null = null;
+
+function retryLastFailedMutation() {
+  if (!lastFailedMutation) {
+    toast.info("ไม่มีคำขอที่ค้างให้รีลอง");
+    return;
+  }
+  const { mutation, variables } = lastFailedMutation;
+  lastFailedMutation = null;
+  const toastId = "retry-mutation";
+  toast.loading("กำลังรีลองคำขอ...", { id: toastId });
+  mutation
+    .execute(variables as never)
+    .then(() => toast.success("คำขอสำเร็จ", { id: toastId }))
+    .catch((e) =>
+      toast.error("รีลองไม่สำเร็จ", {
+        id: toastId,
+        description: e instanceof Error ? e.message : undefined,
+      }),
+    );
+}
 
 async function tryRefreshSession(
   queryClient: QueryClient,
@@ -44,6 +72,17 @@ async function tryRefreshSession(
     }
     toast.success("รีเฟรชเซสชันสำเร็จ", { id: toastId });
     await queryClient.invalidateQueries();
+    if (lastFailedMutation) {
+      toast("พบคำขอค้างอยู่", {
+        id: "retry-prompt",
+        description: "กดเพื่อส่งคำขอเดิมอีกครั้ง",
+        duration: 10000,
+        action: {
+          label: "รีลองคำขอ",
+          onClick: () => retryLastFailedMutation(),
+        },
+      });
+    }
     return true;
   } catch (e) {
     toast.error("รีเฟรชเซสชันไม่สำเร็จ", {
@@ -57,8 +96,11 @@ async function tryRefreshSession(
 }
 
 function makeErrorHandler(queryClient: QueryClient) {
-  return (error: unknown) => {
+  return (error: unknown, _v?: unknown, _c?: unknown, mutation?: Mutation<unknown, unknown, unknown, unknown>) => {
   if (isUnauthorizedError(error)) {
+    if (mutation) {
+      lastFailedMutation = { mutation, variables: mutation.state.variables };
+    }
     toast.error("เซสชันหมดอายุ", {
         description: "ลองรีเฟรชเซสชัน หรือเข้าสู่ระบบใหม่",
       id: "auth-401",
@@ -89,9 +131,15 @@ function makeErrorHandler(queryClient: QueryClient) {
 export const getRouter = () => {
   let queryClient: QueryClient;
   const onError = (error: unknown) => makeErrorHandler(queryClient)(error);
+  const onMutationError = (
+    error: unknown,
+    variables: unknown,
+    context: unknown,
+    mutation: Mutation<unknown, unknown, unknown, unknown>,
+  ) => makeErrorHandler(queryClient)(error, variables, context, mutation);
   queryClient = new QueryClient({
     queryCache: new QueryCache({ onError }),
-    mutationCache: new MutationCache({ onError }),
+    mutationCache: new MutationCache({ onError: onMutationError }),
   });
 
   const router = createRouter({
