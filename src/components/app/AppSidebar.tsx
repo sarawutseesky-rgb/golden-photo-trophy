@@ -109,7 +109,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {isCheckingAdmin && (
+              {isCheckingAdmin && !adminCheckError && (
                 <SidebarMenuItem data-testid="admin-loading">
                   <div className="flex items-center gap-2 px-2 py-1.5">
                     <Skeleton className="h-4 w-4 shrink-0 rounded" />
@@ -139,15 +139,30 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-              {!isCheckingAdmin && adminCheckError && (
+              {adminCheckError && (
                 <SidebarMenuItem data-testid="admin-retry">
                   <SidebarMenuButton
                     onClick={runAdminCheck}
-                    tooltip={collapsed ? "ลองตรวจสอบอีกครั้ง" : undefined}
+                    disabled={isCheckingAdmin}
+                    aria-busy={isCheckingAdmin}
+                    tooltip={
+                      collapsed
+                        ? isCheckingAdmin
+                          ? "กำลังตรวจสอบ..."
+                          : "ลองตรวจสอบอีกครั้ง"
+                        : undefined
+                    }
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    <RefreshCw className="h-4 w-4 shrink-0" />
-                    <span>ลองตรวจสอบอีกครั้ง</span>
+                    <RefreshCw
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        isCheckingAdmin && "animate-spin"
+                      )}
+                    />
+                    <span>
+                      {isCheckingAdmin ? "กำลังตรวจสอบ..." : "ลองตรวจสอบอีกครั้ง"}
+                    </span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
