@@ -1,0 +1,145 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const PHOTO_SELECT = `
+  id, user_id, title, description, tags, image_url, width, height,
+  avg_score, vote_count, current_rank, rank_one_since,
+  milestone_stars, milestone_achieved_at, status, created_at,
+  profiles!photos_user_id_fkey ( id, display_name, avatar_url )
+`;
+
+export const listFeed = createServerFn({ method: "GET" })
+  .inputValidator((d: { limit?: number; sort?: "new" | "top" | "hof" | "trending"; tag?: string; search?: string }) => d)
+  .handler(async ({ data }) => {
+    const limit = Math.min(data.limit ?? 30, 60);
+    let q = supabaseAdmin.from("photos").select(PHOTO_SELECT).eq("status", "active").limit(limit);
+    if (data.tag) q = q.contains("tags", [data.tag]);
+    if (data.search) q = q.ilike("title", `%${data.search}%`);
+    if (data.sort === "top") {
+      q = q.gte("vote_count", 10).order("avg_score", { ascending: false }).order("vote_count", { ascending: false });
+    } else if (data.sort === "hof") {
+      q = q.gte("milestone_stars", 3).order("milestone_stars", { ascending: false }).order("avg_score", { ascending: false });
+    } else if (data.sort === "trending") {
+      // Photos with most recent votes (last 48h) — approximate via created_at + vote_count fallback
+      q = q.order("vote_count", { ascending: false }).order("created_at", { ascending: false });
+    } else {
+      q = q.order("created_at", { ascending: false });
+    }
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { photos: rows ?? [] };
+  });
+
+export const getPhoto = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const { data: photo, error } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_SELECT)
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!photo) return { photo: null, distribution: [0, 0, 0, 0, 0], comments: [] };
+
+    const { data: votes } = await supabaseAdmin.from("votes").select("score").eq("photo_id", data.id);
+    const distribution = [0, 0, 0, 0, 0];
+    (votes ?? []).forEach((v) => {
+      if (v.score >= 1 && v.score <= 5) distribution[v.score - 1]++;
+    });
+
+    const { data: comments } = await supabaseAdmin
+      .from("comments")
+      .select("id, content, created_at, user_id, profiles!comments_user_id_fkey(id, display_name, avatar_url)")
+      .eq("photo_id", data.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    return { photo, distribution, comments: comments ?? [] };
+  });
+
+export const getUserProfile = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, avatar_url, bio, created_at")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!profile) return { profile: null, photos: [], stats: null };
+
+    const { data: photos } = await supabaseAdmin
+      .from("photos")
+      .select("id, title, image_url, avg_score, vote_count, milestone_stars, created_at")
+      .eq("user_id", data.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+
+    const stats = {
+      total_photos: photos?.length ?? 0,
+      total_votes: photos?.reduce((s, p) => s + (p.vote_count ?? 0), 0) ?? 0,
+      total_stars: photos?.reduce((s, p) => s + (p.milestone_stars ?? 0), 0) ?? 0,
+      highest_score: photos?.reduce((m, p) => Math.max(m, Number(p.avg_score ?? 0)), 0) ?? 0,
+    };
+    return { profile, photos: photos ?? [], stats };
+  });
+
+export const createPhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        title: z.string().trim().min(1).max(120),
+        description: z.string().trim().max(1000).optional().default(""),
+        tags: z.array(z.string().trim().min(1).max(30)).max(8).default([]),
+        storage_path: z.string().min(1),
+        image_url: z.string().url(),
+        width: z.number().int().positive().optional(),
+        height: z.number().int().positive().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error, data: row } = await context.supabase
+      .from("photos")
+      .insert({
+        user_id: context.userId,
+        title: data.title,
+        description: data.description,
+        tags: data.tags,
+        storage_path: data.storage_path,
+        image_url: data.image_url,
+        width: data.width,
+        height: data.height,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id };
+  });
+
+export const getUploadQuota = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const start = new Date();
+    start.setUTCDate(1);
+    start.setUTCHours(0, 0, 0, 0);
+    const { count } = await context.supabase
+      .from("photos")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", context.userId)
+      .gte("created_at", start.toISOString());
+    return { used: count ?? 0, limit: 3 };
+  });
+
+export const reportPhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ photo_id: z.string().uuid(), reason: z.string().trim().min(3).max(500) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("reports")
+      .insert({ photo_id: data.photo_id, reporter_id: context.userId, reason: data.reason });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
