@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
+import type { LightboxProps } from "yet-another-react-lightbox";
 
 const LightboxClient = lazy(async () => {
   const [{ default: Lightbox }, { default: Zoom }] = await Promise.all([
@@ -22,7 +23,7 @@ const LightboxClient = lazy(async () => {
     import("yet-another-react-lightbox/styles.css"),
   ]);
   return {
-    default: (props: React.ComponentProps<typeof Lightbox>) => (
+    default: (props: Omit<LightboxProps, "plugins"> & { plugins?: LightboxProps["plugins"] }) => (
       <Lightbox {...props} plugins={[Zoom, ...(props.plugins ?? [])]} />
     ),
   };
@@ -554,23 +555,26 @@ function PhotoDetail() {
         </aside>
       </div>
       {lightboxOpen && (
-        <Lightbox
-          open={lightboxOpen}
-          close={() => setLightboxOpen(false)}
-          slides={[{ src: p.image_url, alt: p.title }]}
-          plugins={[Zoom]}
-          carousel={{ finite: true }}
-          zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
-          controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
-          labels={{
-            Previous: "ก่อนหน้า",
-            Next: "ถัดไป",
-            Close: "ปิด (Esc)",
-            "Zoom in": "ซูมเข้า",
-            "Zoom out": "ซูมออก",
-          }}
-          animation={{ fade: 200, swipe: 300 }}
-        />
+        <ClientOnly fallback={null}>
+          <Suspense fallback={null}>
+            <LightboxClient
+              open={lightboxOpen}
+              close={() => setLightboxOpen(false)}
+              slides={[{ src: p.image_url, alt: p.title }]}
+              carousel={{ finite: true }}
+              zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
+              controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
+              labels={{
+                Previous: "ก่อนหน้า",
+                Next: "ถัดไป",
+                Close: "ปิด (Esc)",
+                "Zoom in": "ซูมเข้า",
+                "Zoom out": "ซูมออก",
+              }}
+              animation={{ fade: 200, swipe: 300 }}
+            />
+          </Suspense>
+        </ClientOnly>
       )}
       {editOpen && (
         <div
