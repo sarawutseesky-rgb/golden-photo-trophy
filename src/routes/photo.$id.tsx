@@ -258,6 +258,21 @@ function PhotoDetail() {
                   </button>
                 ))}
               </div>
+              <div
+                className="mt-2 text-xs text-muted-foreground"
+                aria-live="polite"
+                data-testid="vote-summary"
+              >
+                เฉลี่ย{" "}
+                <span className="font-semibold text-foreground tabular-nums">
+                  {Number(p.avg_score).toFixed(1)}
+                </span>{" "}
+                ★ จาก{" "}
+                <span className="font-semibold text-foreground tabular-nums">
+                  {p.vote_count}
+                </span>{" "}
+                โหวต
+              </div>
             </div>
           )}
 
