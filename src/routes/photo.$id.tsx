@@ -33,8 +33,16 @@ function PhotoDetail() {
   const { data, isLoading } = useQuery({ queryKey: ["photo", id], queryFn: () => fetchPhoto({ data: { id } }) });
   const { data: myVote } = useQuery({
     queryKey: ["my-vote", id, user?.id],
-    queryFn: () => fetchVote({ data: { photo_id: id } }),
+    queryFn: async () => {
+      try {
+        return await fetchVote({ data: { photo_id: id } });
+      } catch {
+        // Not authenticated (e.g. just logged out) — treat as no vote
+        return { score: null };
+      }
+    },
     enabled: !!user,
+    retry: false,
   });
 
   const [hover, setHover] = useState<number | null>(null);
