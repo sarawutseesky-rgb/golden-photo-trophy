@@ -61,23 +61,18 @@ function AdminDashboard() {
   // Persist on change
   useEffect(() => {
     try {
-      window.localStorage.setItem(
-        AUTO_REFRESH_STORAGE_KEY,
-        autoRefresh ? "true" : "false"
-      );
+      if (autoRefresh) {
+        window.localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, "true");
+      } else {
+        window.localStorage.removeItem(AUTO_REFRESH_STORAGE_KEY);
+      }
     } catch {
       // ignore
     }
   }, [autoRefresh]);
 
-  const resetAutoRefresh = () => {
-    setAutoRefresh(false);
-    try {
-      window.localStorage.removeItem(AUTO_REFRESH_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  };
+  // Setting autoRefresh=false will clear the localStorage key via the effect above.
+  const resetAutoRefresh = () => setAutoRefresh(false);
 
   const { data, isLoading, isFetching, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["admin-stats"],
