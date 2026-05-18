@@ -39,6 +39,16 @@ function PhotoDetail() {
 
   const [hover, setHover] = useState<number | null>(null);
   const [text, setText] = useState("");
+  const [debug, setDebug] = useState(false);
+  const [debugLog, setDebugLog] = useState<
+    Array<{ t: number; action: string; avg: number; count: number; latencyMs?: number }>
+  >([]);
+
+  const logDebug = (action: string, avg: number, count: number, latencyMs?: number) => {
+    setDebugLog((prev) =>
+      [{ t: Date.now(), action, avg, count, latencyMs }, ...prev].slice(0, 8),
+    );
+  };
 
   useEffect(() => {
     const ch = supabase
@@ -82,17 +92,29 @@ function PhotoDetail() {
         distribution: dist,
         photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
       });
+      if (debug) logDebug(`vote ${score}★ (optimistic)`, newAvg, newCount);
     }
+    const t0 = performance.now();
     try {
       await vote({ data: { photo_id: id, score } });
       toast.success(`You rated ${score}★`);
       qc.invalidateQueries({ queryKey: photoKey });
       qc.invalidateQueries({ queryKey: voteKey });
+      if (debug) {
+        const cur = qc.getQueryData<any>(photoKey);
+        logDebug(
+          `vote ${score}★ (server ok)`,
+          Number(cur?.photo?.avg_score ?? 0),
+          Number(cur?.photo?.vote_count ?? 0),
+          Math.round(performance.now() - t0),
+        );
+      }
     } catch (e: any) {
       // Roll back optimistic update on failure
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
       toast.error(e.message);
+      if (debug) logDebug(`vote ${score}★ (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
     }
   };
 
@@ -114,16 +136,28 @@ function PhotoDetail() {
         distribution: dist,
         photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
       });
+      if (debug) logDebug(`unvote (optimistic)`, newAvg, newCount);
     }
+    const t0 = performance.now();
     try {
       await unvote({ data: { photo_id: id } });
       toast.success("ยกเลิกการโหวตแล้ว");
       qc.invalidateQueries({ queryKey: photoKey });
       qc.invalidateQueries({ queryKey: voteKey });
+      if (debug) {
+        const cur = qc.getQueryData<any>(photoKey);
+        logDebug(
+          `unvote (server ok)`,
+          Number(cur?.photo?.avg_score ?? 0),
+          Number(cur?.photo?.vote_count ?? 0),
+          Math.round(performance.now() - t0),
+        );
+      }
     } catch (e: any) {
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
       toast.error(e.message);
+      if (debug) logDebug(`unvote (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
     }
   };
 
@@ -311,6 +345,41 @@ function PhotoDetail() {
                 </span>{" "}
                 โหวต
               </div>
+              <button
+                type="button"
+                onClick={() => setDebug((d) => !d)}
+                data-testid="toggle-debug"
+                className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+              >
+                {debug ? "ปิดโหมดดีบัก" : "โหมดดีบัก"}
+              </button>
+              {debug && (
+                <div
+                  className="mt-2 rounded-md border border-dashed border-border bg-muted/30 p-2 text-[11px]"
+                  data-testid="debug-panel"
+                >
+                  <div className="mb-1 font-mono text-muted-foreground">
+                    cache → avg {Number(p.avg_score).toFixed(2)} · count {p.vote_count}
+                  </div>
+                  {debugLog.length === 0 ? (
+                    <div className="text-muted-foreground">กดโหวตหรือยกเลิกเพื่อดู log</div>
+                  ) : (
+                    <ul className="space-y-0.5 font-mono">
+                      {debugLog.map((e) => (
+                        <li key={e.t} className="flex justify-between gap-2">
+                          <span>
+                            {new Date(e.t).toLocaleTimeString()} · {e.action}
+                          </span>
+                          <span className="tabular-nums">
+                            {e.avg.toFixed(2)}★ / {e.count}
+                            {e.latencyMs != null && ` · ${e.latencyMs}ms`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
