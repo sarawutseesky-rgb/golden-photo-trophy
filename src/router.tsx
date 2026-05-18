@@ -24,6 +24,19 @@ function isUnauthorizedError(error: unknown): boolean {
 }
 
 let refreshing = false;
+const retryCounts = new WeakMap<
+  Mutation<unknown, unknown, unknown, unknown>,
+  number
+>();
+const MAX_AUTO_RETRIES = 1;
+
+// Rate-limit consecutive 401s to break tight loops
+let last401At = 0;
+let burst401 = 0;
+const BURST_WINDOW_MS = 10_000;
+const BURST_LIMIT = 3;
+let circuitOpenUntil = 0;
+
 let lastFailedMutation:
   | { mutation: Mutation<unknown, unknown, unknown, unknown>; variables: unknown }
   | null = null;
@@ -33,13 +46,43 @@ function retryLastFailedMutation() {
     toast.info("ไม่มีคำขอที่ค้างให้รีลอง");
     return;
   }
+  if (Date.now() < circuitOpenUntil) {
+    toast.error("ระบบหยุดรีลองชั่วคราว", {
+      description: "พบ 401 ต่อเนื่อง กรุณาเข้าสู่ระบบใหม่",
+      action: {
+        label: "เข้าสู่ระบบ",
+        onClick: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
+    return;
+  }
   const { mutation, variables } = lastFailedMutation;
+  const attempts = retryCounts.get(mutation) ?? 0;
+  if (attempts >= MAX_AUTO_RETRIES) {
+    toast.error("รีลองครบจำนวนแล้ว", {
+      description: "กรุณาเข้าสู่ระบบใหม่",
+      action: {
+        label: "เข้าสู่ระบบ",
+        onClick: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
+    lastFailedMutation = null;
+    return;
+  }
+  retryCounts.set(mutation, attempts + 1);
   lastFailedMutation = null;
   const toastId = "retry-mutation";
   toast.loading("กำลังรีลองคำขอ...", { id: toastId });
   mutation
     .execute(variables as never)
-    .then(() => toast.success("คำขอสำเร็จ", { id: toastId }))
+    .then(() => {
+      toast.success("คำขอสำเร็จ", { id: toastId });
+      retryCounts.delete(mutation);
+    })
     .catch((e) =>
       toast.error("รีลองไม่สำเร็จ", {
         id: toastId,
@@ -98,7 +141,46 @@ async function tryRefreshSession(
 function makeErrorHandler(queryClient: QueryClient) {
   return (error: unknown, _v?: unknown, _c?: unknown, mutation?: Mutation<unknown, unknown, unknown, unknown>) => {
   if (isUnauthorizedError(error)) {
+    // Track 401 burst rate
+    const now = Date.now();
+    if (now - last401At < BURST_WINDOW_MS) {
+      burst401 += 1;
+    } else {
+      burst401 = 1;
+    }
+    last401At = now;
+    if (burst401 >= BURST_LIMIT) {
+      circuitOpenUntil = now + 60_000;
+      burst401 = 0;
+      lastFailedMutation = null;
+      toast.error("ตรวจพบ 401 ซ้ำหลายครั้ง", {
+        id: "auth-401",
+        description: "หยุดรีลองอัตโนมัติ 1 นาที กรุณาเข้าสู่ระบบใหม่",
+        duration: 15000,
+        action: {
+          label: "เข้าสู่ระบบ",
+          onClick: () => {
+            window.location.href = "/login";
+          },
+        },
+      });
+      return;
+    }
     if (mutation) {
+      const attempts = retryCounts.get(mutation) ?? 0;
+      if (attempts >= MAX_AUTO_RETRIES) {
+        toast.error("คำขอนี้ล้มเหลวซ้ำ", {
+          id: "auth-401",
+          description: "ไม่รีลองอัตโนมัติแล้ว กรุณาเข้าสู่ระบบใหม่",
+          action: {
+            label: "เข้าสู่ระบบ",
+            onClick: () => {
+              window.location.href = "/login";
+            },
+          },
+        });
+        return;
+      }
       lastFailedMutation = { mutation, variables: mutation.state.variables };
     }
     toast.error("เซสชันหมดอายุ", {
