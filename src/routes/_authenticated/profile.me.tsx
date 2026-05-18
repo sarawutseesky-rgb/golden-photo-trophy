@@ -74,15 +74,22 @@ function EditProfilePage() {
     }
   };
 
-  const doRemoveAvatar = () => {
-    setShowRemoveDialog(false);
-    setPreviewUrl(null);
-    setAvatarUrl(null);
-    if (user) {
-      supabase.storage
-        .from("photos")
-        .remove([`${user.id}/avatar.jpg`])
-        .catch(() => {});
+  const doRemoveAvatar = async () => {
+    setRemovingAvatar(true);
+    try {
+      if (user) {
+        await supabase.storage
+          .from("photos")
+          .remove([`${user.id}/avatar.jpg`]);
+      }
+      setPreviewUrl(null);
+      setAvatarUrl(null);
+      setShowRemoveDialog(false);
+      toast.success("Avatar removed");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove avatar");
+    } finally {
+      setRemovingAvatar(false);
     }
   };
 
