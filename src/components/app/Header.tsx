@@ -1,15 +1,18 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bell, Star, Upload, LogOut, User } from "lucide-react";
+import { Bell, Star, Upload, LogOut, User, Shield } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
 import { unreadCount } from "@/lib/notifications.functions";
+import { checkAdmin } from "@/lib/profile.functions";
 
 export function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const fetchUnread = useServerFn(unreadCount);
+  const checkAdminFn = useServerFn(checkAdmin);
   const [count, setCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -22,6 +25,16 @@ export function Header() {
       clearInterval(i);
     };
   }, [user, fetchUnread]);
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    checkAdminFn()
+      .then((r) => setIsAdmin(r.isAdmin))
+      .catch(() => setIsAdmin(false));
+  }, [user, checkAdminFn]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
@@ -43,6 +56,14 @@ export function Header() {
           <Link to="/trending" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Trending
           </Link>
+          {isAdmin && (
+            <Link to="/admin" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+              <span className="inline-flex items-center gap-1">
+                <Shield className="h-3.5 w-3.5" />
+                Admin
+              </span>
+            </Link>
+          )}
         </nav>
         <div className="flex items-center gap-2">
           {user ? (
