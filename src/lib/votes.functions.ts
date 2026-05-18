@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const castVote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -45,5 +44,3 @@ export const addComment = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: row.id };
   });
-
-export const _supabaseAdminUnused = supabaseAdmin; // keep imports stable for tree-shaker
