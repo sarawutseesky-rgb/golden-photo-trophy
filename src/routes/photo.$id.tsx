@@ -159,22 +159,34 @@ function PhotoDetail() {
 
         <aside className="space-y-4">
         <div className="rounded-xl border border-border bg-card p-4">
-          <Link
-            to="/profile/$id"
-            params={{ id: p.user_id }}
-            className="flex items-center gap-3 text-sm hover:text-[var(--gold)]"
-          >
-            <div className="h-10 w-10 rounded-full bg-muted" />
-            <div>
-              <div className="font-semibold">{p.profiles?.display_name}</div>
-              <div
-                className="text-xs text-muted-foreground"
-                title={new Date(p.created_at).toLocaleString()}
-              >
-                {formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: th })}
+          {hasVoted || isOwner ? (
+            <Link
+              to="/profile/$id"
+              params={{ id: p.user_id }}
+              className="flex items-center gap-3 text-sm hover:text-[var(--gold)]"
+            >
+              <div className="h-10 w-10 rounded-full bg-muted" />
+              <div>
+                <div className="font-semibold">{p.profiles?.display_name}</div>
+                <div
+                  className="text-xs text-muted-foreground"
+                  title={new Date(p.created_at).toLocaleString()}
+                >
+                  {formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: th })}
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3 text-sm">
+              <div className="h-10 w-10 rounded-full bg-muted" />
+              <div>
+                <div className="font-semibold text-muted-foreground">ผู้โพสต์ที่ไม่เปิดเผย</div>
+                <div className="text-xs text-muted-foreground">
+                  โหวตเพื่อดูว่าใครเป็นเจ้าของภาพ
+                </div>
               </div>
             </div>
-          </Link>
+          )}
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
