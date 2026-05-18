@@ -7,6 +7,7 @@ import {
   Shield,
   PanelLeft,
   RefreshCw,
+  LayoutDashboard,
 } from "lucide-react";
 
 import {
@@ -134,6 +135,28 @@ export function AppSidebar() {
                     >
                       <Shield className="h-4 w-4 shrink-0" />
                       <span>Admin</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {!isCheckingAdmin && isAdmin && (
+                <SidebarMenuItem data-testid="admin-dashboard-menu">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/admin/dashboard")}
+                    tooltip={collapsed ? "Admin Dashboard" : undefined}
+                  >
+                    <Link
+                      to="/admin/dashboard"
+                      className={cn(
+                        "flex items-center gap-2 transition-colors",
+                        isActive("/admin/dashboard")
+                          ? "text-primary"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <LayoutDashboard className="h-4 w-4 shrink-0" />
+                      <span>Admin Dashboard</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
