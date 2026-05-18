@@ -233,7 +233,7 @@ function EditProfilePage() {
       </form>
 
       {/* Remove avatar confirmation */}
-      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+      <AlertDialog open={showRemoveDialog} onOpenChange={(open) => { if (!removingAvatar) setShowRemoveDialog(open); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove avatar?</AlertDialogTitle>
@@ -242,12 +242,15 @@ function EditProfilePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowRemoveDialog(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={removingAvatar} onClick={() => setShowRemoveDialog(false)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
+              disabled={removingAvatar}
               onClick={doRemoveAvatar}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
             >
-              Remove
+              {removingAvatar ? "Removing…" : "Remove"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
