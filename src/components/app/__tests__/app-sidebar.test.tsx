@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { render, screen, waitFor, cleanup, fireEvent } from "@testing-library/react";
 
 // Mock auth context
 const useAuthMock = vi.fn();
@@ -175,5 +175,39 @@ describe("AppSidebar — Admin menu visibility", () => {
       expect(screen.getByText("Admin")).toBeTruthy();
     });
     expect(checkAdminMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a retry button on error, and re-checks (granting Admin) when clicked", async () => {
+    useAuthMock.mockReturnValue({ user: { id: "u-retry" } });
+    checkAdminMock
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce({ isAdmin: true });
+
+    render(<AppSidebar />);
+
+    // After first call rejects → retry button visible, Admin hidden
+    await waitFor(() => {
+      expect(screen.getByTestId("admin-retry")).toBeTruthy();
+    });
+    expect(screen.queryByText("Admin")).toBeNull();
+
+    fireEvent.click(screen.getByText("ลองตรวจสอบอีกครั้ง"));
+
+    // After retry resolves → Admin shown, retry gone
+    await waitFor(() => {
+      expect(screen.getByText("Admin")).toBeTruthy();
+    });
+    expect(screen.queryByTestId("admin-retry")).toBeNull();
+    expect(checkAdminMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("retry button stays hidden on success", async () => {
+    useAuthMock.mockReturnValue({ user: { id: "u-ok" } });
+    checkAdminMock.mockResolvedValue({ isAdmin: false });
+    render(<AppSidebar />);
+    await waitFor(() => {
+      expect(checkAdminMock).toHaveBeenCalled();
+    });
+    expect(screen.queryByTestId("admin-retry")).toBeNull();
   });
 });
