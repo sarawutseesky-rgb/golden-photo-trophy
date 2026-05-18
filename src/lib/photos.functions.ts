@@ -143,3 +143,47 @@ export const reportPhoto = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const updatePhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        title: z.string().trim().min(1).max(120),
+        description: z.string().trim().max(1000).optional().default(""),
+        tags: z.array(z.string().trim().min(1).max(30)).max(8).default([]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("photos")
+      .update({ title: data.title, description: data.description, tags: data.tags })
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deletePhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    // Fetch to get storage_path for cleanup; RLS enforces ownership
+    const { data: row, error: selErr } = await context.supabase
+      .from("photos")
+      .select("id, storage_path, user_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (selErr) throw new Error(selErr.message);
+    if (!row) throw new Error("Photo not found");
+    if (row.user_id !== context.userId) throw new Error("Forbidden");
+
+    const { error } = await context.supabase.from("photos").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    if (row.storage_path) {
+      await context.supabase.storage.from("photos").remove([row.storage_path]).catch(() => {});
+    }
+    return { ok: true };
+  });
