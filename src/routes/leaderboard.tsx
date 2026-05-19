@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Trophy, Medal } from "lucide-react";
+import { Trophy, Medal, ArrowDownToLine } from "lucide-react";
 import { getMemberLeaderboard } from "@/lib/leaderboard.functions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -104,7 +104,20 @@ function LeaderboardPage() {
           ยังไม่มีโหวตในช่วงเวลานี้
         </div>
       ) : (
-        <ol className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="space-y-2">
+          {meInTop && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={scrollToMe}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--gold)]/50 bg-[var(--gold)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--gold)] transition-colors hover:bg-[var(--gold)]/20"
+              >
+                <ArrowDownToLine className="h-3.5 w-3.5" />
+                ไปยังแถวของฉัน (อันดับ {me!.rank})
+              </button>
+            </div>
+          )}
+          <ol className="overflow-hidden rounded-xl border border-border bg-card">
           {entries.map((e: any) => (
             <li
               key={e.user_id}
@@ -150,7 +163,8 @@ function LeaderboardPage() {
               </div>
             </li>
           ))}
-        </ol>
+          </ol>
+        </div>
       )}
     </div>
   );
