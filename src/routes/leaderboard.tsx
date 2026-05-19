@@ -2,12 +2,13 @@ import { useCallback, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Trophy, Medal, ArrowDownToLine } from "lucide-react";
-import { getMemberLeaderboard } from "@/lib/leaderboard.functions";
+import { Trophy, Medal, ArrowDownToLine, Star, Image as ImageIcon, Users } from "lucide-react";
+import { getMemberLeaderboard, getPhotoLeaderboard } from "@/lib/leaderboard.functions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 type Range = "day" | "week" | "month" | "year" | "all";
+type Mode = "members" | "photos";
 
 const TABS: { id: Range; label: string }[] = [
   { id: "day", label: "วันนี้" },
@@ -55,10 +56,12 @@ export const Route = createFileRoute("/leaderboard")({
 
 function LeaderboardPage() {
   const [range, setRange] = useState<Range>("week");
+  const [mode, setMode] = useState<Mode>("members");
   const { user } = useAuth();
   const fn = useServerFn(getMemberLeaderboard);
   const { data, isLoading } = useQuery({
     queryKey: ["member-leaderboard", range, user?.id ?? null],
+    enabled: mode === "members",
     queryFn: () =>
       fn({ data: { range, limit: 50, viewer_id: user?.id ?? null } }),
   });
@@ -84,13 +87,36 @@ function LeaderboardPage() {
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold">
             <Trophy className="h-7 w-7 text-[var(--gold)]" />
-            อันดับสมาชิก
+            {mode === "members" ? "อันดับสมาชิก" : "อันดับภาพถ่าย"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            จัดอันดับจากจำนวนโหวตที่ได้รับ — คะแนนจะถูกตัดทิ้งตามช่วงเวลาที่อัปโหลดรูป
+            {mode === "members"
+              ? "จัดอันดับจากจำนวนโหวตที่ได้รับ — คะแนนจะถูกตัดทิ้งตามช่วงเวลาที่อัปโหลดรูป"
+              : "จัดอันดับจากค่าเฉลี่ยคะแนน (ต้องมีอย่างน้อย 10 โหวต)"}
           </p>
         </div>
       </header>
+
+      <div className="inline-flex rounded-full border border-border bg-card p-1">
+        <button
+          onClick={() => setMode("members")}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+            mode === "members" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Users className="h-4 w-4" /> สมาชิก
+        </button>
+        <button
+          onClick={() => setMode("photos")}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+            mode === "photos" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <ImageIcon className="h-4 w-4" /> ภาพถ่าย
+        </button>
+      </div>
 
       <div className="flex flex-wrap gap-2 border-b border-border pb-2">
         {TABS.map((t) => (
@@ -109,6 +135,10 @@ function LeaderboardPage() {
         ))}
       </div>
 
+      {mode === "photos" ? (
+        <PhotoLeaderboard range={range} />
+      ) : (
+        <>
       {user && (
         <MyRankPanel
           me={me}
@@ -187,7 +217,73 @@ function LeaderboardPage() {
           </ol>
         </div>
       )}
+        </>
+      )}
     </div>
+  );
+}
+
+function PhotoLeaderboard({ range }: { range: Range }) {
+  const fn = useServerFn(getPhotoLeaderboard);
+  const { data, isLoading } = useQuery({
+    queryKey: ["photo-leaderboard", range],
+    queryFn: () => fn({ data: { range, limit: 50, min_votes: 10 } }),
+  });
+  const entries = data?.entries ?? [];
+  const minVotes = data?.min_votes ?? 10;
+
+  if (isLoading) {
+    return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+  }
+  if (entries.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+        <Star className="mx-auto h-10 w-10 text-[var(--gold)]" strokeWidth={1.5} />
+        <h3 className="mt-3 text-lg font-semibold">ยังไม่มีภาพที่ผ่านเกณฑ์</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          ต้องได้รับอย่างน้อย {minVotes} โหวตจึงจะถูกจัดอันดับ — ช่วยกันโหวตภาพถ่ายให้ครบเกณฑ์กันเถอะ
+        </p>
+      </div>
+    );
+  }
+  return (
+    <ol className="overflow-hidden rounded-xl border border-border bg-card">
+      {entries.map((e: any) => (
+        <li
+          key={e.photo_id}
+          className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40"
+        >
+          <RankBadge rank={e.rank} />
+          <Link
+            to="/photo/$id"
+            params={{ id: e.photo_id }}
+            className="flex flex-1 items-center gap-3 min-w-0"
+          >
+            <img
+              src={e.image_url}
+              alt={e.title}
+              loading="lazy"
+              className="h-14 w-14 rounded-md object-cover ring-1 ring-border"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold">{e.title}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                โดย {e.display_name} · {e.vote_count.toLocaleString()} โหวต
+              </div>
+            </div>
+          </Link>
+          <div className="text-right">
+            <div className="flex items-center justify-end gap-1 text-lg font-bold tabular-nums text-[var(--gold)]">
+              {e.avg_score.toFixed(2)}
+              <Star className="h-4 w-4 fill-current" />
+            </div>
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              avg score
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 
