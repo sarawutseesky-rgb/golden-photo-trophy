@@ -1,12 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { listFeed } from "@/lib/photos.functions";
-import { PhotoGrid } from "@/components/app/PhotoGrid";
+import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 import { FeedFilterBar, type FeedTab, type FeedSort } from "@/components/app/FeedFilterBar";
 import { SpotlightHero } from "@/components/app/SpotlightHero";
 
@@ -52,13 +49,7 @@ function buildFeedParams(tab: FeedTab, sort: FeedSort, tag: string | undefined, 
 function HomePage() {
   const { user } = useAuth();
   const { tab, sort, tag } = Route.useSearch();
-  const fn = useServerFn(listFeed);
   const params = buildFeedParams(tab, sort, tag, user?.id ?? null);
-  const { data, isLoading } = useQuery({
-    queryKey: ["feed", tab, sort, tag ?? null, params.following_of ?? null],
-    queryFn: () => fn({ data: params }),
-    enabled: tab !== "following" || !!user,
-  });
 
   return (
     <div className="space-y-2">
@@ -75,21 +66,13 @@ function HomePage() {
             Login
           </Link>
         </div>
-      ) : isLoading ? (
-        <Skeleton />
       ) : (
-        <PhotoGrid photos={data?.photos ?? []} />
+        <InfinitePhotoFeed
+          queryKey={[tab, sort, tag ?? null, params.following_of ?? null]}
+          params={params}
+          enabled={tab !== "following" || !!user}
+        />
       )}
-    </div>
-  );
-}
-
-function Skeleton() {
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="aspect-[4/5] animate-pulse rounded-xl bg-muted" />
-      ))}
     </div>
   );
 }
