@@ -99,7 +99,11 @@ function PhotoDetail() {
   const p = data.photo as any;
   const isOwner = user?.id === p.user_id;
   const hasVoted = myVote?.score != null;
-  const total = data.distribution.reduce((a: number, b: number) => a + b, 0) || 1;
+  const normalizedDist: number[] = (() => {
+    const base = Array.isArray(data.distribution) ? data.distribution : [];
+    return [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
+  })();
+  const total = normalizedDist.reduce((a, b) => a + b, 0) || 1;
   const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
 
   const handleVote = async (score: number) => {
@@ -117,7 +121,8 @@ function PhotoDetail() {
 
     // Optimistic update — detail cache
     if (prevPhoto?.photo) {
-      const dist = [...prevPhoto.distribution];
+      const base = Array.isArray(prevPhoto.distribution) ? prevPhoto.distribution : [];
+      const dist = [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
       const oldScore = prevVote?.score as number | null | undefined;
       if (oldScore && oldScore >= 1 && oldScore <= 5) dist[oldScore - 1] = Math.max(0, dist[oldScore - 1] - 1);
       dist[score - 1] += 1;
@@ -186,7 +191,8 @@ function PhotoDetail() {
     setBusy(true);
     qc.setQueryData(voteKey, { score: null });
     if (prevPhoto?.photo && prevVote?.score) {
-      const dist = [...prevPhoto.distribution];
+      const base = Array.isArray(prevPhoto.distribution) ? prevPhoto.distribution : [];
+      const dist = [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
       dist[prevVote.score - 1] = Math.max(0, dist[prevVote.score - 1] - 1);
       const newCount = dist.reduce((a, b) => a + b, 0);
       const sum = dist.reduce((acc, c, i) => acc + c * (i + 1), 0);
@@ -553,8 +559,8 @@ function PhotoDetail() {
           )}
 
           <div className="mt-4 space-y-1">
-            {[5, 4, 3, 2, 1].map((s) => {
-              const c = data.distribution[s - 1];
+          {[5, 4, 3, 2, 1].map((s) => {
+              const c = normalizedDist[s - 1] ?? 0;
               return (
                 <div key={s} className="flex items-center gap-2 text-xs">
                   <span className="w-4 text-muted-foreground">{s}★</span>
