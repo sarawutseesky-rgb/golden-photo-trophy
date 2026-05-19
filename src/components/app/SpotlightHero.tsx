@@ -3,14 +3,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Crown, Medal, Sparkles, Star } from "lucide-react";
 import { getTopTwoPhotos } from "@/lib/photos.functions";
-import { nextMilestoneProgress, THRESHOLDS_DAYS } from "@/lib/milestone";
+import { nextMilestoneProgress, THRESHOLDS_HOURS } from "@/lib/milestone";
 import { StarRow } from "./StarRow";
 import { cn } from "@/lib/utils";
 
-function formatDays(d: number) {
-  if (d < 1 / 24) return "<1h";
-  if (d < 1) return `${Math.max(1, Math.floor(d * 24))}h`;
-  return `${d.toFixed(d < 10 ? 1 : 0)}d`;
+function formatHours(h: number) {
+  if (h < 1) return "<1h";
+  if (h < 48) return `${Math.round(h)}h`;
+  return `${(h / 24).toFixed(h < 240 ? 1 : 0)}d`;
 }
 
 export function SpotlightHero() {
@@ -33,12 +33,12 @@ export function SpotlightHero() {
   if (!photo) return null;
   const held: boolean = !!data?.held;
 
-  const prog = nextMilestoneProgress(photo.milestone_stars ?? 0, photo.rank_one_since);
+  const prog = nextMilestoneProgress(photo.milestone_stars ?? 0, photo.created_at);
   const stars = photo.milestone_stars ?? 0;
-  const elapsed = prog?.elapsedDays ?? 0;
-  const next = prog?.nextDays ?? THRESHOLDS_DAYS[Math.min(stars, THRESHOLDS_DAYS.length - 1)];
-  const remaining = Math.max(0, (next ?? 0) - elapsed);
-  const pct = next ? Math.min(100, (elapsed / next) * 100) : 100;
+  const elapsedH = prog?.elapsedHours ?? 0;
+  const nextH = prog?.nextHours ?? THRESHOLDS_HOURS[Math.min(stars, THRESHOLDS_HOURS.length - 1)];
+  const remainingH = Math.max(0, (nextH ?? 0) - elapsedH);
+  const pct = nextH ? Math.min(100, (elapsedH / nextH) * 100) : 100;
 
   return (
     <section
@@ -122,18 +122,18 @@ export function SpotlightHero() {
             </div>
           </div>
 
-          {/* Countdown — only meaningful while actually holding #1 */}
-          {held && stars < 5 && (
+          {/* Countdown — time-since-upload toward next milestone tier */}
+          {prog && stars < 5 && (
             <div className="rounded-xl border border-border bg-background/60 p-3 backdrop-blur">
               <div className="mb-1.5 flex items-baseline justify-between gap-3 text-xs">
                 <span className="font-medium text-muted-foreground">
-                  Held #1 for{" "}
-                  <span className="font-bold text-foreground">{formatDays(elapsed)}</span>
+                  Age{" "}
+                  <span className="font-bold text-foreground">{formatHours(elapsedH)}</span>
                 </span>
                 <span className="text-muted-foreground">
                   Next ★ in{" "}
-                  <span className="font-bold text-[var(--gold)]">{formatDays(remaining)}</span>
-                  <span className="ml-1">/ {next}d</span>
+                  <span className="font-bold text-[var(--gold)]">{formatHours(remainingH)}</span>
+                  <span className="ml-1">/ {nextH}h</span>
                 </span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -144,12 +144,6 @@ export function SpotlightHero() {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-            </div>
-          )}
-
-          {!held && (
-            <div className="rounded-xl border border-dashed border-border bg-background/60 p-3 text-xs text-muted-foreground backdrop-blur">
-              Reach #1 with at least 10 votes to start the milestone clock toward your next ★.
             </div>
           )}
 
