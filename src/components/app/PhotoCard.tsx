@@ -162,6 +162,50 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
             </span>
           </span>
         </div>
+        {/* Quick-vote stars overlay (visible on hover) */}
+        <div
+          className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100"
+          onMouseLeave={() => setHover(null)}
+          aria-label="โหวตด่วน"
+        >
+          <div className="flex items-center gap-0.5 rounded-full bg-background/85 px-3 py-1.5 shadow-lg backdrop-blur">
+            {[1, 2, 3, 4, 5].map((n) => {
+              const filled = (hover ?? myScore ?? 0) >= n;
+              return (
+                <button
+                  key={`quick-${n}`}
+                  type="button"
+                  disabled={hasVoted || busy || isOwner}
+                  onMouseEnter={() => !hasVoted && setHover(n)}
+                  onFocus={() => !hasVoted && setHover(n)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleVote(n);
+                  }}
+                  className="p-0.5 disabled:cursor-not-allowed"
+                  aria-label={`โหวตด่วน ${n} ดาว`}
+                  title={
+                    isOwner
+                      ? "โหวตรูปตัวเองไม่ได้"
+                      : hasVoted
+                        ? `คุณให้ ${myScore}★ แล้ว`
+                        : `ให้ ${n} ดาว`
+                  }
+                >
+                  <Star
+                    className={cn(
+                      "h-6 w-6 transition",
+                      filled
+                        ? "fill-[var(--gold)] text-[var(--gold)]"
+                        : "text-muted-foreground/60",
+                    )}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </Link>
       <div className="p-3">
         <h3 className="line-clamp-1 text-sm font-semibold">
