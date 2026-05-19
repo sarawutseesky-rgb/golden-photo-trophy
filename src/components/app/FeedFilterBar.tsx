@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, X, Flame, Sparkles, RotateCcw, Star } from "lucide-react";
+import { ChevronDown, X, Flame, Sparkles, RotateCcw } from "lucide-react";
 import { getPopularTags } from "@/lib/photos.functions";
 import { cn } from "@/lib/utils";
 import {
