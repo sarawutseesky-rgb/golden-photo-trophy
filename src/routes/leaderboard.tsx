@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Trophy, Medal } from "lucide-react";
 import { getMemberLeaderboard } from "@/lib/leaderboard.functions";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 type Range = "day" | "week" | "month" | "year" | "all";
 
@@ -32,13 +33,18 @@ export const Route = createFileRoute("/leaderboard")({
 
 function LeaderboardPage() {
   const [range, setRange] = useState<Range>("week");
+  const { user } = useAuth();
   const fn = useServerFn(getMemberLeaderboard);
   const { data, isLoading } = useQuery({
-    queryKey: ["member-leaderboard", range],
-    queryFn: () => fn({ data: { range, limit: 50 } }),
+    queryKey: ["member-leaderboard", range, user?.id ?? null],
+    queryFn: () =>
+      fn({ data: { range, limit: 50, viewer_id: user?.id ?? null } }),
   });
 
   const entries = data?.entries ?? [];
+  const me = data?.me ?? null;
+  const total = data?.total ?? 0;
+  const meInTop = !!me && entries.some((e: any) => e.user_id === me.user_id);
 
   return (
     <div className="space-y-6">
@@ -71,6 +77,10 @@ function LeaderboardPage() {
         ))}
       </div>
 
+      {user && (
+        <MyRankPanel me={me} total={total} highlighted={meInTop} />
+      )}
+
       {isLoading ? (
         <div className="py-12 text-center text-muted-foreground">Loading…</div>
       ) : entries.length === 0 ? (
@@ -82,7 +92,10 @@ function LeaderboardPage() {
           {entries.map((e: any) => (
             <li
               key={e.user_id}
-              className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40"
+              className={cn(
+                "flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40",
+                me?.user_id === e.user_id && "bg-[var(--gold)]/5",
+              )}
             >
               <RankBadge rank={e.rank} />
               <Link
