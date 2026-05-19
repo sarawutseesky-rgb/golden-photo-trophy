@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Crown, Sparkles, Star } from "lucide-react";
-import { getRankOnePhoto } from "@/lib/photos.functions";
+import { ArrowRight, Crown, Medal, Sparkles, Star } from "lucide-react";
+import { getTopTwoPhotos } from "@/lib/photos.functions";
 import { nextMilestoneProgress, THRESHOLDS_DAYS } from "@/lib/milestone";
 import { StarRow } from "./StarRow";
 import { cn } from "@/lib/utils";
@@ -14,9 +14,9 @@ function formatDays(d: number) {
 }
 
 export function SpotlightHero() {
-  const fn = useServerFn(getRankOnePhoto);
+  const fn = useServerFn(getTopTwoPhotos);
   const { data, isLoading } = useQuery({
-    queryKey: ["spotlight-rank-one"],
+    queryKey: ["spotlight-top-two"],
     queryFn: () => fn(),
     refetchInterval: 60_000,
     staleTime: 30_000,
@@ -28,7 +28,8 @@ export function SpotlightHero() {
     );
   }
 
-  const photo: any = data?.photo;
+  const photo: any = data?.first;
+  const runnerUp: any = data?.second;
   if (!photo) return null;
   const held: boolean = !!data?.held;
 
