@@ -16,6 +16,7 @@ export const Route = createFileRoute("/api/public/cron/rank")({
           .gte("vote_count", 10)
           .order("avg_score", { ascending: false })
           .order("vote_count", { ascending: false })
+          .order("id", { ascending: true })
           .limit(1)
           .maybeSingle();
 
