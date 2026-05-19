@@ -342,49 +342,76 @@ export function PhotoCard({
         <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
           by {photo.profiles?.display_name ?? "Anonymous"}
         </p>
-        {showMilestoneTimeline &&
-          photo.milestone_stars > 0 &&
-          Array.isArray(photo.milestone_achieved_at) &&
-          photo.milestone_achieved_at.length > 0 && (
+        {showMilestoneTimeline && photo.milestone_stars > 0 && (() => {
+          const achieved = Array.isArray(photo.milestone_achieved_at)
+            ? photo.milestone_achieved_at
+            : [];
+          const total = 5;
+          const earned = Math.min(photo.milestone_stars, total);
+          const pct = ((earned - 1) / (total - 1)) * 100;
+          return (
             <div
-              className="mt-2 rounded-md border border-border/60 bg-muted/30 p-2"
-              aria-label={`ไทม์ไลน์ดาวที่ได้รับ ${photo.milestone_stars} ดวง`}
+              className="mt-3 rounded-md border border-border/60 bg-muted/30 p-2.5"
+              aria-label={`ความคืบหน้าดาว ${earned} จาก ${total}`}
             >
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                ไทม์ไลน์ดาว
+              <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
+                <span className="text-muted-foreground">ความคืบหน้าดาว</span>
+                <span className="text-[var(--gold)]">{earned}/{total}★</span>
               </div>
-              <ul className="space-y-0.5">
-                {photo.milestone_achieved_at.slice(0, 5).map((iso, i) => {
-                  const d = new Date(iso);
-                  const ok = !isNaN(d.getTime());
+              <div className="relative h-1 rounded-full bg-border">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[var(--gold)] to-[var(--gold-glow,#ffd97a)]"
+                  style={{ width: `${pct}%` }}
+                />
+                <ol className="absolute inset-0 flex items-center justify-between">
+                  {Array.from({ length: total }).map((_, i) => {
+                    const tier = i + 1;
+                    const isEarned = tier <= earned;
+                    const iso = achieved[i];
+                    const d = iso ? new Date(iso) : null;
+                    const ok = d && !isNaN(d.getTime());
+                    const label = ok
+                      ? `${tier}★ · ${d!.toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "2-digit" })}`
+                      : isEarned
+                        ? `${tier}★`
+                        : `${tier}★ — ยังไม่ผ่าน`;
+                    return (
+                      <li key={tier} className="relative flex flex-col items-center">
+                        <span
+                          className={cn(
+                            "block h-3 w-3 rounded-full border-2 transition",
+                            isEarned
+                              ? "border-[var(--gold)] bg-[var(--gold)] shadow-[0_0_6px_var(--gold-glow,#ffd97a)]"
+                              : "border-border bg-background",
+                          )}
+                          aria-label={label}
+                          title={label}
+                        />
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+              <div className="mt-1.5 flex items-center justify-between text-[10px] tabular-nums text-muted-foreground">
+                {Array.from({ length: total }).map((_, i) => {
+                  const iso = achieved[i];
+                  const d = iso ? new Date(iso) : null;
+                  const ok = d && !isNaN(d.getTime());
                   return (
-                    <li
-                      key={`${i}-${iso}`}
-                      className="flex items-center justify-between gap-2 text-[11px]"
+                    <span
+                      key={i}
+                      className={cn("w-8 text-center", i + 1 <= earned ? "text-foreground/80" : "opacity-50")}
                     >
-                      <span className="inline-flex items-center gap-1 font-semibold text-[var(--gold)]">
-                        <Check className="h-3 w-3" />
-                        {i + 1}★
-                      </span>
-                      <time
-                        dateTime={ok ? d.toISOString() : undefined}
-                        className="tabular-nums text-muted-foreground"
-                        title={ok ? d.toLocaleString("th-TH") : iso}
-                      >
-                        {ok
-                          ? d.toLocaleDateString("th-TH", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "2-digit",
-                            })
-                          : "—"}
-                      </time>
-                    </li>
+                      {ok
+                        ? d!.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })
+                        : "—"}
+                    </span>
                   );
                 })}
-              </ul>
+              </div>
             </div>
-          )}
+          );
+        })()}
         <div
           className="mt-2 flex items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100"
           onMouseLeave={() => setHover(null)}
