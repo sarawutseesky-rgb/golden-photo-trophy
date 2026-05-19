@@ -715,17 +715,17 @@ function PhotoDetail() {
           <StarRow count={p.milestone_stars} size={22} />
           {progress && (
             <div className="mt-3 text-xs text-muted-foreground">
-              {progress.holding
-                ? `Held #1 for ${progress.elapsedDays.toFixed(1)}d · next ★ at ${progress.nextDays}d`
-                : `Reach #1 (min 10 votes) to start the clock toward ${THRESHOLDS_DAYS[p.milestone_stars]}d for your next ★`}
-              {progress.holding && (
-                <div className="mt-1 h-1.5 overflow-hidden rounded bg-muted">
-                  <div
-                    className="h-full bg-[var(--gold)]"
-                    style={{ width: `${Math.min(100, (progress.elapsedDays / progress.nextDays) * 100)}%` }}
-                  />
-                </div>
-              )}
+              {progress.elapsedHours.toFixed(progress.elapsedHours < 48 ? 0 : 1)}h since upload · next ★ at {progress.nextHours}h
+              {" "}({THRESHOLDS_HOURS[p.milestone_stars] / 24}d)
+              <div className="mt-1 h-1.5 overflow-hidden rounded bg-muted">
+                <div
+                  className="h-full bg-[var(--gold)]"
+                  style={{ width: `${progress.fraction * 100}%` }}
+                />
+              </div>
+              <div className="mt-1 text-[10px] opacity-70">
+                Earned if no later upload outscores it at the checkpoint.
+              </div>
             </div>
           )}
         </div>
