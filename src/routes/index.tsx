@@ -83,7 +83,7 @@ function HomePage() {
       </div>
       <SpotlightHero />
       <FeedFilterBar tab={tab} sort={sort} tag={tag} />
-      <div id="feed-panel" role="tabpanel">
+      <div id="feed-panel" role="tabpanel" aria-labelledby={`tab-${tab ?? "latest"}`}>
       {tab === "following" && !user ? (
         <EmptyState
           variant="follow"

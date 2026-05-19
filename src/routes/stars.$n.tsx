@@ -81,7 +81,7 @@ function StarsPage() {
 
       <FeedFilterBar showSort={false} showTags={false} />
 
-      <div id="feed-panel" role="tabpanel">
+      <div id="feed-panel" role="tabpanel" aria-labelledby={`tab-stars-${n}`}>
         <InfinitePhotoFeed
           queryKey={["stars", n]}
           params={{ sort: "new", stars: level }}
