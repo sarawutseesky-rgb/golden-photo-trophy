@@ -12,12 +12,34 @@ const PHOTO_SELECT = `
 `;
 
 export const listFeed = createServerFn({ method: "GET" })
-  .inputValidator((d: { limit?: number; sort?: "new" | "top" | "hof" | "trending"; tag?: string; search?: string }) => d)
+  .inputValidator(
+    (d: {
+      limit?: number;
+      sort?: "new" | "top" | "hof" | "trending" | "votes";
+      tag?: string;
+      search?: string;
+      range?: "all" | "week";
+      following_of?: string | null;
+    }) => d,
+  )
   .handler(async ({ data }) => {
     const limit = Math.min(data.limit ?? 30, 60);
     let q = supabaseAdmin.from("photos").select(PHOTO_SELECT).eq("status", "active").limit(limit);
     if (data.tag) q = q.contains("tags", [data.tag]);
     if (data.search) q = q.ilike("title", `%${data.search}%`);
+    if (data.range === "week") {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      q = q.gte("created_at", since);
+    }
+    if (data.following_of) {
+      const { data: rows } = await supabaseAdmin
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", data.following_of);
+      const ids = (rows ?? []).map((r: any) => r.following_id);
+      if (ids.length === 0) return { photos: [] };
+      q = q.in("user_id", ids);
+    }
     if (data.sort === "top") {
       q = q.gte("vote_count", 10).order("avg_score", { ascending: false }).order("vote_count", { ascending: false });
     } else if (data.sort === "hof") {
@@ -25,12 +47,36 @@ export const listFeed = createServerFn({ method: "GET" })
     } else if (data.sort === "trending") {
       // Photos with most recent votes (last 48h) — approximate via created_at + vote_count fallback
       q = q.order("vote_count", { ascending: false }).order("created_at", { ascending: false });
+    } else if (data.sort === "votes") {
+      q = q.order("vote_count", { ascending: false }).order("avg_score", { ascending: false });
     } else {
       q = q.order("created_at", { ascending: false });
     }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return { photos: rows ?? [] };
+  });
+
+export const getPopularTags = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data } = await supabaseAdmin
+      .from("photos")
+      .select("tags")
+      .eq("status", "active")
+      .not("tags", "is", null)
+      .limit(500);
+    const counts = new Map<string, number>();
+    (data ?? []).forEach((row: any) => {
+      (row.tags ?? []).forEach((t: string) => {
+        if (!t) return;
+        counts.set(t, (counts.get(t) ?? 0) + 1);
+      });
+    });
+    const tags = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([tag, count]) => ({ tag, count }));
+    return { tags };
   });
 
 export const getPhoto = createServerFn({ method: "GET" })
