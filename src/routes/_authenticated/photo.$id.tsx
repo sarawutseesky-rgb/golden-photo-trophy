@@ -374,6 +374,7 @@ function PhotoDetail() {
             <Link
               to="/photo/$id"
               params={{ id: adjacent.prev.id }}
+              onClick={() => setSwitching(true)}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
               aria-label={`ภาพก่อนหน้า: ${adjacent.prev.title ?? ""}`}
             >
@@ -388,6 +389,7 @@ function PhotoDetail() {
             <Link
               to="/photo/$id"
               params={{ id: adjacent.next.id }}
+              onClick={() => setSwitching(true)}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
               aria-label={`ภาพถัดไป: ${adjacent.next.title ?? ""}`}
             >
