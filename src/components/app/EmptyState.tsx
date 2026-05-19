@@ -52,8 +52,7 @@ export function EmptyState({
               : "rounded-full border border-input bg-background px-5 py-2 text-sm font-semibold text-foreground transition hover:bg-accent";
             if (a.kind === "link") {
               return (
-                // @ts-expect-error — TanStack Link `to` is a literal union; we accept string at runtime.
-                <Link key={i} to={a.to} params={a.params as any} className={cls}>
+                <Link key={i} to={a.to as any} params={a.params as any} className={cls}>
                   {a.label}
                 </Link>
               );
