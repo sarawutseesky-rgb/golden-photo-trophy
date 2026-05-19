@@ -113,8 +113,14 @@ export function CommandPalette({ open, setOpen }: Ctx) {
                     )}
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate">{p.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ★ {Number(p.avg_score ?? 0).toFixed(2)} · {p.vote_count ?? 0} votes
+                      <span
+                        className="text-xs text-muted-foreground"
+                        aria-label={`คะแนนเฉลี่ย ${Number(p.avg_score ?? 0).toFixed(2)} จาก 5 ดาว`}
+                      >
+                        <span className="text-[var(--gold)]" aria-hidden="true">
+                          {"★".repeat(Math.round(Number(p.avg_score ?? 0)))}
+                        </span>{" "}
+                        {Number(p.avg_score ?? 0).toFixed(2)} · {p.vote_count ?? 0} votes
                       </span>
                     </div>
                   </CommandItem>
