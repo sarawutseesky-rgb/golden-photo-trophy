@@ -1,0 +1,35 @@
+name: Timezone Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test-tz:
+    name: vitest @ TZ=${{ matrix.tz }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tz:
+          - UTC
+          - Asia/Bangkok
+          - America/New_York
+          - Pacific/Kiritimati
+          - Pacific/Niue
+    env:
+      TZ: ${{ matrix.tz }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run timezone-sensitive tests
+        run: bunx vitest run src/lib/__tests__/milestone-rules.timezone.test.ts
