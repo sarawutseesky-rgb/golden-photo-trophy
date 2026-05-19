@@ -1,8 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { listFeed } from "@/lib/photos.functions";
-import { PhotoGrid } from "@/components/app/PhotoGrid";
+import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 
 export const Route = createFileRoute("/hall-of-fame")({
   head: () => ({
@@ -15,15 +12,13 @@ export const Route = createFileRoute("/hall-of-fame")({
 });
 
 function HoFPage() {
-  const fn = useServerFn(listFeed);
-  const { data } = useQuery({ queryKey: ["feed", "hof"], queryFn: () => fn({ data: { sort: "hof" } }) });
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Hall of Fame</h1>
         <p className="mt-1 text-muted-foreground">Photos that earned 3★ or more.</p>
       </div>
-      <PhotoGrid photos={data?.photos ?? []} />
+      <InfinitePhotoFeed queryKey={["hof"]} params={{ sort: "hof" }} />
     </div>
   );
 }
