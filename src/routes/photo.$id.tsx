@@ -176,11 +176,14 @@ function PhotoDetail() {
   };
 
   const handleUnvote = async () => {
-    if (!user) return;
+    if (!user || busy) return;
     const photoKey = ["photo", id];
     const voteKey = ["my-vote", id, user.id];
     const prevPhoto = qc.getQueryData<any>(photoKey);
     const prevVote = qc.getQueryData<any>(voteKey);
+    const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
+
+    setBusy(true);
     qc.setQueryData(voteKey, { score: null });
     if (prevPhoto?.photo && prevVote?.score) {
       const dist = [...prevPhoto.distribution];
@@ -195,6 +198,26 @@ function PhotoDetail() {
       });
       if (debug) logDebug(`unvote (optimistic)`, newAvg, newCount);
     }
+
+    // Optimistic update — feed caches
+    qc.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
+      if (!old?.photos) return old;
+      return {
+        ...old,
+        photos: old.photos.map((ph: any) => {
+          if (ph.id !== id) return ph;
+          const oldCount = ph.vote_count ?? 0;
+          const oldAvg = Number(ph.avg_score ?? 0);
+          const prevScore = prevVote?.score ?? 0;
+          const newCount = Math.max(0, oldCount - 1);
+          const newAvg = newCount > 0
+            ? Number(((oldAvg * oldCount - prevScore) / newCount).toFixed(2))
+            : 0;
+          return { ...ph, vote_count: newCount, avg_score: newAvg };
+        }),
+      };
+    });
+
     const t0 = performance.now();
     try {
       await unvote({ data: { photo_id: id } });
@@ -213,8 +236,11 @@ function PhotoDetail() {
     } catch (e: any) {
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
-      toast.error(e.message);
+      prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error(e.message ?? "ยกเลิกโหวตไม่สำเร็จ");
       if (debug) logDebug(`unvote (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
+    } finally {
+      setBusy(false);
     }
   };
 
