@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, X, Flame, Sparkles, RotateCcw } from "lucide-react";
+import { ChevronDown, X, Flame, Sparkles, RotateCcw, Users } from "lucide-react";
 import { getPopularTags } from "@/lib/photos.functions";
 import { cn } from "@/lib/utils";
 import {
@@ -127,6 +127,26 @@ export function FeedFilterBar({
                 </Tooltip>
               );
             })}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to="/leaderboard"
+                  id="tab-leaderboard"
+                  className={cn(
+                    "ml-1 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                  activeProps={{
+                    className:
+                      "ml-1 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition border-[var(--gold)]/60 bg-[var(--gold)]/10 text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  }}
+                  aria-label="ดู Leaderboard"
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  Leaderboard
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={6}>อันดับช่างภาพ</TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
