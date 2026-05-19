@@ -11,7 +11,7 @@ import { incrementPhotoView } from "@/lib/follows.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
 import { VoteDistribution } from "@/components/app/VoteDistribution";
-import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
+import { THRESHOLDS_HOURS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
 import { applyOptimisticVote } from "@/lib/votes.helpers";
@@ -181,7 +181,7 @@ function PhotoDetail() {
   const isOwner = user?.id === p.user_id;
   const hasVoted = myVote?.score != null;
   const normalizedDist = normalizeDistribution(data.distribution);
-  const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
+  const progress = nextMilestoneProgress(p.milestone_stars, p.created_at);
 
   const handleVote = async (score: number) => {
     if (!user || busy) return;
