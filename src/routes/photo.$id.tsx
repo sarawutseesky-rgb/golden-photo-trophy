@@ -99,10 +99,7 @@ function PhotoDetail() {
   const p = data.photo as any;
   const isOwner = user?.id === p.user_id;
   const hasVoted = myVote?.score != null;
-  const normalizedDist: number[] = (() => {
-    const base = Array.isArray(data.distribution) ? data.distribution : [];
-    return [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
-  })();
+  const normalizedDist = normalizeDistribution(data.distribution);
   const total = normalizedDist.reduce((a, b) => a + b, 0) || 1;
   const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
 
