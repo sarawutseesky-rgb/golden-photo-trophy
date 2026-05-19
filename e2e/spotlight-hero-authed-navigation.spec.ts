@@ -104,4 +104,13 @@ test.describe("Spotlight Hero — authed navigation to /photo/:id", () => {
       spotlight.getByRole("link", { name: /^spotlight:/i }),
     );
   });
+
+  test("clicking the View photo details CTA as a logged-in user navigates to /photo/:id", async ({
+    page,
+    context,
+  }) => {
+    await runAuthedClick(page, context, (spotlight) =>
+      spotlight.getByRole("link", { name: /view photo details/i }),
+    );
+  });
 });
