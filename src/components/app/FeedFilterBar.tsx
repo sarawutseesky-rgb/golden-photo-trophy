@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronDown, X, Flame, Sparkles, RotateCcw } from "lucide-react";
@@ -45,6 +45,7 @@ export function FeedFilterBar({
   showTags?: boolean;
 }) {
   const navigate = useNavigate({ from: "/" });
+  const location = useLocation();
   const tagsFn = useServerFn(getPopularTags);
   const { data } = useQuery({ queryKey: ["popular-tags"], queryFn: () => tagsFn() });
   const tags = data?.tags ?? [];
