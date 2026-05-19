@@ -30,6 +30,7 @@ export function SpotlightHero() {
 
   const photo: any = data?.photo;
   if (!photo) return null;
+  const held: boolean = !!data?.held;
 
   const prog = nextMilestoneProgress(photo.milestone_stars ?? 0, photo.rank_one_since);
   const stars = photo.milestone_stars ?? 0;
@@ -61,7 +62,7 @@ export function SpotlightHero() {
           <div className="absolute inset-0 bg-gradient-to-tr from-background/70 via-background/10 to-transparent md:bg-gradient-to-r" />
           <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--gold)]/95 px-3 py-1 text-xs font-bold uppercase tracking-wider text-background shadow-lg">
             <Crown className="h-3.5 w-3.5" />
-            #1 Now
+            {held ? "#1 Now" : "Top Rated"}
           </div>
         </Link>
 
@@ -69,7 +70,7 @@ export function SpotlightHero() {
         <div className="flex flex-col justify-center gap-4 p-5 md:p-7">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--gold)]">
             <Sparkles className="h-3.5 w-3.5" />
-            Spotlight · Holding #1
+            {held ? "Spotlight · Holding #1" : "Spotlight · Top of the feed"}
           </div>
 
           <h2 className="text-2xl font-bold leading-tight tracking-tight md:text-3xl">
@@ -110,8 +111,8 @@ export function SpotlightHero() {
             </div>
           </div>
 
-          {/* Countdown */}
-          {stars < 5 && (
+          {/* Countdown — only meaningful while actually holding #1 */}
+          {held && stars < 5 && (
             <div className="rounded-xl border border-border bg-background/60 p-3 backdrop-blur">
               <div className="mb-1.5 flex items-baseline justify-between gap-3 text-xs">
                 <span className="font-medium text-muted-foreground">
@@ -132,6 +133,12 @@ export function SpotlightHero() {
                   style={{ width: `${pct}%` }}
                 />
               </div>
+            </div>
+          )}
+
+          {!held && (
+            <div className="rounded-xl border border-dashed border-border bg-background/60 p-3 text-xs text-muted-foreground backdrop-blur">
+              Reach #1 with at least 10 votes to start the milestone clock toward your next ★.
             </div>
           )}
 
