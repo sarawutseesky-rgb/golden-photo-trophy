@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { motion } from "framer-motion";
 import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
@@ -66,6 +67,7 @@ function PhotoDetail() {
   });
 
   const [hover, setHover] = useState<number | null>(null);
+  const [bouncedStar, setBouncedStar] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [debug, setDebug] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -496,13 +498,24 @@ function PhotoDetail() {
               )}
               <div className="mt-1 flex gap-1" onMouseLeave={() => setHover(null)}>
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <button
+                  <motion.button
                     key={n}
                     disabled={hasVoted || busy}
                     onMouseEnter={() => !hasVoted && !busy && setHover(n)}
-                    onClick={() => handleVote(n)}
+                    onClick={() => {
+                      setBouncedStar(n);
+                      setTimeout(() => setBouncedStar(null), 400);
+                      handleVote(n);
+                    }}
                     className="disabled:cursor-not-allowed"
                     aria-label={`Rate ${n} stars`}
+                    whileTap={{ scale: 0.85 }}
+                    animate={
+                      bouncedStar === n
+                        ? { scale: [1, 1.5, 1], rotate: [0, 15, -15, 0] }
+                        : { scale: 1, rotate: 0 }
+                    }
+                    transition={{ type: "spring", stiffness: 500, damping: 15 }}
                   >
                     <Star
                       className={cn(
@@ -512,7 +525,7 @@ function PhotoDetail() {
                           : "text-muted-foreground/40",
                       )}
                     />
-                  </button>
+                  </motion.button>
                 ))}
               </div>
               <div
