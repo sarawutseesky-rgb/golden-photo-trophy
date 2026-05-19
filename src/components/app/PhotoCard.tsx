@@ -32,6 +32,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
   const [hover, setHover] = useState<number | null>(null);
   const [myScore, setMyScore] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmed, setConfirmed] = useState<{ score: number; avg: number; count: number } | null>(null);
   const quickRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const focusQuick = (idx: number) => {
@@ -90,6 +91,8 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     const prevPhoto = qc.getQueryData<any>(photoKey);
 
     // Optimistic update on feed caches
+    let optimisticAvg = Number(photo.avg_score ?? 0);
+    let optimisticCount = (photo.vote_count ?? 0) + 1;
     qc.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
       if (!old?.photos) return old;
       return {
@@ -100,6 +103,8 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
           const oldAvg = Number(ph.avg_score ?? 0);
           const newCount = oldCount + 1;
           const newAvg = newCount > 0 ? Number(((oldAvg * oldCount + score) / newCount).toFixed(2)) : 0;
+          optimisticAvg = newAvg;
+          optimisticCount = newCount;
           return { ...ph, vote_count: newCount, avg_score: newAvg };
         }),
       };
@@ -122,10 +127,12 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     try {
       await vote({ data: { photo_id: photo.id, score } });
       toast.success(`ให้ ${score}★ แล้ว`);
+      setConfirmed({ score, avg: optimisticAvg, count: optimisticCount });
       qc.invalidateQueries({ queryKey: ["feed"] });
       qc.invalidateQueries({ queryKey: photoKey });
     } catch (e: any) {
       setMyScore(null);
+      setConfirmed(null);
       // Rollback
       prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
       qc.setQueryData(photoKey, prevPhoto);
@@ -140,11 +147,13 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     : hasVoted
       ? `คุณให้คะแนนรูป ${photo.title} ${myScore} จาก 5 ดาวแล้ว`
       : `โหวตด่วนสำหรับรูป ${photo.title} คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก ${photo.vote_count} โหวต`;
-  const liveStatus = busy
-    ? "กำลังส่งคะแนน"
-    : hasVoted
-      ? `โหวต ${myScore} ดาวเรียบร้อย`
-      : "";
+  const liveStatus = (() => {
+    if (busy && myScore != null) return `กำลังส่งคะแนน ${myScore} ดาว`;
+    if (confirmed)
+      return `โหวต ${confirmed.score} ดาวเรียบร้อย คะแนนเฉลี่ยใหม่ ${confirmed.avg.toFixed(1)} จาก ${confirmed.count} โหวต`;
+    if (!hasVoted && hover != null) return `เลือก ${hover} ดาว`;
+    return "";
+  })();
 
   return (
     <article className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg">
