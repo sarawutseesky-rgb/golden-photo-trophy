@@ -12,7 +12,7 @@ const AUTO_REFRESH_STORAGE_KEY = "admin-dashboard:auto-refresh";
 export const Route = createFileRoute("/_authenticated/_admin/admin/dashboard")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard — StarShot" },
+      { title: "Admin Dashboard — SEESTAR" },
       { name: "description", content: "Overview of platform stats for admins." },
       { name: "robots", content: "noindex, nofollow" },
     ],

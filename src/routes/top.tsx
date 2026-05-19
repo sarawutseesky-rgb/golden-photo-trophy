@@ -4,7 +4,7 @@ import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 export const Route = createFileRoute("/top")({
   head: () => ({
     meta: [
-      { title: "Top rated — StarShot" },
+      { title: "Top rated — SEESTAR" },
       { name: "description", content: "Highest-rated photos with at least 10 votes." },
     ],
   }),

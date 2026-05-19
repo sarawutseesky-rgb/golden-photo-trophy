@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/profile/me")({
-  head: () => ({ meta: [{ title: "Edit Profile — StarShot" }] }),
+  head: () => ({ meta: [{ title: "Edit Profile — SEESTAR" }] }),
   component: EditProfilePage,
 });
 

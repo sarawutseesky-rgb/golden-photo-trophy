@@ -63,7 +63,7 @@
 
 :root {
   --radius: 0.625rem;
-  /* StarShot — dark navy base with gold milestone accent */
+  /* SEESTAR — dark navy base with gold milestone accent */
   --background: oklch(0.18 0.04 265);          /* #0F172A navy */
   --foreground: oklch(0.97 0.01 250);
   --card: oklch(0.23 0.04 265);

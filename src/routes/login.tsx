@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — StarShot" }] }),
+  head: () => ({ meta: [{ title: "Sign in — SEESTAR" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),

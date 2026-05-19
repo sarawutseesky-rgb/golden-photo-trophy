@@ -20,8 +20,8 @@ export const Route = createFileRoute("/")({
   validateSearch: zodValidator(feedSearchSchema),
   head: () => ({
     meta: [
-      { title: "StarShot — Latest photos" },
-      { name: "description", content: "Newest photos from the StarShot community." },
+      { title: "SEESTAR — Latest photos" },
+      { name: "description", content: "Newest photos from the SEESTAR community." },
     ],
   }),
   component: HomePage,

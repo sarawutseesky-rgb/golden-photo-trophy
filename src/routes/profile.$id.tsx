@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { EmptyState } from "@/components/app/EmptyState";
 
 export const Route = createFileRoute("/profile/$id")({
-  head: () => ({ meta: [{ title: "Profile — StarShot" }] }),
+  head: () => ({ meta: [{ title: "Profile — SEESTAR" }] }),
   component: ProfilePage,
 });
 
