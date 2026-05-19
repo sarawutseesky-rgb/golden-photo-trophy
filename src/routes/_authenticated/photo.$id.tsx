@@ -124,7 +124,6 @@ function PhotoDetail() {
   const isOwner = user?.id === p.user_id;
   const hasVoted = myVote?.score != null;
   const normalizedDist = normalizeDistribution(data.distribution);
-  const total = normalizedDist.reduce((a, b) => a + b, 0) || 1;
   const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
 
   const handleVote = async (score: number) => {
