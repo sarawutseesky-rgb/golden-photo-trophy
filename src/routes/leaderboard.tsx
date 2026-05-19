@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Trophy, Medal, ArrowDownToLine, Star, Image as ImageIcon, Users } from "lucide-react";
 import { getMemberLeaderboard, getPhotoLeaderboard } from "@/lib/leaderboard.functions";
@@ -225,14 +225,38 @@ function LeaderboardPage() {
 
 function PhotoLeaderboard({ range }: { range: Range }) {
   const fn = useServerFn(getPhotoLeaderboard);
-  const { data, isLoading } = useQuery({
+  const PAGE_SIZE = 24;
+  const query = useInfiniteQuery({
     queryKey: ["photo-leaderboard", range],
-    queryFn: () => fn({ data: { range, limit: 50, min_votes: 10 } }),
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      fn({ data: { range, limit: PAGE_SIZE, offset: pageParam as number, min_votes: 10 } }),
+    getNextPageParam: (last, all) => {
+      const got = last?.entries?.length ?? 0;
+      if (got < PAGE_SIZE) return undefined;
+      return all.reduce((s, p) => s + (p?.entries?.length ?? 0), 0);
+    },
   });
-  const entries = data?.entries ?? [];
-  const minVotes = data?.min_votes ?? 10;
+  const entries = (query.data?.pages ?? []).flatMap((p) => p?.entries ?? []);
+  const minVotes = query.data?.pages?.[0]?.min_votes ?? 10;
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && query.hasNextPage && !query.isFetchingNextPage) {
+          query.fetchNextPage();
+        }
+      },
+      { rootMargin: "400px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [query.hasNextPage, query.isFetchingNextPage, query.fetchNextPage]);
+
+  if (query.isLoading) {
     return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
   }
   if (entries.length === 0) {
@@ -247,6 +271,7 @@ function PhotoLeaderboard({ range }: { range: Range }) {
     );
   }
   return (
+    <div className="space-y-4">
     <ol className="overflow-hidden rounded-xl border border-border bg-card">
       {entries.map((e: any) => (
         <li
@@ -284,6 +309,24 @@ function PhotoLeaderboard({ range }: { range: Range }) {
         </li>
       ))}
     </ol>
+      <div ref={sentinelRef} />
+      {query.hasNextPage ? (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => query.fetchNextPage()}
+            disabled={query.isFetchingNextPage}
+            className="rounded-full border border-input bg-background px-5 py-2 text-sm font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
+          >
+            {query.isFetchingNextPage ? "กำลังโหลด…" : "โหลดเพิ่ม"}
+          </button>
+        </div>
+      ) : (
+        entries.length > PAGE_SIZE && (
+          <p className="text-center text-sm text-muted-foreground">— จบอันดับแล้ว —</p>
+        )
+      )}
+    </div>
   );
 }
 
