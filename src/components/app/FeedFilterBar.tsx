@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, X, Flame, Sparkles, Trophy, Users, RotateCcw, Calendar, CalendarDays, CalendarRange } from "lucide-react";
+import { ChevronDown, X, Flame, Sparkles, RotateCcw, Star } from "lucide-react";
 import { getPopularTags } from "@/lib/photos.functions";
 import { cn } from "@/lib/utils";
 import {
@@ -17,11 +17,6 @@ export type FeedSort = "new" | "score" | "votes";
 const TABS: { id: FeedTab; label: string; icon: any }[] = [
   { id: "latest", label: "Latest", icon: Sparkles },
   { id: "trending", label: "Trending", icon: Flame },
-  { id: "top-day", label: "Top day", icon: Calendar },
-  { id: "top-week", label: "Top this week", icon: Trophy },
-  { id: "top-month", label: "Top month", icon: CalendarDays },
-  { id: "top-year", label: "Top year", icon: CalendarRange },
-  { id: "following", label: "Following", icon: Users },
 ];
 
 const SORT_LABELS: Record<FeedSort, string> = {
@@ -78,6 +73,25 @@ export function FeedFilterBar({
                 </Link>
               );
             })}
+            {([1, 2, 3, 4, 5] as const).map((n) => (
+              <Link
+                key={`stars-${n}`}
+                to="/stars/$n"
+                params={{ n: String(n) }}
+                role="tab"
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground",
+                )}
+                activeProps={{
+                  className:
+                    "inline-flex shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-sm font-medium transition border-[var(--gold)]/60 bg-[var(--gold)]/10 text-foreground shadow-sm",
+                }}
+                aria-label={`${n} star${n === 1 ? "" : "s"}`}
+              >
+                <span>{n}</span>
+                <Star className="h-3.5 w-3.5 fill-[var(--gold)] text-[var(--gold)]" />
+              </Link>
+            ))}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
