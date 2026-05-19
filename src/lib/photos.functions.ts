@@ -6,7 +6,7 @@ import { normalizeDistribution } from "@/lib/utils";
 
 const PHOTO_SELECT = `
   id, user_id, title, description, tags, image_url, width, height,
-  avg_score, vote_count, current_rank, rank_one_since,
+  avg_score, vote_count, view_count, current_rank, rank_one_since,
   milestone_stars, milestone_achieved_at, status, created_at,
   profiles!photos_user_id_fkey ( id, display_name, avatar_url )
 `;
