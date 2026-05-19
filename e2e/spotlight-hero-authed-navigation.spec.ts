@@ -113,4 +113,53 @@ test.describe("Spotlight Hero — authed navigation to /photo/:id", () => {
       spotlight.getByRole("link", { name: /view photo details/i }),
     );
   });
+
+  test("View photo details CTA href matches /photo/:id exactly and does not redirect", async ({
+    page,
+    context,
+  }) => {
+    const pageErrors: Error[] = [];
+    page.on("pageerror", (e) => pageErrors.push(e));
+    const failedResponses: { url: string; status: number }[] = [];
+    page.on("response", (res) => {
+      if (res.status() >= 500) failedResponses.push({ url: res.url(), status: res.status() });
+    });
+
+    const { spotlight, ctaHref } = await loginAndOpenSpotlight(page, context);
+
+    // Strict shape check: /photo/<non-empty id without slash/?/#>.
+    expect(ctaHref).toMatch(/^\/photo\/[A-Za-z0-9_-]+$/);
+    const expectedId = ctaHref.slice("/photo/".length);
+    expect(expectedId.length).toBeGreaterThan(0);
+
+    // CTA id must match the image-link id (i.e., really the spotlight photo).
+    const imageHref = await spotlight
+      .getByRole("link", { name: /^spotlight:/i })
+      .getAttribute("href");
+    expect(imageHref).toBe(ctaHref);
+
+    // Track any redirects the browser follows after the click.
+    const navigations: string[] = [];
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) navigations.push(new URL(frame.url()).pathname);
+    });
+
+    await spotlight.getByRole("link", { name: /view photo details/i }).click();
+
+    // Final URL pathname must be exactly the CTA href (no redirect chain to
+    // /login, /, /unauthorized, etc.).
+    await expect
+      .poll(() => new URL(page.url()).pathname, { timeout: 15_000 })
+      .toBe(ctaHref);
+
+    // Only allowed mid-flight pathname is the destination itself.
+    const stray = navigations.filter((p) => p !== ctaHref);
+    expect(
+      stray,
+      `unexpected redirect hops: ${stray.join(" → ")}`,
+    ).toEqual([]);
+
+    expect(failedResponses).toEqual([]);
+    expect(pageErrors).toEqual([]);
+  });
 });
