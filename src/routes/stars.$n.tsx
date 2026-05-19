@@ -188,6 +188,7 @@ function StarsPage() {
         <InfinitePhotoFeed
           queryKey={["stars", n]}
           params={{ sort: "new", stars: level }}
+          showMilestoneTimeline
         />
       </div>
     </div>
