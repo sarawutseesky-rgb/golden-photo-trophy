@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-// Milestone thresholds in milliseconds
-const THRESHOLDS_MS = [
-  1 * 24 * 60 * 60 * 1000,   // 1 day  -> 1 star
-  7 * 24 * 60 * 60 * 1000,   // 7 days -> 2 stars
-  30 * 24 * 60 * 60 * 1000,  // 30 days -> 3 stars
-  90 * 24 * 60 * 60 * 1000,  // 90 days -> 4 stars
-  180 * 24 * 60 * 60 * 1000, // 180 days -> 5 stars
-];
+import { decideMilestone } from "@/lib/milestone-rules";
 
 export const Route = createFileRoute("/api/public/cron/rank")({
   server: {
@@ -40,33 +32,30 @@ export const Route = createFileRoute("/api/public/cron/rank")({
 
         if (!top) return Response.json({ ok: true, top: null });
 
-        // Start clock if needed
-        let since: Date;
-        if (!top.rank_one_since) {
-          since = now;
-          await supabaseAdmin.from("photos").update({ rank_one_since: now.toISOString() }).eq("id", top.id);
-        } else {
-          since = new Date(top.rank_one_since);
+        const decision = decideMilestone(
+          {
+            id: top.id,
+            milestone_stars: top.milestone_stars ?? 0,
+            milestone_achieved_at: (top.milestone_achieved_at ?? []) as string[],
+            rank_one_since: top.rank_one_since ?? null,
+          },
+          now,
+        );
+
+        if (decision.startClock) {
+          await supabaseAdmin
+            .from("photos")
+            .update({ rank_one_since: now.toISOString() })
+            .eq("id", top.id);
         }
 
-        // Check thresholds
-        const elapsed = now.getTime() - since.getTime();
-        let stars = top.milestone_stars ?? 0;
-        const achieved: string[] = (top.milestone_achieved_at ?? []) as string[];
-        const newAchieved: string[] = [];
-        for (let i = stars; i < THRESHOLDS_MS.length; i++) {
-          if (elapsed >= THRESHOLDS_MS[i]) {
-            stars = i + 1;
-            newAchieved.push(now.toISOString());
-          } else break;
-        }
-
-        if (newAchieved.length > 0) {
+        if (decision.newlyAchievedAt.length > 0) {
+          const achieved = (top.milestone_achieved_at ?? []) as string[];
           await supabaseAdmin
             .from("photos")
             .update({
-              milestone_stars: stars,
-              milestone_achieved_at: [...achieved, ...newAchieved],
+              milestone_stars: decision.newStars,
+              milestone_achieved_at: [...achieved, ...decision.newlyAchievedAt],
             })
             .eq("id", top.id);
 
@@ -74,11 +63,16 @@ export const Route = createFileRoute("/api/public/cron/rank")({
             user_id: top.user_id,
             type: "milestone",
             photo_id: top.id,
-            message: `Your photo earned ${stars}★ for holding #1!`,
+            message: `Your photo earned ${decision.newStars}★ for holding #1!`,
           });
         }
 
-        return Response.json({ ok: true, top: top.id, stars, elapsed_ms: elapsed });
+        return Response.json({
+          ok: true,
+          top: top.id,
+          stars: decision.newStars,
+          elapsed_ms: decision.elapsedMs,
+        });
       },
     },
   },
