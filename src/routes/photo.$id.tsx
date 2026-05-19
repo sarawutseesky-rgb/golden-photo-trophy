@@ -187,8 +187,7 @@ function PhotoDetail() {
     setBusy(true);
     qc.setQueryData(voteKey, { score: null });
     if (prevPhoto?.photo && prevVote?.score) {
-      const base = Array.isArray(prevPhoto.distribution) ? prevPhoto.distribution : [];
-      const dist = [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
+      const dist = normalizeDistribution(prevPhoto.distribution);
       dist[prevVote.score - 1] = Math.max(0, dist[prevVote.score - 1] - 1);
       const newCount = dist.reduce((a, b) => a + b, 0);
       const sum = dist.reduce((acc, c, i) => acc + c * (i + 1), 0);
