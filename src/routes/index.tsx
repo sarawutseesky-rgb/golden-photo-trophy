@@ -83,6 +83,7 @@ function HomePage() {
       </div>
       <SpotlightHero />
       <FeedFilterBar tab={tab} sort={sort} tag={tag} />
+      <div id="feed-panel" role="tabpanel">
       {tab === "following" && !user ? (
         <EmptyState
           variant="follow"
@@ -113,6 +114,7 @@ function HomePage() {
           }
         />
       )}
+      </div>
     </div>
   );
 }

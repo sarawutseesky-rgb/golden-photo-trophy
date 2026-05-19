@@ -74,6 +74,8 @@ export function FeedFilterBar({
                       to="/"
                       search={(prev: any) => ({ ...prev, tab: t.id })}
                       role="tab"
+                      id={`tab-${t.id}`}
+                      aria-controls="feed-panel"
                       aria-selected={active}
                       className={cn(
                         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -99,6 +101,8 @@ export function FeedFilterBar({
                       to="/stars/$n"
                       params={{ n: String(n) }}
                       role="tab"
+                      id={`tab-stars-${n}`}
+                      aria-controls="feed-panel"
                       aria-selected={starActive}
                       className={cn(
                         "inline-flex shrink-0 items-center gap-0.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
