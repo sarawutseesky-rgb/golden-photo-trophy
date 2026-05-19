@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StarsNRouteImport } from './routes/stars.$n'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 import { Route as AuthenticatedUploadRouteImport } from './routes/_authenticated/upload'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -59,6 +60,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StarsNRoute = StarsNRouteImport.update({
+  id: '/stars/$n',
+  path: '/stars/$n',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileIdRoute = ProfileIdRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/upload': typeof AuthenticatedUploadRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/stars/$n': typeof StarsNRoute
   '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
   '/photo/$id': typeof AuthenticatedPhotoIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/upload': typeof AuthenticatedUploadRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/stars/$n': typeof StarsNRoute
   '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
   '/photo/$id': typeof AuthenticatedPhotoIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/upload': typeof AuthenticatedUploadRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/stars/$n': typeof StarsNRoute
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRouteWithChildren
   '/_authenticated/photo/$id': typeof AuthenticatedPhotoIdRoute
   '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/upload'
     | '/profile/$id'
+    | '/stars/$n'
     | '/admin'
     | '/photo/$id'
     | '/profile/me'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/upload'
     | '/profile/$id'
+    | '/stars/$n'
     | '/admin'
     | '/photo/$id'
     | '/profile/me'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/upload'
     | '/profile/$id'
+    | '/stars/$n'
     | '/_authenticated/_admin/admin'
     | '/_authenticated/photo/$id'
     | '/_authenticated/profile/me'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   TopRoute: typeof TopRoute
   TrendingRoute: typeof TrendingRoute
   ProfileIdRoute: typeof ProfileIdRoute
+  StarsNRoute: typeof StarsNRoute
   ApiPublicCronRankRoute: typeof ApiPublicCronRankRoute
 }
 
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stars/$n': {
+      id: '/stars/$n'
+      path: '/stars/$n'
+      fullPath: '/stars/$n'
+      preLoaderRoute: typeof StarsNRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$id': {
@@ -417,8 +437,19 @@ const rootRouteChildren: RootRouteChildren = {
   TopRoute: TopRoute,
   TrendingRoute: TrendingRoute,
   ProfileIdRoute: ProfileIdRoute,
+  StarsNRoute: StarsNRoute,
   ApiPublicCronRankRoute: ApiPublicCronRankRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
