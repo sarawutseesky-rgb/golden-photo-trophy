@@ -33,6 +33,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
   const [myScore, setMyScore] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState<{ score: number; avg: number; count: number } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const quickRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const focusQuick = (idx: number) => {
@@ -84,6 +85,8 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     if (hasVoted || busy) return;
     setBusy(true);
     setMyScore(score);
+    setErrorMsg(null);
+    setConfirmed(null);
 
     // Snapshot current caches for rollback
     const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
@@ -136,7 +139,9 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
       // Rollback
       prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
       qc.setQueryData(photoKey, prevPhoto);
-      toast.error(e.message ?? "โหวตไม่สำเร็จ");
+      const msg = e?.message ?? "โหวตไม่สำเร็จ";
+      toast.error(msg);
+      setErrorMsg(`โหวตไม่สำเร็จ: ${msg} กรุณาลองอีกครั้ง`);
     } finally {
       setBusy(false);
     }
@@ -148,6 +153,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
       ? `คุณให้คะแนนรูป ${photo.title} ${myScore} จาก 5 ดาวแล้ว`
       : `โหวตด่วนสำหรับรูป ${photo.title} คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก ${photo.vote_count} โหวต`;
   const liveStatus = (() => {
+    if (errorMsg) return errorMsg;
     if (busy && myScore != null) return `กำลังส่งคะแนน ${myScore} ดาว`;
     if (confirmed)
       return `โหวต ${confirmed.score} ดาวเรียบร้อย คะแนนเฉลี่ยใหม่ ${confirmed.avg.toFixed(1)} จาก ${confirmed.count} โหวต`;
@@ -268,8 +274,8 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
             })}
           </div>
           <span
-            role="status"
-            aria-live="polite"
+            role={errorMsg ? "alert" : "status"}
+            aria-live={errorMsg ? "assertive" : "polite"}
             aria-atomic="true"
             className="sr-only"
           >
