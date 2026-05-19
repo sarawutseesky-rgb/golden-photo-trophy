@@ -43,15 +43,21 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
   useQuery({
     queryKey: ["my-vote", photo.id, user?.id ?? "anon"],
     queryFn: async () => {
-      const res = await fetchMyVote({ data: { photo_id: photo.id } });
-      if (res.score != null) {
-        setMyScore(res.score);
-        setHydratedFromServer(true);
+      try {
+        const res = await fetchMyVote({ data: { photo_id: photo.id } });
+        if (res.score != null) {
+          setMyScore(res.score);
+          setHydratedFromServer(true);
+        }
+        return res;
+      } catch {
+        // Not authenticated (e.g. just logged out) — treat as no vote
+        return { score: null };
       }
-      return res;
     },
     enabled: !!user && !isOwner,
     staleTime: 60_000,
+    retry: false,
   });
 
   const focusQuick = (idx: number) => {
