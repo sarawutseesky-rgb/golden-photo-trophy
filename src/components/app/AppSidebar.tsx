@@ -9,6 +9,7 @@ import {
   RefreshCw,
   LayoutDashboard,
   Users as UsersIcon,
+  Star,
 } from "lucide-react";
 
 import {
@@ -211,6 +212,44 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            By Stars
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {[1, 2, 3, 4, 5].map((n) => {
+                const url = `/stars/${n}`;
+                const label = `${n} Star${n === 1 ? "" : "s"}`;
+                return (
+                  <SidebarMenuItem key={n}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(url)}
+                      tooltip={collapsed ? label : undefined}
+                    >
+                      <Link
+                        to="/stars/$n"
+                        params={{ n: String(n) }}
+                        className={cn(
+                          "flex items-center gap-2 transition-colors",
+                          isActive(url)
+                            ? "text-primary"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" />
+                        <span>{label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

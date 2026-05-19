@@ -13,6 +13,7 @@ type FeedParams = {
   tag?: string;
   range?: "all" | "day" | "week" | "month" | "year";
   following_of?: string | null;
+  stars?: number;
 };
 
 export function InfinitePhotoFeed({

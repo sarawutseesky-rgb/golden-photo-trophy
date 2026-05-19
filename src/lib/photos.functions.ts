@@ -21,6 +21,7 @@ export const listFeed = createServerFn({ method: "GET" })
       search?: string;
       range?: "all" | "day" | "week" | "month" | "year";
       following_of?: string | null;
+      stars?: number;
     }) => d,
   )
   .handler(async ({ data }) => {
@@ -29,6 +30,9 @@ export const listFeed = createServerFn({ method: "GET" })
     let q = supabaseAdmin.from("photos").select(PHOTO_SELECT).eq("status", "active").range(offset, offset + limit - 1);
     if (data.tag) q = q.contains("tags", [data.tag]);
     if (data.search) q = q.ilike("title", `%${data.search}%`);
+    if (typeof data.stars === "number" && data.stars >= 1 && data.stars <= 5) {
+      q = q.eq("milestone_stars", data.stars);
+    }
     const RANGE_MS: Record<string, number> = {
       day: 24 * 60 * 60 * 1000,
       week: 7 * 24 * 60 * 60 * 1000,
