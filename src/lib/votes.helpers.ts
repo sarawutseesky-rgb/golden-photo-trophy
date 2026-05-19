@@ -45,3 +45,45 @@ export function computeDistribution(
   }
   return buckets;
 }
+
+import { normalizeDistribution } from "@/lib/utils";
+
+export type PhotoDetailPayload = {
+  photo: { vote_count: number; avg_score: number } & Record<string, unknown>;
+  distribution: number[];
+  [key: string]: unknown;
+};
+
+/**
+ * Build the optimistic next state for the photo detail cache after a user
+ * casts (or changes) a vote. Exported so it can be unit-tested without
+ * spinning up TanStack Query or the route.
+ *
+ * - `score` — the new star value the user just chose (1–5)
+ * - `oldScore` — the user's previous vote on this photo, if any (so we can
+ *   subtract it from the distribution before adding the new one).
+ *
+ * Returns the new payload, or the original payload unchanged when invalid.
+ */
+export function applyOptimisticVote(
+  prev: PhotoDetailPayload,
+  score: number,
+  oldScore?: number | null,
+): PhotoDetailPayload {
+  if (!prev?.photo || !Number.isInteger(score) || score < 1 || score > 5) {
+    return prev;
+  }
+  const dist = normalizeDistribution(prev.distribution);
+  if (oldScore && oldScore >= 1 && oldScore <= 5) {
+    dist[oldScore - 1] = Math.max(0, dist[oldScore - 1] - 1);
+  }
+  dist[score - 1] += 1;
+  const newCount = dist.reduce((a, b) => a + b, 0);
+  const sum = dist.reduce((acc, c, i) => acc + c * (i + 1), 0);
+  const newAvg = newCount > 0 ? Number((sum / newCount).toFixed(2)) : 0;
+  return {
+    ...prev,
+    distribution: dist,
+    photo: { ...prev.photo, vote_count: newCount, avg_score: newAvg },
+  };
+}
