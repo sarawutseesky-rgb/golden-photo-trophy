@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { listFeed } from "@/lib/photos.functions";
 import { PhotoGrid } from "@/components/app/PhotoGrid";
 import { FeedFilterBar, type FeedTab, type FeedSort } from "@/components/app/FeedFilterBar";
+import { SpotlightHero } from "@/components/app/SpotlightHero";
 
 const feedSearchSchema = z.object({
   tab: fallback(z.enum(["latest", "trending", "top-week", "following"]), "latest").default("latest"),
@@ -65,6 +66,7 @@ function HomePage() {
         <h1 className="text-3xl font-bold tracking-tight">Latest shots</h1>
         <p className="mt-1 text-muted-foreground">Vote 1–5 stars. Photos that hold #1 earn permanent milestone stars.</p>
       </div>
+      <SpotlightHero />
       <FeedFilterBar tab={tab} sort={sort} tag={tag} />
       {tab === "following" && !user ? (
         <div className="flex h-60 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border text-muted-foreground">
