@@ -10,6 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type FeedTab = "latest" | "trending" | "top-day" | "top-week" | "top-month" | "top-year" | "following";
 export type FeedSort = "new" | "score" | "votes";
@@ -78,28 +84,35 @@ export function FeedFilterBar({
                 </Link>
               );
             })}
-            {([1, 2, 3, 4, 5] as const).map((n) => (
-              <Link
-                key={`stars-${n}`}
-                to="/stars/$n"
-                params={{ n: String(n) }}
-                role="tab"
-                className={cn(
-                  "inline-flex shrink-0 items-center gap-0.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground",
-                )}
-                activeProps={{
-                  className:
-                    "inline-flex shrink-0 items-center gap-0.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition border-[var(--gold)]/60 bg-[var(--gold)]/10 text-foreground shadow-sm",
-                }}
-                aria-label={`${n} star${n === 1 ? "" : "s"}`}
-                title={`ดูภาพที่ได้ ${n} ดาว`}
-              >
-                <span>
-                  {n}
-                  <span className="text-[var(--gold)]">★</span>
-                </span>
-              </Link>
-            ))}
+            <TooltipProvider delayDuration={150}>
+              {([1, 2, 3, 4, 5] as const).map((n) => (
+                <Tooltip key={`stars-${n}`}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/stars/$n"
+                      params={{ n: String(n) }}
+                      role="tab"
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-0.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      )}
+                      activeProps={{
+                        className:
+                          "inline-flex shrink-0 items-center gap-0.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition border-[var(--gold)]/60 bg-[var(--gold)]/10 text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      }}
+                      aria-label={`ดูภาพที่ได้ ${n} ดาว`}
+                    >
+                      <span>
+                        {n}
+                        <span className="text-[var(--gold)]">★</span>
+                      </span>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={6}>
+                    ดูภาพที่ได้ {n} ดาว
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
