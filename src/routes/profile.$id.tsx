@@ -6,6 +6,7 @@ import { getUserProfile } from "@/lib/photos.functions";
 import { getFollowStats, followUser, unfollowUser } from "@/lib/follows.functions";
 import { StarRow } from "@/components/app/StarRow";
 import { useAuth } from "@/lib/auth-context";
+import { EmptyState } from "@/components/app/EmptyState";
 
 export const Route = createFileRoute("/profile/$id")({
   head: () => ({ meta: [{ title: "Profile — StarShot" }] }),
@@ -103,7 +104,22 @@ function ProfilePage() {
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Photos</h2>
         {data.photos.length === 0 ? (
-          <p className="text-muted-foreground">No photos uploaded yet.</p>
+          isSelf ? (
+            <EmptyState
+              variant="upload"
+              title="ยังไม่มีรูปในโปรไฟล์ของคุณ"
+              description="เริ่มต้นด้วยการอัปโหลดรูปแรก แล้วให้ชุมชนช่วยให้คะแนน"
+              actions={[
+                { kind: "link", to: "/upload", label: "อัปโหลดรูปแรกของคุณ", primary: true },
+              ]}
+            />
+          ) : (
+            <EmptyState
+              variant="generic"
+              title="ยังไม่มีรูปในโปรไฟล์นี้"
+              description="ผู้ใช้คนนี้ยังไม่ได้อัปโหลดรูปใด ๆ"
+            />
+          )
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {data.photos.map((p: any) => (
