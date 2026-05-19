@@ -1,150 +1,201 @@
 import { describe, it, expect } from "vitest";
 import {
+  THRESHOLDS_HOURS,
   THRESHOLDS_MS,
+  buildMaxLaterScoreMap,
   decideMilestone,
-  resetClockOnDethrone,
-  type RankedPhoto,
+  maxQualifiedTier,
+  type PhotoForMilestone,
 } from "../milestone-rules";
 
-const DAY = 24 * 60 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
 const T0 = new Date("2026-01-01T00:00:00.000Z");
-const at = (offsetMs: number) => new Date(T0.getTime() + offsetMs);
 
-const make = (over: Partial<RankedPhoto> = {}): RankedPhoto => ({
-  id: "p1",
+const make = (over: Partial<PhotoForMilestone> = {}): PhotoForMilestone => ({
+  id: "p",
+  created_at: T0.toISOString(),
+  total_score: 0,
   milestone_stars: 0,
   milestone_achieved_at: [],
-  rank_one_since: null,
   ...over,
 });
 
+describe("THRESHOLDS", () => {
+  it("matches the spec: 24/168/720/2160/4320 hours", () => {
+    expect(THRESHOLDS_HOURS).toEqual([24, 168, 720, 2160, 4320]);
+    expect(THRESHOLDS_MS).toEqual(THRESHOLDS_HOURS.map((h) => h * HOUR));
+  });
+});
+
+describe("maxQualifiedTier", () => {
+  it("returns 0 when overtaken by a later upload", () => {
+    expect(maxQualifiedTier(1000 * HOUR, false)).toBe(0);
+  });
+  it("returns the highest tier reached by age", () => {
+    expect(maxQualifiedTier(23 * HOUR, true)).toBe(0);
+    expect(maxQualifiedTier(24 * HOUR, true)).toBe(1);
+    expect(maxQualifiedTier(167 * HOUR, true)).toBe(1);
+    expect(maxQualifiedTier(168 * HOUR, true)).toBe(2);
+    expect(maxQualifiedTier(720 * HOUR, true)).toBe(3);
+    expect(maxQualifiedTier(2160 * HOUR, true)).toBe(4);
+    expect(maxQualifiedTier(4320 * HOUR, true)).toBe(5);
+    expect(maxQualifiedTier(99999 * HOUR, true)).toBe(5);
+  });
+});
+
 describe("decideMilestone", () => {
-  it("starts the clock when the photo just became #1", () => {
-    const d = decideMilestone(make({ rank_one_since: null }), T0);
-    expect(d.startClock).toBe(true);
-    expect(d.elapsedMs).toBe(0);
-    expect(d.newStars).toBe(0);
-    expect(d.newlyAchievedAt).toEqual([]);
-  });
-
-  it("does not award a star before 1 day has passed", () => {
-    const since = at(-DAY + 1).toISOString(); // 1ms shy of 1 day
-    const d = decideMilestone(make({ rank_one_since: since }), T0);
-    expect(d.newStars).toBe(0);
-    expect(d.newlyAchievedAt).toHaveLength(0);
-  });
-
-  it("awards the 1st star exactly at the 1-day threshold", () => {
-    const since = at(-DAY).toISOString();
-    const d = decideMilestone(make({ rank_one_since: since }), T0);
+  it("awards 1★ exactly at 24h when no later photo outscores", () => {
+    const p = make({
+      created_at: new Date(T0.getTime() - 24 * HOUR).toISOString(),
+      total_score: 50,
+    });
+    const d = decideMilestone(p, 49, T0);
+    expect(d.beatsLater).toBe(true);
+    expect(d.qualifiedTier).toBe(1);
     expect(d.newStars).toBe(1);
     expect(d.newlyAchievedAt).toEqual([T0.toISOString()]);
   });
 
-  it("awards multiple stars at once when crossing several thresholds", () => {
-    // Held #1 for 35 days -> should jump 0 -> 3 stars (1d, 7d, 30d met; 90d not).
-    const since = at(-35 * DAY).toISOString();
-    const d = decideMilestone(make({ rank_one_since: since }), T0);
+  it("does not award when a later upload scores strictly higher", () => {
+    const p = make({
+      created_at: new Date(T0.getTime() - 24 * HOUR).toISOString(),
+      total_score: 49,
+    });
+    const d = decideMilestone(p, 50, T0);
+    expect(d.beatsLater).toBe(false);
+    expect(d.qualifiedTier).toBe(0);
+    expect(d.newStars).toBe(0);
+  });
+
+  it("allows ties — equal later score does not block the tier", () => {
+    const p = make({
+      created_at: new Date(T0.getTime() - 24 * HOUR).toISOString(),
+      total_score: 30,
+    });
+    const d = decideMilestone(p, 30, T0);
+    expect(d.beatsLater).toBe(true);
+    expect(d.newStars).toBe(1);
+  });
+
+  it("can jump multiple tiers at once (0 → 3) when crossing thresholds", () => {
+    const p = make({
+      created_at: new Date(T0.getTime() - 800 * HOUR).toISOString(), // > 720h
+      total_score: 100,
+    });
+    const d = decideMilestone(p, 0, T0);
+    expect(d.qualifiedTier).toBe(3);
     expect(d.newStars).toBe(3);
     expect(d.newlyAchievedAt).toHaveLength(3);
-    expect(d.newlyAchievedAt.every((t) => t === T0.toISOString())).toBe(true);
   });
 
-  it("only adds the next star without rewriting previously earned ones", () => {
-    // Already has 2 stars; held long enough to earn a 3rd only.
-    const since = at(-31 * DAY).toISOString();
-    const d = decideMilestone(
-      make({
-        milestone_stars: 2,
-        milestone_achieved_at: ["old-1", "old-2"],
-        rank_one_since: since,
-      }),
-      T0,
-    );
-    expect(d.newStars).toBe(3);
-    expect(d.newlyAchievedAt).toEqual([T0.toISOString()]);
-  });
-
-  it("caps at 5 stars and never exceeds the thresholds array", () => {
-    const since = at(-1000 * DAY).toISOString();
-    const d = decideMilestone(make({ rank_one_since: since }), T0);
-    expect(d.newStars).toBe(5);
-    expect(d.newlyAchievedAt).toHaveLength(5);
-    expect(THRESHOLDS_MS).toHaveLength(5);
-  });
-
-  it("does not award more stars when already at the max", () => {
-    const since = at(-1000 * DAY).toISOString();
-    const d = decideMilestone(
-      make({
-        milestone_stars: 5,
-        milestone_achieved_at: ["a", "b", "c", "d", "e"],
-        rank_one_since: since,
-      }),
-      T0,
-    );
-    expect(d.newStars).toBe(5);
+  it("never removes earned stars even if later overtaken", () => {
+    const p = make({
+      created_at: new Date(T0.getTime() - 200 * HOUR).toISOString(),
+      total_score: 10,
+      milestone_stars: 2,
+      milestone_achieved_at: ["a", "b"],
+    });
+    const d = decideMilestone(p, 9999, T0);
+    expect(d.beatsLater).toBe(false);
+    expect(d.qualifiedTier).toBe(0);
+    expect(d.newStars).toBe(2); // preserved
     expect(d.newlyAchievedAt).toEqual([]);
   });
 
-  it("thresholds match the documented schedule (1/7/30/90/180 days)", () => {
-    expect(THRESHOLDS_MS).toEqual([1, 7, 30, 90, 180].map((n) => n * DAY));
+  it("does not re-award an already-earned tier", () => {
+    const p = make({
+      created_at: new Date(T0.getTime() - 200 * HOUR).toISOString(),
+      total_score: 100,
+      milestone_stars: 2,
+    });
+    const d = decideMilestone(p, 0, T0);
+    expect(d.qualifiedTier).toBe(2);
+    expect(d.newStars).toBe(2);
+    expect(d.newlyAchievedAt).toEqual([]);
+  });
+
+  it("caps at 5★", () => {
+    const p = make({
+      created_at: new Date(T0.getTime() - 10000 * HOUR).toISOString(),
+      total_score: 1,
+      milestone_stars: 5,
+    });
+    const d = decideMilestone(p, 0, T0);
+    expect(d.qualifiedTier).toBe(5);
+    expect(d.newStars).toBe(5);
+    expect(d.newlyAchievedAt).toEqual([]);
   });
 });
 
-describe("resetClockOnDethrone", () => {
-  it("clears rank_one_since but preserves earned stars and timestamps", () => {
-    const prev = make({
-      milestone_stars: 3,
-      milestone_achieved_at: ["a", "b", "c"],
-      rank_one_since: at(-10 * DAY).toISOString(),
+describe("buildMaxLaterScoreMap", () => {
+  it("maps each photo to the max score of strictly-later photos", () => {
+    // Sorted oldest -> newest
+    const photos = [
+      { id: "A", total_score: 10 },
+      { id: "B", total_score: 30 },
+      { id: "C", total_score: 20 },
+      { id: "D", total_score: 5 },
+    ];
+    const m = buildMaxLaterScoreMap(photos);
+    expect(m.get("A")).toBe(30); // max(B,C,D) = 30
+    expect(m.get("B")).toBe(20); // max(C,D) = 20
+    expect(m.get("C")).toBe(5);
+    expect(m.get("D")).toBe(-Infinity); // no later photos
+  });
+
+  it("a later high-scoring upload blocks an older photo from earning", () => {
+    const A = make({
+      id: "A",
+      created_at: new Date(T0.getTime() - 30 * HOUR).toISOString(),
+      total_score: 20,
     });
-    const diff = resetClockOnDethrone(prev);
-    expect(diff.rank_one_since).toBeNull();
-    expect(diff.milestone_stars).toBe(3);
-    expect(diff.milestone_achieved_at).toEqual(["a", "b", "c"]);
+    const B = make({
+      id: "B",
+      created_at: new Date(T0.getTime() - 25 * HOUR).toISOString(),
+      total_score: 21,
+    });
+    const m = buildMaxLaterScoreMap([A, B]);
+    const dA = decideMilestone(A, m.get(A.id) ?? -Infinity, T0);
+    const dB = decideMilestone(B, m.get(B.id) ?? -Infinity, T0);
+    expect(dA.newStars).toBe(0); // blocked by B
+    expect(dB.newStars).toBe(1); // no later photo, age >= 24h
   });
+});
 
-  it("is a no-op for stars when none are earned yet", () => {
-    const prev = make({ rank_one_since: at(-DAY / 2).toISOString() });
-    const diff = resetClockOnDethrone(prev);
-    expect(diff.rank_one_since).toBeNull();
-    expect(diff.milestone_stars).toBe(0);
-    expect(diff.milestone_achieved_at).toEqual([]);
-  });
+describe("end-to-end scenario across multiple cron ticks", () => {
+  it("awards 2★ at 168h, keeps stars if later overtaken, awards 3★ at 720h", () => {
+    const created = new Date("2026-01-01T00:00:00Z");
+    const p: PhotoForMilestone = {
+      id: "p",
+      created_at: created.toISOString(),
+      total_score: 100,
+      milestone_stars: 0,
+      milestone_achieved_at: [],
+    };
 
-  it("after a dethrone+re-throne cycle, the clock restarts from 0", () => {
-    // Photo held #1 for 2 days, earned 1 star, then got dethroned.
-    const earned = decideMilestone(
-      make({ rank_one_since: at(-2 * DAY).toISOString() }),
-      T0,
-    );
-    expect(earned.newStars).toBe(1);
+    // Tick at 24h: earns 1★
+    let now = new Date(created.getTime() + 24 * HOUR);
+    let d = decideMilestone(p, 50, now);
+    expect(d.newStars).toBe(1);
+    p.milestone_stars = d.newStars;
+    p.milestone_achieved_at.push(...d.newlyAchievedAt);
 
-    const afterDethrone = resetClockOnDethrone(
-      make({
-        milestone_stars: earned.newStars,
-        milestone_achieved_at: earned.newlyAchievedAt,
-        rank_one_since: at(-2 * DAY).toISOString(),
-      }),
-    );
-    expect(afterDethrone.rank_one_since).toBeNull();
-    expect(afterDethrone.milestone_stars).toBe(1); // preserved
+    // Tick at 168h: earns 2★
+    now = new Date(created.getTime() + 168 * HOUR);
+    d = decideMilestone(p, 50, now);
+    expect(d.newStars).toBe(2);
+    p.milestone_stars = d.newStars;
+    p.milestone_achieved_at.push(...d.newlyAchievedAt);
 
-    // Later, the same photo reclaims #1. Clock starts fresh, stars kept.
-    const reclaimedAt = at(10 * DAY);
-    const reclaimed = decideMilestone(
-      {
-        id: "p1",
-        milestone_stars: afterDethrone.milestone_stars,
-        milestone_achieved_at: afterDethrone.milestone_achieved_at,
-        rank_one_since: null,
-      },
-      reclaimedAt,
-    );
-    expect(reclaimed.startClock).toBe(true);
-    expect(reclaimed.elapsedMs).toBe(0);
-    expect(reclaimed.newStars).toBe(1); // not awarded again
-    expect(reclaimed.newlyAchievedAt).toEqual([]);
+    // Tick at 500h: a later photo overtakes -> no new tier, but keeps 2★
+    now = new Date(created.getTime() + 500 * HOUR);
+    d = decideMilestone(p, 9999, now);
+    expect(d.newStars).toBe(2);
+
+    // Tick at 720h: later photo no longer outscores -> earns 3★
+    now = new Date(created.getTime() + 720 * HOUR);
+    d = decideMilestone(p, 50, now);
+    expect(d.newStars).toBe(3);
+    expect(d.newlyAchievedAt).toHaveLength(1);
   });
 });
