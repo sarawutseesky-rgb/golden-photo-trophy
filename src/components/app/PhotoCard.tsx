@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles } from "lucide-react";
+import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { castVote, getMyVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
@@ -22,10 +22,17 @@ export type FeedPhoto = {
   current_rank?: number | null;
   rank_one_since?: string | null;
   created_at?: string;
+  milestone_achieved_at?: string[] | null;
   profiles?: { display_name: string; avatar_url: string | null } | null;
 };
 
-export function PhotoCard({ photo }: { photo: FeedPhoto }) {
+export function PhotoCard({
+  photo,
+  showMilestoneTimeline = false,
+}: {
+  photo: FeedPhoto;
+  showMilestoneTimeline?: boolean;
+}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const vote = useServerFn(castVote);
@@ -335,6 +342,49 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
         <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
           by {photo.profiles?.display_name ?? "Anonymous"}
         </p>
+        {showMilestoneTimeline &&
+          photo.milestone_stars > 0 &&
+          Array.isArray(photo.milestone_achieved_at) &&
+          photo.milestone_achieved_at.length > 0 && (
+            <div
+              className="mt-2 rounded-md border border-border/60 bg-muted/30 p-2"
+              aria-label={`ไทม์ไลน์ดาวที่ได้รับ ${photo.milestone_stars} ดวง`}
+            >
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                ไทม์ไลน์ดาว
+              </div>
+              <ul className="space-y-0.5">
+                {photo.milestone_achieved_at.slice(0, 5).map((iso, i) => {
+                  const d = new Date(iso);
+                  const ok = !isNaN(d.getTime());
+                  return (
+                    <li
+                      key={`${i}-${iso}`}
+                      className="flex items-center justify-between gap-2 text-[11px]"
+                    >
+                      <span className="inline-flex items-center gap-1 font-semibold text-[var(--gold)]">
+                        <Check className="h-3 w-3" />
+                        {i + 1}★
+                      </span>
+                      <time
+                        dateTime={ok ? d.toISOString() : undefined}
+                        className="tabular-nums text-muted-foreground"
+                        title={ok ? d.toLocaleString("th-TH") : iso}
+                      >
+                        {ok
+                          ? d.toLocaleDateString("th-TH", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "2-digit",
+                            })
+                          : "—"}
+                      </time>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         <div
           className="mt-2 flex items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100"
           onMouseLeave={() => setHover(null)}
