@@ -57,6 +57,24 @@ function PhotoDetail() {
     queryKey: ["photo-adjacent", id],
     queryFn: () => fetchAdjacent({ data: { id } }),
   });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (lightboxOpen || editOpen) return;
+      if (e.key === "ArrowLeft" && adjacent?.prev) {
+        e.preventDefault();
+        navigate({ to: "/photo/$id", params: { id: adjacent.prev.id } });
+      } else if (e.key === "ArrowRight" && adjacent?.next) {
+        e.preventDefault();
+        navigate({ to: "/photo/$id", params: { id: adjacent.next.id } });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [adjacent?.prev?.id, adjacent?.next?.id, lightboxOpen, editOpen, navigate]);
   const { data: myVote } = useQuery({
     queryKey: ["my-vote", id, user?.id],
     queryFn: async () => {
