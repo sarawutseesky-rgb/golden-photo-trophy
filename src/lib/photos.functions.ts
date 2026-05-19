@@ -10,6 +10,19 @@ const PHOTO_BASE_SELECT = `
   milestone_stars, milestone_achieved_at, status, created_at
 `;
 
+const SCHEMA_CACHE_ERROR = "Could not query the database for the schema cache. Retrying.";
+
+function isSchemaCacheError(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) return false;
+  return String(error.message).includes(SCHEMA_CACHE_ERROR);
+}
+
+function fallbackOnSchemaCache<T>(error: unknown, fallback: T): T {
+  if (isSchemaCacheError(error)) return fallback;
+  if (error instanceof Error) throw error;
+  throw new Error("Unexpected backend error");
+}
+
 async function attachPhotoProfiles<T extends { user_id: string | null }>(photos: T[]) {
   const userIds = Array.from(new Set(photos.map((photo) => photo.user_id).filter(Boolean)));
 
