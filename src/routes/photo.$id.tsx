@@ -457,8 +457,9 @@ function PhotoDetail() {
                   <button
                     type="button"
                     onClick={handleUnvote}
+                    disabled={busy}
                     data-testid="unvote-button"
-                    className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                    className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
                   >
                     ยกเลิกโหวต
                   </button>
@@ -470,8 +471,8 @@ function PhotoDetail() {
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
                     key={n}
-                    disabled={hasVoted}
-                    onMouseEnter={() => setHover(n)}
+                    disabled={hasVoted || busy}
+                    onMouseEnter={() => !hasVoted && !busy && setHover(n)}
                     onClick={() => handleVote(n)}
                     className="disabled:cursor-not-allowed"
                     aria-label={`Rate ${n} stars`}
