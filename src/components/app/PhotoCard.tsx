@@ -135,6 +135,17 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     }
   };
 
+  const voteGroupLabel = isOwner
+    ? `โหวตด่วนสำหรับรูป ${photo.title} (เจ้าของรูปโหวตเองไม่ได้)`
+    : hasVoted
+      ? `คุณให้คะแนนรูป ${photo.title} ${myScore} จาก 5 ดาวแล้ว`
+      : `โหวตด่วนสำหรับรูป ${photo.title} คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก ${photo.vote_count} โหวต`;
+  const liveStatus = busy
+    ? "กำลังส่งคะแนน"
+    : hasVoted
+      ? `โหวต ${myScore} ดาวเรียบร้อย`
+      : "";
+
   return (
     <article className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg">
       <Link
