@@ -193,17 +193,6 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
             </span>
           </span>
         </div>
-  const voteGroupLabel = isOwner
-    ? `โหวตด่วนสำหรับรูป ${photo.title} (เจ้าของรูปโหวตเองไม่ได้)`
-    : hasVoted
-      ? `คุณให้คะแนนรูป ${photo.title} ${myScore} จาก 5 ดาวแล้ว`
-      : `โหวตด่วนสำหรับรูป ${photo.title} คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก ${photo.vote_count} โหวต`;
-  const liveStatus = busy
-    ? "กำลังส่งคะแนน"
-    : hasVoted
-      ? `โหวต ${myScore} ดาวเรียบร้อย`
-      : "";
-
         {/* Quick-vote stars overlay (visible on hover) */}
         <div
           className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100"
