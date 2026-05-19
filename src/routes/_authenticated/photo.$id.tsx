@@ -413,8 +413,17 @@ function PhotoDetail() {
           <img
             src={p.image_url}
             alt={p.title}
-            className="block h-auto max-h-[85vh] w-auto max-w-full object-contain transition group-hover:opacity-95"
+            className={cn(
+              "block h-auto max-h-[85vh] w-auto max-w-full object-contain transition group-hover:opacity-95",
+              switching && "opacity-40 blur-sm",
+            )}
           />
+          {switching && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
+              <span className="text-sm font-medium text-foreground/90">กำลังโหลดภาพถัดไป…</span>
+            </div>
+          )}
           <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-background/70 px-2 py-1 text-[10px] uppercase tracking-wide text-foreground/80 opacity-0 backdrop-blur transition group-hover:opacity-100">
             คลิกเพื่อขยาย
           </span>
