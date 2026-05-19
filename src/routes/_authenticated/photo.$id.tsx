@@ -28,7 +28,7 @@ const LightboxClient = lazy(async () => {
   };
 });
 
-export const Route = createFileRoute("/photo/$id")({
+export const Route = createFileRoute("/_authenticated/photo/$id")({
   head: () => ({ meta: [{ title: "Photo — StarShot" }] }),
   component: PhotoDetail,
 });

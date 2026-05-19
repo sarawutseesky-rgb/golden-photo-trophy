@@ -17,11 +17,11 @@ import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
-import { Route as PhotoIdRouteImport } from './routes/photo.$id'
 import { Route as AuthenticatedUploadRouteImport } from './routes/_authenticated/upload'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
 import { Route as AuthenticatedProfileMeRouteImport } from './routes/_authenticated/profile.me'
+import { Route as AuthenticatedPhotoIdRouteImport } from './routes/_authenticated/photo.$id'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
 import { Route as ApiPublicCronRankRouteImport } from './routes/api/public/cron/rank'
 import { Route as AuthenticatedAdminAdminUsersRouteImport } from './routes/_authenticated/_admin/admin.users'
@@ -66,11 +66,6 @@ const ProfileIdRoute = ProfileIdRouteImport.update({
   path: '/profile/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PhotoIdRoute = PhotoIdRouteImport.update({
-  id: '/photo/$id',
-  path: '/photo/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedUploadRoute = AuthenticatedUploadRouteImport.update({
   id: '/upload',
   path: '/upload',
@@ -89,6 +84,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AuthenticatedProfileMeRoute = AuthenticatedProfileMeRouteImport.update({
   id: '/profile/me',
   path: '/profile/me',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPhotoIdRoute = AuthenticatedPhotoIdRouteImport.update({
+  id: '/photo/$id',
+  path: '/photo/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
@@ -123,9 +123,9 @@ export interface FileRoutesByFullPath {
   '/trending': typeof TrendingRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/upload': typeof AuthenticatedUploadRoute
-  '/photo/$id': typeof PhotoIdRoute
   '/profile/$id': typeof ProfileIdRoute
   '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
+  '/photo/$id': typeof AuthenticatedPhotoIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/admin/dashboard': typeof AuthenticatedAdminAdminDashboardRoute
   '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
@@ -140,9 +140,9 @@ export interface FileRoutesByTo {
   '/trending': typeof TrendingRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/upload': typeof AuthenticatedUploadRoute
-  '/photo/$id': typeof PhotoIdRoute
   '/profile/$id': typeof ProfileIdRoute
   '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
+  '/photo/$id': typeof AuthenticatedPhotoIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/admin/dashboard': typeof AuthenticatedAdminAdminDashboardRoute
   '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
@@ -160,9 +160,9 @@ export interface FileRoutesById {
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/upload': typeof AuthenticatedUploadRoute
-  '/photo/$id': typeof PhotoIdRoute
   '/profile/$id': typeof ProfileIdRoute
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRouteWithChildren
+  '/_authenticated/photo/$id': typeof AuthenticatedPhotoIdRoute
   '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
   '/_authenticated/_admin/admin/dashboard': typeof AuthenticatedAdminAdminDashboardRoute
   '/_authenticated/_admin/admin/users': typeof AuthenticatedAdminAdminUsersRoute
@@ -179,9 +179,9 @@ export interface FileRouteTypes {
     | '/trending'
     | '/notifications'
     | '/upload'
-    | '/photo/$id'
     | '/profile/$id'
     | '/admin'
+    | '/photo/$id'
     | '/profile/me'
     | '/admin/dashboard'
     | '/admin/users'
@@ -196,9 +196,9 @@ export interface FileRouteTypes {
     | '/trending'
     | '/notifications'
     | '/upload'
-    | '/photo/$id'
     | '/profile/$id'
     | '/admin'
+    | '/photo/$id'
     | '/profile/me'
     | '/admin/dashboard'
     | '/admin/users'
@@ -215,9 +215,9 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin'
     | '/_authenticated/notifications'
     | '/_authenticated/upload'
-    | '/photo/$id'
     | '/profile/$id'
     | '/_authenticated/_admin/admin'
+    | '/_authenticated/photo/$id'
     | '/_authenticated/profile/me'
     | '/_authenticated/_admin/admin/dashboard'
     | '/_authenticated/_admin/admin/users'
@@ -232,7 +232,6 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TopRoute: typeof TopRoute
   TrendingRoute: typeof TrendingRoute
-  PhotoIdRoute: typeof PhotoIdRoute
   ProfileIdRoute: typeof ProfileIdRoute
   ApiPublicCronRankRoute: typeof ApiPublicCronRankRoute
 }
@@ -295,13 +294,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/photo/$id': {
-      id: '/photo/$id'
-      path: '/photo/$id'
-      fullPath: '/photo/$id'
-      preLoaderRoute: typeof PhotoIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/upload': {
       id: '/_authenticated/upload'
       path: '/upload'
@@ -328,6 +320,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/me'
       fullPath: '/profile/me'
       preLoaderRoute: typeof AuthenticatedProfileMeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/photo/$id': {
+      id: '/_authenticated/photo/$id'
+      path: '/photo/$id'
+      fullPath: '/photo/$id'
+      preLoaderRoute: typeof AuthenticatedPhotoIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_admin/admin': {
@@ -393,6 +392,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedUploadRoute: typeof AuthenticatedUploadRoute
+  AuthenticatedPhotoIdRoute: typeof AuthenticatedPhotoIdRoute
   AuthenticatedProfileMeRoute: typeof AuthenticatedProfileMeRoute
 }
 
@@ -400,6 +400,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedUploadRoute: AuthenticatedUploadRoute,
+  AuthenticatedPhotoIdRoute: AuthenticatedPhotoIdRoute,
   AuthenticatedProfileMeRoute: AuthenticatedProfileMeRoute,
 }
 
@@ -415,10 +416,19 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TopRoute: TopRoute,
   TrendingRoute: TrendingRoute,
-  PhotoIdRoute: PhotoIdRoute,
   ProfileIdRoute: ProfileIdRoute,
   ApiPublicCronRankRoute: ApiPublicCronRankRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
