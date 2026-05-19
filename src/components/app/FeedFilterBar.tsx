@@ -113,9 +113,11 @@ export function FeedFilterBar({
                       }}
                       aria-label={`ดูภาพที่ได้ ${n} ดาว`}
                     >
-                      <span>
-                        {n}
-                        <span className="text-[var(--gold)]">★</span>
+                      <span className="inline-flex items-center gap-0.5">
+                        <span>{n}</span>
+                        <span className="text-[var(--gold)]" aria-hidden="true">
+                          {"★".repeat(n)}
+                        </span>
                       </span>
                     </Link>
                   </TooltipTrigger>
