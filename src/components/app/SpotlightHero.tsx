@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { Crown, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Crown, Sparkles, Star } from "lucide-react";
 import { getRankOnePhoto } from "@/lib/photos.functions";
 import { nextMilestoneProgress, THRESHOLDS_DAYS } from "@/lib/milestone";
 import { StarRow } from "./StarRow";
@@ -96,6 +96,16 @@ export function SpotlightHero() {
               </span>
             )}
             by {photo.profiles?.display_name ?? "Anonymous"}
+          </Link>
+
+          <Link
+            to="/photo/$id"
+            params={{ id: photo.id }}
+            className="group/cta inline-flex w-fit items-center gap-2 rounded-full bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-background shadow-lg shadow-[var(--gold)]/20 transition hover:brightness-110"
+            aria-label={`View details for ${photo.title}`}
+          >
+            View photo details
+            <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" />
           </Link>
 
           {/* Stats row */}
