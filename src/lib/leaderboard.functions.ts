@@ -96,3 +96,59 @@ export const getMemberLeaderboard = createServerFn({ method: "GET" })
       total: totalRanked,
     };
   });
+
+const MIN_VOTES = 10;
+
+export const getPhotoLeaderboard = createServerFn({ method: "GET" })
+  .inputValidator((d: { range?: Range; limit?: number; min_votes?: number }) => d)
+  .handler(async ({ data }) => {
+    const range: Range = data.range ?? "all";
+    const limit = Math.min(Math.max(data.limit ?? 50, 1), 100);
+    const minVotes = Math.max(data.min_votes ?? MIN_VOTES, 1);
+
+    let q = supabaseAdmin
+      .from("photos")
+      .select("id, title, image_url, user_id, avg_score, vote_count, created_at")
+      .eq("status", "active")
+      .gte("vote_count", minVotes);
+
+    if (range !== "all") {
+      const since = new Date(Date.now() - RANGE_MS[range]).toISOString();
+      q = q.gte("created_at", since);
+    }
+
+    const { data: rows, error } = await q
+      .order("avg_score", { ascending: false })
+      .order("vote_count", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+
+    const photos = rows ?? [];
+    if (photos.length === 0) {
+      return { entries: [], min_votes: minVotes };
+    }
+
+    const userIds = Array.from(new Set(photos.map((p: any) => p.user_id)));
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, avatar_url")
+      .in("id", userIds);
+    const pmap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+
+    const entries = photos.map((p: any, i: number) => {
+      const prof = pmap.get(p.user_id);
+      return {
+        rank: i + 1,
+        photo_id: p.id,
+        title: p.title,
+        image_url: p.image_url,
+        avg_score: Number(p.avg_score ?? 0),
+        vote_count: Number(p.vote_count ?? 0),
+        user_id: p.user_id,
+        display_name: prof?.display_name ?? "Unknown",
+        avatar_url: prof?.avatar_url ?? null,
+      };
+    });
+
+    return { entries, min_votes: minVotes };
+  });
