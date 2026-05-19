@@ -257,7 +257,7 @@ function PhotoLeaderboard({ range }: { range: Range }) {
   }, [query.hasNextPage, query.isFetchingNextPage, query.fetchNextPage]);
 
   if (query.isLoading) {
-    return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+    return <PhotoLeaderboardSkeleton count={8} />;
   }
   if (entries.length === 0) {
     return (
@@ -310,6 +310,7 @@ function PhotoLeaderboard({ range }: { range: Range }) {
       ))}
     </ol>
       <div ref={sentinelRef} />
+      {query.isFetchingNextPage && <PhotoLeaderboardSkeleton count={4} compact />}
       {query.hasNextPage ? (
         <div className="flex justify-center">
           <button
@@ -327,6 +328,38 @@ function PhotoLeaderboard({ range }: { range: Range }) {
         )
       )}
     </div>
+  );
+}
+
+function PhotoLeaderboardSkeleton({ count = 8, compact = false }: { count?: number; compact?: boolean }) {
+  return (
+    <ol
+      className={cn(
+        "overflow-hidden rounded-xl border border-border bg-card",
+        compact && "border-dashed",
+      )}
+      aria-busy="true"
+      aria-label="กำลังโหลดอันดับ"
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <li
+          key={i}
+          className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0"
+          style={{ animationDelay: `${i * 60}ms` }}
+        >
+          <div className="h-9 w-9 shrink-0 rounded-full shimmer" />
+          <div className="h-14 w-14 shrink-0 rounded-md shimmer" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-2/3 rounded shimmer" />
+            <div className="h-3 w-1/3 rounded shimmer" />
+          </div>
+          <div className="space-y-2 text-right">
+            <div className="ml-auto h-5 w-16 rounded shimmer" />
+            <div className="ml-auto h-3 w-12 rounded shimmer" />
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 
