@@ -52,9 +52,40 @@ describe("normalizeDistribution", () => {
     expect(result).toEqual([0, 0, 0, 0, 0]);
   });
 
-  it("floors decimal values to integers", () => {
+  it("floors decimal values to integers at every position", () => {
     const result = normalizeDistribution([1.9, 2.1, 3.5, 4.99, 0.1]);
     expect(result).toEqual([1, 2, 3, 4, 0]);
+    // verify each position individually
+    expect(result[0]).toBe(1);
+    expect(result[1]).toBe(2);
+    expect(result[2]).toBe(3);
+    expect(result[3]).toBe(4);
+    expect(result[4]).toBe(0);
+  });
+
+  it("floors large decimals at every position", () => {
+    const result = normalizeDistribution([99.9, 88.1, 77.5, 66.99, 55.01]);
+    expect(result).toEqual([99, 88, 77, 66, 55]);
+    expect(result[0]).toBe(99);
+    expect(result[1]).toBe(88);
+    expect(result[2]).toBe(77);
+    expect(result[3]).toBe(66);
+    expect(result[4]).toBe(55);
+  });
+
+  it("floors negative decimal toward zero (becomes 0)", () => {
+    const result = normalizeDistribution([-1.1, -2.9, -3.5, -0.1, -99.9]);
+    expect(result).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it("floors string decimals correctly", () => {
+    const result = normalizeDistribution(["1.9", "2.1", "3.5", "4.99", "0.1"]);
+    expect(result).toEqual([1, 2, 3, 4, 0]);
+    expect(result[0]).toBe(1);
+    expect(result[1]).toBe(2);
+    expect(result[2]).toBe(3);
+    expect(result[3]).toBe(4);
+    expect(result[4]).toBe(0);
   });
 
   it("handles a mixed bag of bad values correctly", () => {
