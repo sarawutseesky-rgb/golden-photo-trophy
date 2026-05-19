@@ -6,8 +6,8 @@ import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { castVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
+import { normalizeDistribution } from "@/lib/utils";
 import { StarRow } from "./StarRow";
-import { cn } from "@/lib/utils";
 
 export type FeedPhoto = {
   id: string;
