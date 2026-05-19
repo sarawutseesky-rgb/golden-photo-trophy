@@ -107,6 +107,51 @@ export const getRankOnePhoto = createServerFn({ method: "GET" })
     return { photo: top ?? null, held: false };
   });
 
+export const getTopTwoPhotos = createServerFn({ method: "GET" })
+  .handler(async () => {
+    // #1 — same selection rule as getRankOnePhoto.
+    const { data: held, error: heldErr } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_SELECT)
+      .eq("status", "active")
+      .not("rank_one_since", "is", null)
+      .order("rank_one_since", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (heldErr) throw new Error(heldErr.message);
+
+    let first = held ?? null;
+    const isHeld = !!held;
+    if (!first) {
+      const { data: top, error: topErr } = await supabaseAdmin
+        .from("photos")
+        .select(PHOTO_SELECT)
+        .eq("status", "active")
+        .gte("vote_count", 1)
+        .order("avg_score", { ascending: false })
+        .order("vote_count", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (topErr) throw new Error(topErr.message);
+      first = top ?? null;
+    }
+
+    // #2 — next top-rated active photo, excluding the #1 id.
+    let secondQuery = supabaseAdmin
+      .from("photos")
+      .select(PHOTO_SELECT)
+      .eq("status", "active")
+      .gte("vote_count", 1)
+      .order("avg_score", { ascending: false })
+      .order("vote_count", { ascending: false })
+      .limit(1);
+    if (first?.id) secondQuery = secondQuery.neq("id", first.id);
+    const { data: second, error: secondErr } = await secondQuery.maybeSingle();
+    if (secondErr) throw new Error(secondErr.message);
+
+    return { first, second: second ?? null, held: isHeld };
+  });
+
 export const getPhoto = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
