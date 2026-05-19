@@ -27,6 +27,22 @@ test.describe("Spotlight Hero — View photo details CTA", () => {
     const href = await cta.getAttribute("href");
     expect(href).toMatch(/^\/photo\/[^/?#]+/);
 
+    // The spotlight image itself also links to the photo detail page. Verify
+    // its /photo/<id> matches the CTA's id — i.e. the CTA points at exactly
+    // the photo currently shown in the hero, not some other one.
+    const imageLink = spotlight.getByRole("link", { name: /^spotlight:/i });
+    const imageHref = await imageLink.getAttribute("href");
+    expect(imageHref).toMatch(/^\/photo\/[^/?#]+/);
+    const idFromCta = href!.match(/^\/photo\/([^/?#]+)/)![1];
+    const idFromImage = imageHref!.match(/^\/photo\/([^/?#]+)/)![1];
+    expect(idFromCta).toBe(idFromImage);
+
+    // Title link inside the hero must also resolve to the same photo id.
+    const titleLink = spotlight.getByRole("heading", { level: 2 }).getByRole("link");
+    const titleHref = await titleLink.getAttribute("href");
+    const idFromTitle = titleHref!.match(/^\/photo\/([^/?#]+)/)![1];
+    expect(idFromTitle).toBe(idFromCta);
+
     await cta.click();
 
     // We should land on the photo detail route for that id.
