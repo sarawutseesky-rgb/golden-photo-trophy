@@ -1,7 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
-import { Star } from "lucide-react";
+import { Star, Link2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const VALID = ["1", "2", "3", "4", "5"] as const;
 type StarLevel = (typeof VALID)[number];
