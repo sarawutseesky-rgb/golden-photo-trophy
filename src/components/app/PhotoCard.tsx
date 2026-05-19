@@ -61,8 +61,8 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
 
     // Optimistic update on detail cache if present
     if (prevPhoto?.photo) {
-      const dist = [...(prevPhoto.distribution ?? [0, 0, 0, 0, 0])];
-      dist[score - 1] = (dist[score - 1] ?? 0) + 1;
+      const dist = normalizeDistribution(prevPhoto.distribution);
+      dist[score - 1] += 1;
       const newCount = dist.reduce((a: number, b: number) => a + b, 0);
       const sum = dist.reduce((acc: number, c: number, i: number) => acc + c * (i + 1), 0);
       const newAvg = newCount > 0 ? Number((sum / newCount).toFixed(2)) : 0;
