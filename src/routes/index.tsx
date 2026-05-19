@@ -21,7 +21,13 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "SEESTAR — Latest photos" },
-      { name: "description", content: "Newest photos from the SEESTAR community." },
+      { name: "description", content: "Browse the newest photos shared by the SEESTAR community — upload your own, vote 1–5 stars, and climb the leaderboard." },
+      { property: "og:title", content: "SEESTAR — Latest photos" },
+      { property: "og:description", content: "Browse the newest photos shared by the SEESTAR community — upload, vote 1–5 stars, and climb the leaderboard." },
+      { property: "og:url", content: "https://golden-photo-trophy.lovable.app/" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://golden-photo-trophy.lovable.app/" },
     ],
   }),
   component: HomePage,

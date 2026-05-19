@@ -9,7 +9,29 @@ import { useAuth } from "@/lib/auth-context";
 import { EmptyState } from "@/components/app/EmptyState";
 
 export const Route = createFileRoute("/profile/$id")({
-  head: () => ({ meta: [{ title: "Profile — SEESTAR" }] }),
+  head: ({ params }) => ({
+    meta: [
+      { title: "Member profile — SEESTAR" },
+      { name: "description", content: "View a SEESTAR member's profile, including their uploaded photos, milestone stars, and community ranking." },
+      { property: "og:title", content: "Member profile — SEESTAR" },
+      { property: "og:description", content: "View a SEESTAR member's uploaded photos, milestone stars, and community ranking." },
+      { property: "og:url", content: `https://golden-photo-trophy.lovable.app/profile/${params.id}` },
+      { property: "og:type", content: "profile" },
+    ],
+    links: [
+      { rel: "canonical", href: `https://golden-photo-trophy.lovable.app/profile/${params.id}` },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ProfilePage",
+          url: `https://golden-photo-trophy.lovable.app/profile/${params.id}`,
+        }),
+      },
+    ],
+  }),
   component: ProfilePage,
 });
 

@@ -26,6 +26,28 @@ export const Route = createFileRoute("/leaderboard")({
         content:
           "อันดับสมาชิกที่ได้รับโหวตมากที่สุด รายวัน รายสัปดาห์ รายเดือน รายปี และตลอดกาล",
       },
+      { property: "og:title", content: "Member Leaderboard — SEESTAR" },
+      {
+        property: "og:description",
+        content:
+          "อันดับสมาชิก SEESTAR ที่ได้รับโหวตมากที่สุด รายวัน รายสัปดาห์ รายเดือน รายปี และตลอดกาล",
+      },
+      { property: "og:url", content: "https://golden-photo-trophy.lovable.app/leaderboard" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://golden-photo-trophy.lovable.app/leaderboard" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Member Leaderboard",
+          url: "https://golden-photo-trophy.lovable.app/leaderboard",
+          description: "Top SEESTAR members ranked by votes received across day, week, month, year, and all-time.",
+        }),
+      },
     ],
   }),
   component: LeaderboardPage,

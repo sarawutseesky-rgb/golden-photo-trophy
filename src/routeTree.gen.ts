@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as TopRouteImport } from './routes/top'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -37,6 +38,11 @@ const TrendingRoute = TrendingRouteImport.update({
 const TopRoute = TopRouteImport.update({
   id: '/top',
   path: '/top',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/top': typeof TopRoute
   '/trending': typeof TrendingRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/top': typeof TopRoute
   '/trending': typeof TrendingRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/top': typeof TopRoute
   '/trending': typeof TrendingRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/signup'
+    | '/sitemap.xml'
     | '/top'
     | '/trending'
     | '/notifications'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/signup'
+    | '/sitemap.xml'
     | '/top'
     | '/trending'
     | '/notifications'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/signup'
+    | '/sitemap.xml'
     | '/top'
     | '/trending'
     | '/_authenticated/_admin'
@@ -255,6 +267,7 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TopRoute: typeof TopRoute
   TrendingRoute: typeof TrendingRoute
   ProfileIdRoute: typeof ProfileIdRoute
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/top'
       fullPath: '/top'
       preLoaderRoute: typeof TopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -455,6 +475,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TopRoute: TopRoute,
   TrendingRoute: TrendingRoute,
   ProfileIdRoute: ProfileIdRoute,

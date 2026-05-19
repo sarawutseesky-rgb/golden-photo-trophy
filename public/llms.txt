@@ -1,0 +1,11 @@
+# SEESTAR
+
+> A photo voting and star-ranking community where members upload photos, rate them 1–5 stars, and earn milestone stars by holding the #1 spot.
+
+## Pages
+
+- [Home](/): Latest photos from the SEESTAR community.
+- [Trending](/trending): Photos drawing the most votes right now.
+- [Top rated](/top): Highest-rated photos with at least 10 votes.
+- [Hall of Fame](/hall-of-fame): Photos that earned 3 or more milestone stars.
+- [Member Leaderboard](/leaderboard): Members ranked by votes received over day, week, month, year, and all-time.

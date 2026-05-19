@@ -5,7 +5,25 @@ export const Route = createFileRoute("/top")({
   head: () => ({
     meta: [
       { title: "Top rated — SEESTAR" },
-      { name: "description", content: "Highest-rated photos with at least 10 votes." },
+      { name: "description", content: "Discover the highest-rated photos on SEESTAR, sorted by average star score with a minimum of 10 community votes." },
+      { property: "og:title", content: "Top rated photos — SEESTAR" },
+      { property: "og:description", content: "Discover the highest-rated SEESTAR photos, sorted by average star score with at least 10 community votes." },
+      { property: "og:url", content: "https://golden-photo-trophy.lovable.app/top" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://golden-photo-trophy.lovable.app/top" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Top rated photos",
+          url: "https://golden-photo-trophy.lovable.app/top",
+          description: "Highest-rated SEESTAR photos with at least 10 votes.",
+        }),
+      },
     ],
   }),
   component: TopPage,
