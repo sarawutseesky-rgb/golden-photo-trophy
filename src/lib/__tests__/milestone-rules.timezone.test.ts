@@ -73,6 +73,53 @@ describe("decideMilestone — timezone of created_at must not change the result"
   });
 });
 
+describe("decideMilestone — naive (TZ-less) created_at locked to LOCAL-time parsing", () => {
+  // Production never sees naive strings (Postgres always returns with TZ),
+  // but we lock the runtime contract: a naive ISO MUST be parsed as local
+  // time, exactly like `new Date(s).getTime()`. If a future polyfill or
+  // runtime change silently treats naive ISO as UTC, these tests will fail
+  // and surface the regression before it reaches users.
+  const NAIVE = [
+    "2026-01-01T00:00:00",
+    "2026-01-01T00:00:00.000",
+    "2026-01-01T12:34:56",
+  ];
+
+  it("ageMs equals (now - new Date(naive).getTime()) for every naive string", () => {
+    const now = new Date("2026-06-01T00:00:00.000Z");
+    for (const s of NAIVE) {
+      const expected = now.getTime() - new Date(s).getTime();
+      const { ageMs } = decideMilestone(base(s), 0, now);
+      expect(ageMs).toBe(expected);
+    }
+  });
+
+  it("naive vs explicit-Z of the same wall clock differ by the runner's TZ offset", () => {
+    const naive = new Date("2026-01-01T00:00:00").getTime();
+    const utc = new Date("2026-01-01T00:00:00Z").getTime();
+    // Compare against the Intl-reported offset for that wall clock — this
+    // works on any CI TZ (UTC, Bangkok, NY, etc.) without hard-coding.
+    const expectedOffsetMs =
+      new Date("2026-01-01T00:00:00Z").getTimezoneOffset() * 60 * 1000;
+    // naive = wall-clock interpreted as local => UTC instant is shifted by +offset
+    expect(naive - utc).toBe(expectedOffsetMs);
+  });
+
+  it("tier decision on a naive string matches tier decision on its local-equivalent UTC string", () => {
+    const naive = "2026-01-01T00:00:00";
+    // Build the equivalent explicit-offset string for the runner's TZ so the
+    // two represent the same UTC instant.
+    const naiveInstant = new Date(naive).getTime();
+    const equivalentUtc = new Date(naiveInstant).toISOString();
+    const now = new Date(naiveInstant + 25 * HOUR);
+    const a = decideMilestone(base(naive), 0, now);
+    const b = decideMilestone(base(equivalentUtc), 0, now);
+    expect(a.ageMs).toBe(b.ageMs);
+    expect(a.qualifiedTier).toBe(b.qualifiedTier);
+    expect(a.newStars).toBe(b.newStars);
+  });
+});
+
 describe("nextMilestoneProgress (UI helper) — TZ-agnostic", () => {
   it("returns the same elapsedHours for every TZ string of the same instant", () => {
     // Freeze "now" to a known UTC instant via Date.now spy.
