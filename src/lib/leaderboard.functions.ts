@@ -100,10 +100,11 @@ export const getMemberLeaderboard = createServerFn({ method: "GET" })
 const MIN_VOTES = 10;
 
 export const getPhotoLeaderboard = createServerFn({ method: "GET" })
-  .inputValidator((d: { range?: Range; limit?: number; min_votes?: number }) => d)
+  .inputValidator((d: { range?: Range; limit?: number; offset?: number; min_votes?: number }) => d)
   .handler(async ({ data }) => {
     const range: Range = data.range ?? "all";
-    const limit = Math.min(Math.max(data.limit ?? 50, 1), 100);
+    const limit = Math.min(Math.max(data.limit ?? 24, 1), 100);
+    const offset = Math.max(data.offset ?? 0, 0);
     const minVotes = Math.max(data.min_votes ?? MIN_VOTES, 1);
 
     let q = supabaseAdmin
@@ -120,7 +121,7 @@ export const getPhotoLeaderboard = createServerFn({ method: "GET" })
     const { data: rows, error } = await q
       .order("avg_score", { ascending: false })
       .order("vote_count", { ascending: false })
-      .limit(limit);
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(error.message);
 
     const photos = rows ?? [];
@@ -138,7 +139,7 @@ export const getPhotoLeaderboard = createServerFn({ method: "GET" })
     const entries = photos.map((p: any, i: number) => {
       const prof = pmap.get(p.user_id);
       return {
-        rank: i + 1,
+        rank: offset + i + 1,
         photo_id: p.id,
         title: p.title,
         image_url: p.image_url,
