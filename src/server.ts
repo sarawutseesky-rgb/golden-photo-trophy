@@ -77,15 +77,52 @@ function renderDebugBufferPage(): string {
 h1{font:600 16px system-ui;margin:0 0 4px}.bar{color:#94a3b8;margin:0 0 16px}
 pre{background:#1e293b;border:1px solid #334155;padding:12px;border-radius:6px;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:8px 0}
 details{background:#1e293b;border:1px solid #334155;padding:8px 12px;border-radius:6px;margin-bottom:8px}
-summary{cursor:pointer}a{color:#fbbf24}</style></head><body>
+summary{cursor:pointer}a,button.linkish{color:#fbbf24;background:none;border:0;padding:0;font:inherit;cursor:pointer;text-decoration:underline}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:10px 16px;border-radius:6px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{border-color:#7f1d1d;color:#fecaca}</style></head><body>
 <h1>SSR error buffer (${entries.length})</h1>
 <div class="bar">
   <a href="?clear=1">clear</a> ·
+  <button type="button" class="linkish" onclick="copySsrJson()">copy JSON</button> ·
   <a href="?format=json">view JSON</a> ·
   <a href="?format=json&download=1">download JSON</a> ·
   <a href="?off=1">disable debug</a> ·
   <a href="/">home</a>
-</div>${rows}</body></html>`;
+</div>${rows}
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  function showToast(msg, isErr){
+    var t=document.getElementById('toast');
+    t.textContent=msg;t.className=isErr?'show err':'show';
+    clearTimeout(window.__ssrToastTimer);
+    window.__ssrToastTimer=setTimeout(function(){t.className=isErr?'err':''},2200);
+  }
+  async function fallbackCopy(text){
+    var ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);
+    ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(_){}
+    document.body.removeChild(ta);return ok;
+  }
+  window.copySsrJson=async function(){
+    try{
+      var res=await fetch('/__ssr-debug?format=json',{cache:'no-store'});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      var text=await res.text();
+      var count=0;try{count=JSON.parse(text).length}catch(_){}
+      if(navigator.clipboard&&window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+      }else{
+        var ok=await fallbackCopy(text);
+        if(!ok)throw new Error('clipboard unavailable');
+      }
+      showToast('คัดลอกแล้ว · '+count+' รายการ · '+text.length.toLocaleString()+' ตัวอักษร',false);
+    }catch(e){showToast('คัดลอกไม่สำเร็จ: '+(e&&e.message||e),true)}
+  };
+})();
+</script>
+</body></html>`;
 }
 
 function handleDebugRoute(request: Request): Response {
