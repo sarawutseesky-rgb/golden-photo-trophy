@@ -210,7 +210,7 @@ export const getAdjacentPhotos = createServerFn({ method: "GET" })
     // "next" in feed = older photo (feed is newest first)
     const { data: nextRow } = await supabaseAdmin
       .from("photos")
-      .select("id, title")
+      .select("id, title, image_url")
       .eq("status", "active")
       .lt("created_at", cur.created_at)
       .order("created_at", { ascending: false })
@@ -219,7 +219,7 @@ export const getAdjacentPhotos = createServerFn({ method: "GET" })
 
     const { data: prevRow } = await supabaseAdmin
       .from("photos")
-      .select("id, title")
+      .select("id, title, image_url")
       .eq("status", "active")
       .gt("created_at", cur.created_at)
       .order("created_at", { ascending: true })
