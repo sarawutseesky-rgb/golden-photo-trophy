@@ -573,6 +573,12 @@ function PhotoDetail() {
             <span className="text-3xl font-bold">{Number(p.avg_score).toFixed(1)}</span>
             <span className="text-sm text-muted-foreground">/ 5 · {p.vote_count} votes</span>
           </div>
+          <div
+            className="mt-1"
+            aria-label={`คะแนนเฉลี่ย ${Number(p.avg_score).toFixed(1)} จาก 5 ดาว`}
+          >
+            <StarRow count={Math.round(Number(p.avg_score))} size={18} />
+          </div>
 
           <div
             className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-xs text-muted-foreground"
