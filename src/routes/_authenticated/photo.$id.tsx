@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { Star, Share2, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, getAdjacentPhotos, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
@@ -82,6 +82,7 @@ function PhotoDetail() {
   const [editTags, setEditTags] = useState("");
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [debugLog, setDebugLog] = useState<
     Array<{ t: number; action: string; avg: number; count: number; latencyMs?: number }>
   >([]);
@@ -126,6 +127,10 @@ function PhotoDetail() {
   }, [id, bumpView]);
 
   useEffect(() => {
+    setSwitching(false);
+  }, [id]);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
       const t = e.target as HTMLElement | null;
@@ -133,9 +138,11 @@ function PhotoDetail() {
       if (lightboxOpen || editOpen) return;
       if (e.key === "ArrowLeft" && adjacent?.prev) {
         e.preventDefault();
+        setSwitching(true);
         navigate({ to: "/photo/$id", params: { id: adjacent.prev.id } });
       } else if (e.key === "ArrowRight" && adjacent?.next) {
         e.preventDefault();
+        setSwitching(true);
         navigate({ to: "/photo/$id", params: { id: adjacent.next.id } });
       }
     };
@@ -367,6 +374,7 @@ function PhotoDetail() {
             <Link
               to="/photo/$id"
               params={{ id: adjacent.prev.id }}
+              onClick={() => setSwitching(true)}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
               aria-label={`ภาพก่อนหน้า: ${adjacent.prev.title ?? ""}`}
             >
@@ -381,6 +389,7 @@ function PhotoDetail() {
             <Link
               to="/photo/$id"
               params={{ id: adjacent.next.id }}
+              onClick={() => setSwitching(true)}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
               aria-label={`ภาพถัดไป: ${adjacent.next.title ?? ""}`}
             >
@@ -404,8 +413,17 @@ function PhotoDetail() {
           <img
             src={p.image_url}
             alt={p.title}
-            className="block h-auto max-h-[85vh] w-auto max-w-full object-contain transition group-hover:opacity-95"
+            className={cn(
+              "block h-auto max-h-[85vh] w-auto max-w-full object-contain transition group-hover:opacity-95",
+              switching && "opacity-40 blur-sm",
+            )}
           />
+          {switching && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
+              <span className="text-sm font-medium text-foreground/90">กำลังโหลดภาพถัดไป…</span>
+            </div>
+          )}
           <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-background/70 px-2 py-1 text-[10px] uppercase tracking-wide text-foreground/80 opacity-0 backdrop-blur transition group-hover:opacity-100">
             คลิกเพื่อขยาย
           </span>
