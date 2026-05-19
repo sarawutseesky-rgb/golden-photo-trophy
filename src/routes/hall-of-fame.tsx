@@ -5,7 +5,25 @@ export const Route = createFileRoute("/hall-of-fame")({
   head: () => ({
     meta: [
       { title: "Hall of Fame — SEESTAR" },
-      { name: "description", content: "Photos that earned three or more milestone stars." },
+      { name: "description", content: "Celebrating SEESTAR photos that earned three or more milestone stars by repeatedly holding the #1 spot." },
+      { property: "og:title", content: "Hall of Fame — SEESTAR" },
+      { property: "og:description", content: "Celebrating SEESTAR photos that earned three or more milestone stars by repeatedly holding the #1 spot." },
+      { property: "og:url", content: "https://golden-photo-trophy.lovable.app/hall-of-fame" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://golden-photo-trophy.lovable.app/hall-of-fame" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Hall of Fame",
+          url: "https://golden-photo-trophy.lovable.app/hall-of-fame",
+          description: "SEESTAR photos that earned three or more milestone stars.",
+        }),
+      },
     ],
   }),
   component: HoFPage,
