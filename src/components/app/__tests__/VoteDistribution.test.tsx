@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "vitest";
+import { render, screen, within, cleanup } from "@testing-library/react";
 import { VoteDistribution } from "@/components/app/VoteDistribution";
 import { computeDistribution } from "@/lib/votes.helpers";
 
@@ -24,6 +24,8 @@ function percentFor(star: 1 | 2 | 3 | 4 | 5): number {
     screen.getByTestId(`vote-dist-bar-${star}`).getAttribute("data-percent") ?? "0",
   );
 }
+
+afterEach(() => cleanup());
 
 describe("<VoteDistribution /> — UI reflects multi-user voting", () => {
   it("renders all five rows with zero counts when no one has voted", () => {
