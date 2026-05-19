@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { Star, Share2, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, getAdjacentPhotos, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
@@ -82,6 +82,7 @@ function PhotoDetail() {
   const [editTags, setEditTags] = useState("");
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [debugLog, setDebugLog] = useState<
     Array<{ t: number; action: string; avg: number; count: number; latencyMs?: number }>
   >([]);
