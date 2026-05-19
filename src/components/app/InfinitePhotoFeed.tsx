@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listFeed } from "@/lib/photos.functions";
 import { PhotoCard, type FeedPhoto } from "./PhotoCard";
 import { PhotoGridSkeleton } from "./PhotoGrid";
+import { EmptyState } from "./EmptyState";
 
 const PAGE_SIZE = 24;
 
@@ -18,10 +19,12 @@ export function InfinitePhotoFeed({
   queryKey,
   params,
   enabled = true,
+  emptyState,
 }: {
   queryKey: unknown[];
   params: FeedParams;
   enabled?: boolean;
+  emptyState?: ReactNode;
 }) {
   const fn = useServerFn(listFeed);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -59,10 +62,16 @@ export function InfinitePhotoFeed({
   const photos: FeedPhoto[] = (query.data?.pages ?? []).flatMap((p) => p?.photos ?? []);
 
   if (photos.length === 0) {
+    if (emptyState) return <>{emptyState}</>;
     return (
-      <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-border text-muted-foreground">
-        No photos yet — be the first to upload ✨
-      </div>
+      <EmptyState
+        variant="upload"
+        title="ยังไม่มีรูปในฟีดนี้"
+        description="เป็นคนแรกที่อัปโหลด แล้วให้ชุมชนได้โหวตให้คะแนน"
+        actions={[
+          { kind: "link", to: "/upload", label: "อัปโหลดรูปแรกของคุณ", primary: true },
+        ]}
+      />
     );
   }
 
