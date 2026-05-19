@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,6 +32,37 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
   const [hover, setHover] = useState<number | null>(null);
   const [myScore, setMyScore] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const quickRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const focusQuick = (idx: number) => {
+    const clamped = Math.max(0, Math.min(4, idx));
+    const btn = quickRefs.current[clamped];
+    if (btn) {
+      btn.focus();
+      if (!hasVoted) setHover(clamped + 1);
+    }
+  };
+
+  const handleQuickKey = (e: React.KeyboardEvent<HTMLButtonElement>, n: number) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      focusQuick(n); // n is 1-based, so n -> index n
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      focusQuick(n - 2);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusQuick(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusQuick(4);
+    } else if (/^[1-5]$/.test(e.key)) {
+      e.preventDefault();
+      const score = Number(e.key);
+      setHover(score);
+      handleVote(score);
+    }
+  };
 
   const isOwner = !!user && photo.user_id === user.id;
   const hasVoted = myScore != null;
@@ -174,10 +205,12 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
               return (
                 <button
                   key={`quick-${n}`}
+                  ref={(el) => { quickRefs.current[n - 1] = el; }}
                   type="button"
                   disabled={hasVoted || busy || isOwner}
                   onMouseEnter={() => !hasVoted && setHover(n)}
                   onFocus={() => !hasVoted && setHover(n)}
+                  onKeyDown={(e) => handleQuickKey(e, n)}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
