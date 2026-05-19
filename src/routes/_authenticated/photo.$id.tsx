@@ -3,9 +3,9 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X, Eye } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { getPhoto, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
+import { getPhoto, getAdjacentPhotos, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
 import { incrementPhotoView } from "@/lib/follows.functions";
 import { useAuth } from "@/lib/auth-context";
@@ -42,6 +42,7 @@ function PhotoDetail() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const fetchPhoto = useServerFn(getPhoto);
+  const fetchAdjacent = useServerFn(getAdjacentPhotos);
   const fetchVote = useServerFn(getMyVote);
   const vote = useServerFn(castVote);
   const unvote = useServerFn(removeVote);
@@ -52,6 +53,10 @@ function PhotoDetail() {
   const bumpView = useServerFn(incrementPhotoView);
 
   const { data, isLoading } = useQuery({ queryKey: ["photo", id], queryFn: () => fetchPhoto({ data: { id } }) });
+  const { data: adjacent } = useQuery({
+    queryKey: ["photo-adjacent", id],
+    queryFn: () => fetchAdjacent({ data: { id } }),
+  });
   const { data: myVote } = useQuery({
     queryKey: ["my-vote", id, user?.id],
     queryFn: async () => {
@@ -327,17 +332,49 @@ function PhotoDetail() {
 
   return (
     <div className="space-y-4">
-      <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          กลับไปหน้า Feed
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-foreground">{p.title}</span>
-      </nav>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <nav aria-label="Breadcrumb">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            กลับไปหน้า Feed
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-foreground">{p.title}</span>
+        </nav>
+        <div className="flex items-center gap-1.5">
+          {adjacent?.prev ? (
+            <Link
+              to="/photo/$id"
+              params={{ id: adjacent.prev.id }}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
+              aria-label={`ภาพก่อนหน้า: ${adjacent.prev.title ?? ""}`}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> ก่อนหน้า
+            </Link>
+          ) : (
+            <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-border/50 px-2.5 py-1 text-xs opacity-50">
+              <ArrowLeft className="h-3.5 w-3.5" /> ก่อนหน้า
+            </span>
+          )}
+          {adjacent?.next ? (
+            <Link
+              to="/photo/$id"
+              params={{ id: adjacent.next.id }}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-muted"
+              aria-label={`ภาพถัดไป: ${adjacent.next.title ?? ""}`}
+            >
+              ถัดไป <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : (
+            <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-border/50 px-2.5 py-1 text-xs opacity-50">
+              ถัดไป <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          )}
+        </div>
+      </div>
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">
         <div className="space-y-4">
         <button

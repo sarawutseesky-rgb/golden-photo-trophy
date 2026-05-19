@@ -197,6 +197,38 @@ export const getPhoto = createServerFn({ method: "GET" })
     return { photo, distribution, comments: comments ?? [] };
   });
 
+export const getAdjacentPhotos = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const { data: cur } = await supabaseAdmin
+      .from("photos")
+      .select("id, created_at")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!cur) return { prev: null, next: null };
+
+    // "next" in feed = older photo (feed is newest first)
+    const { data: nextRow } = await supabaseAdmin
+      .from("photos")
+      .select("id, title")
+      .eq("status", "active")
+      .lt("created_at", cur.created_at)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data: prevRow } = await supabaseAdmin
+      .from("photos")
+      .select("id, title")
+      .eq("status", "active")
+      .gt("created_at", cur.created_at)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    return { prev: prevRow ?? null, next: nextRow ?? null };
+  });
+
 export const getUserProfile = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
