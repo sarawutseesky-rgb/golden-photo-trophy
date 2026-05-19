@@ -5,7 +5,25 @@ export const Route = createFileRoute("/trending")({
   head: () => ({
     meta: [
       { title: "Trending — SEESTAR" },
-      { name: "description", content: "Photos with the most engagement right now." },
+      { name: "description", content: "See which SEESTAR photos are drawing the most votes and engagement right now — refreshed continuously across the community." },
+      { property: "og:title", content: "Trending photos — SEESTAR" },
+      { property: "og:description", content: "See which SEESTAR photos are drawing the most votes and engagement right now across the community." },
+      { property: "og:url", content: "https://golden-photo-trophy.lovable.app/trending" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://golden-photo-trophy.lovable.app/trending" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Trending photos",
+          url: "https://golden-photo-trophy.lovable.app/trending",
+          description: "SEESTAR photos with the most engagement right now.",
+        }),
+      },
     ],
   }),
   component: TrendingPage,
