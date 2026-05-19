@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
 import { createPhoto, getUploadQuota } from "@/lib/photos.functions";
 import { compressImage, getImageDims } from "@/lib/image-compress";
 import { supabase } from "@/integrations/supabase/client";
+import { ImagePlus, UploadCloud, X, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/upload")({
   head: () => ({ meta: [{ title: "Upload — SEESTAR" }] }),
@@ -25,6 +26,8 @@ function UploadPage() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchQuota().then(setQuota).catch(() => {});
@@ -76,63 +79,189 @@ function UploadPage() {
   };
 
   const remaining = quota ? Math.max(0, quota.limit - quota.used) : null;
+  const tagsArr = useMemo(
+    () => tags.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 8),
+    [tags],
+  );
+  const canSubmit = !!file && !!title.trim() && !busy;
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Upload a photo</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {remaining !== null ? `${remaining}/${quota!.limit} uploads left this month` : "Loading quota…"}
-        </p>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-8 pb-16">
+      {/* Header */}
+      <header className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-background p-6 sm:p-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full opacity-30 blur-3xl"
+          style={{ background: "radial-gradient(circle, var(--gold-glow), transparent 60%)" }}
+        />
+        <div className="flex items-start gap-4">
+          <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--gold)_40%,transparent)] bg-[color-mix(in_oklab,var(--gold)_12%,transparent)] sm:flex">
+            <Sparkles className="h-6 w-6 text-[var(--gold)]" />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">อัปโหลดรูปของคุณ</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              แชร์ผลงานเพื่อรับโหวตและไต่อันดับลีดเดอร์บอร์ด
+            </p>
+            {quota && (
+              <div className="mt-4 max-w-xs">
+                <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>โควต้าเดือนนี้</span>
+                  <span className="font-medium text-foreground">{quota.used}/{quota.limit}</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[var(--gold)] to-[var(--gold-glow)] transition-all"
+                    style={{ width: `${Math.min(100, (quota.used / quota.limit) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
       {remaining === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
-          You've used all 3 uploads this month. Come back next month!
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <p className="text-base font-medium">โควต้าครบแล้ว</p>
+          <p className="mt-1 text-sm text-muted-foreground">คุณใช้สิทธิ์อัปโหลดครบ {quota!.limit} รูปในเดือนนี้แล้ว แล้วพบกันใหม่เดือนหน้า</p>
         </div>
       ) : (
-        <form onSubmit={onSubmit} className="space-y-4">
-          <label className="block">
-            <span className="text-sm text-muted-foreground">Photo (JPG/PNG/WEBP, max 10MB)</span>
+        <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
+          {/* Dropzone */}
+          <div className="lg:col-span-3">
             <input
+              ref={inputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
               required
               onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-              className="mt-1 block w-full text-sm"
+              className="sr-only"
             />
-          </label>
-          {preview && (
-            <img src={preview} alt="" className="max-h-72 w-full rounded-lg object-contain border border-border" />
-          )}
-          <input
-            required
-            maxLength={120}
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-          <textarea
-            maxLength={1000}
-            placeholder="Description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-          <input
-            placeholder="Tags, comma-separated (max 8)"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={busy || !file}
-            className="w-full rounded-md bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-          >
-            {busy ? "Uploading…" : "Publish"}
-          </button>
+            {!preview ? (
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  onFile(e.dataTransfer.files?.[0] ?? null);
+                }}
+                className={`group flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed bg-card/40 p-8 text-center transition-all ${
+                  dragOver
+                    ? "border-[var(--gold)] bg-[color-mix(in_oklab,var(--gold)_8%,transparent)] scale-[1.01]"
+                    : "border-border hover:border-[var(--gold)]/60 hover:bg-card/70"
+                }`}
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--gold)_15%,transparent)] text-[var(--gold)] transition-transform group-hover:scale-110">
+                  <UploadCloud className="h-7 w-7" />
+                </div>
+                <div>
+                  <p className="text-base font-medium">ลากรูปมาวาง หรือคลิกเพื่อเลือก</p>
+                  <p className="mt-1 text-xs text-muted-foreground">JPG · PNG · WEBP — ไม่เกิน 10MB</p>
+                </div>
+              </button>
+            ) : (
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-black/40">
+                <img src={preview} alt="" className="aspect-[4/3] w-full object-contain" />
+                <div className="absolute right-3 top-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    className="flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1.5 text-xs font-medium backdrop-blur transition hover:bg-background"
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" /> เปลี่ยน
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setFile(null); setPreview(null); }}
+                    className="flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1.5 text-xs font-medium backdrop-blur transition hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" /> ลบ
+                  </button>
+                </div>
+                <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1.5 text-xs backdrop-blur">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[var(--gold)]" />
+                  พร้อมอัปโหลด · {(file!.size / 1024 / 1024).toFixed(2)} MB
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Fields */}
+          <div className="space-y-5 lg:col-span-2">
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="title" className="text-sm font-medium">ชื่อรูป</label>
+                <span className="text-[10px] text-muted-foreground">{title.length}/120</span>
+              </div>
+              <input
+                id="title"
+                required
+                maxLength={120}
+                placeholder="เช่น พระอาทิตย์ตกที่ภูเก็ต"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm transition focus:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30"
+              />
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="desc" className="text-sm font-medium">คำอธิบาย <span className="text-muted-foreground font-normal">(ไม่บังคับ)</span></label>
+                <span className="text-[10px] text-muted-foreground">{description.length}/1000</span>
+              </div>
+              <textarea
+                id="desc"
+                maxLength={1000}
+                placeholder="เล่าเรื่องราวเบื้องหลังภาพนี้…"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="w-full resize-none rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm transition focus:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30"
+              />
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="tags" className="text-sm font-medium">แท็ก</label>
+                <span className="text-[10px] text-muted-foreground">{tagsArr.length}/8</span>
+              </div>
+              <input
+                id="tags"
+                placeholder="ทะเล, พระอาทิตย์, ภูเก็ต"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm transition focus:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/30"
+              />
+              {tagsArr.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {tagsArr.map((t) => (
+                    <span key={t} className="rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-xs">
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-[var(--gold)] to-[var(--gold-glow)] py-3 text-sm font-semibold text-background shadow-lg shadow-[var(--gold)]/20 transition disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:shadow-xl enabled:hover:shadow-[var(--gold)]/30 enabled:active:scale-[0.99]"
+            >
+              {busy ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> กำลังอัปโหลด…</>
+              ) : (
+                <><UploadCloud className="h-4 w-4" /> เผยแพร่</>
+              )}
+            </button>
+            <p className="text-center text-[11px] text-muted-foreground">
+              เมื่อเผยแพร่แล้วถือว่าคุณยอมรับข้อตกลงในการแชร์ภาพ
+            </p>
+          </div>
         </form>
       )}
     </div>
