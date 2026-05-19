@@ -24,7 +24,7 @@ function fallbackOnSchemaCache<T>(error: unknown, fallback: T): T {
 }
 
 async function attachPhotoProfiles<T extends { user_id: string | null }>(photos: T[]) {
-  const userIds = Array.from(new Set(photos.map((photo) => photo.user_id).filter(Boolean)));
+  const userIds = Array.from(new Set(photos.map((photo) => photo.user_id).filter((id): id is string => Boolean(id))));
 
   if (userIds.length === 0) {
     return photos.map((photo) => ({ ...photo, profiles: null }));
@@ -35,7 +35,7 @@ async function attachPhotoProfiles<T extends { user_id: string | null }>(photos:
     .select("id, display_name, avatar_url")
     .in("id", userIds);
 
-  if (error) throw new Error(error.message);
+  if (error) return fallbackOnSchemaCache(error, photos.map((photo) => ({ ...photo, profiles: null })));
 
   const profileMap = new Map((profiles ?? []).map((profile: any) => [profile.id, profile]));
   return photos.map((photo) => ({ ...photo, profiles: photo.user_id ? (profileMap.get(photo.user_id) ?? null) : null }));
