@@ -59,22 +59,10 @@ describe("<VoteDistribution /> — UI reflects multi-user voting", () => {
   it("aria-label on each row announces star count and vote count", () => {
     const dist = computeDistribution([5, 5, 4, 1]);
     render(<VoteDistribution distribution={dist} />);
-    expect(screen.getByTestId("vote-dist-row-5")).toHaveAttribute(
-      "aria-label",
-      "5 ดาว: 2 โหวต",
-    );
-    expect(screen.getByTestId("vote-dist-row-4")).toHaveAttribute(
-      "aria-label",
-      "4 ดาว: 1 โหวต",
-    );
-    expect(screen.getByTestId("vote-dist-row-1")).toHaveAttribute(
-      "aria-label",
-      "1 ดาว: 1 โหวต",
-    );
-    expect(screen.getByTestId("vote-dist-row-3")).toHaveAttribute(
-      "aria-label",
-      "3 ดาว: 0 โหวต",
-    );
+    expect(screen.getByTestId("vote-dist-row-5").getAttribute("aria-label")).toBe("5 ดาว: 2 โหวต");
+    expect(screen.getByTestId("vote-dist-row-4").getAttribute("aria-label")).toBe("4 ดาว: 1 โหวต");
+    expect(screen.getByTestId("vote-dist-row-1").getAttribute("aria-label")).toBe("1 ดาว: 1 โหวต");
+    expect(screen.getByTestId("vote-dist-row-3").getAttribute("aria-label")).toBe("3 ดาว: 0 โหวต");
   });
 
   it("re-renders correctly when a new vote arrives (optimistic update)", () => {
