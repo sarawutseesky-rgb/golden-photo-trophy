@@ -127,6 +127,10 @@ function PhotoDetail() {
   }, [id, bumpView]);
 
   useEffect(() => {
+    setSwitching(false);
+  }, [id]);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
       const t = e.target as HTMLElement | null;
@@ -134,9 +138,11 @@ function PhotoDetail() {
       if (lightboxOpen || editOpen) return;
       if (e.key === "ArrowLeft" && adjacent?.prev) {
         e.preventDefault();
+        setSwitching(true);
         navigate({ to: "/photo/$id", params: { id: adjacent.prev.id } });
       } else if (e.key === "ArrowRight" && adjacent?.next) {
         e.preventDefault();
+        setSwitching(true);
         navigate({ to: "/photo/$id", params: { id: adjacent.next.id } });
       }
     };
