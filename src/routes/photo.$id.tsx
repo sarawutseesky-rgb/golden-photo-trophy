@@ -103,13 +103,19 @@ function PhotoDetail() {
   const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
 
   const handleVote = async (score: number) => {
-    if (!user) return toast.error("Sign in to vote");
+    if (!user || busy) return;
+    if (isOwner) return toast.error("โหวตรูปตัวเองไม่ได้");
     const photoKey = ["photo", id];
     const voteKey = ["my-vote", id, user.id];
     const prevPhoto = qc.getQueryData<any>(photoKey);
     const prevVote = qc.getQueryData<any>(voteKey);
-    // Optimistic update — apply new vote to cached aggregates
+    const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
+
+    setBusy(true);
+    // Optimistic update — vote cache
     qc.setQueryData(voteKey, { score });
+
+    // Optimistic update — detail cache
     if (prevPhoto?.photo) {
       const dist = [...prevPhoto.distribution];
       const oldScore = prevVote?.score as number | null | undefined;
@@ -125,10 +131,27 @@ function PhotoDetail() {
       });
       if (debug) logDebug(`vote ${score}★ (optimistic)`, newAvg, newCount);
     }
+
+    // Optimistic update — feed caches
+    qc.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
+      if (!old?.photos) return old;
+      return {
+        ...old,
+        photos: old.photos.map((ph: any) => {
+          if (ph.id !== id) return ph;
+          const oldCount = ph.vote_count ?? 0;
+          const oldAvg = Number(ph.avg_score ?? 0);
+          const newCount = oldCount + 1;
+          const newAvg = newCount > 0 ? Number(((oldAvg * oldCount + score) / newCount).toFixed(2)) : 0;
+          return { ...ph, vote_count: newCount, avg_score: newAvg };
+        }),
+      };
+    });
+
     const t0 = performance.now();
     try {
       await vote({ data: { photo_id: id, score } });
-      toast.success(`You rated ${score}★`);
+      toast.success(`ให้ ${score}★ แล้ว`);
       qc.invalidateQueries({ queryKey: photoKey });
       qc.invalidateQueries({ queryKey: voteKey });
       if (debug) {
@@ -144,8 +167,11 @@ function PhotoDetail() {
       // Roll back optimistic update on failure
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
-      toast.error(e.message);
+      prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error(e.message ?? "โหวตไม่สำเร็จ");
       if (debug) logDebug(`vote ${score}★ (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
+    } finally {
+      setBusy(false);
     }
   };
 
