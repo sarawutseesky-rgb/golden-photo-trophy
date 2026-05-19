@@ -118,8 +118,7 @@ function PhotoDetail() {
 
     // Optimistic update — detail cache
     if (prevPhoto?.photo) {
-      const base = Array.isArray(prevPhoto.distribution) ? prevPhoto.distribution : [];
-      const dist = [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
+      const dist = normalizeDistribution(prevPhoto.distribution);
       const oldScore = prevVote?.score as number | null | undefined;
       if (oldScore && oldScore >= 1 && oldScore <= 5) dist[oldScore - 1] = Math.max(0, dist[oldScore - 1] - 1);
       dist[score - 1] += 1;
