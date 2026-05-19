@@ -41,6 +41,8 @@ export function FeedFilterBar({
   const { data } = useQuery({ queryKey: ["popular-tags"], queryFn: () => tagsFn() });
   const tags = data?.tags ?? [];
 
+  const isDefault = tab === "latest" && sort === "new" && !tag;
+
   return (
     <div className="sticky top-[57px] z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:-mx-6 md:px-6">
       <div className="flex flex-col gap-3">
@@ -75,29 +77,43 @@ export function FeedFilterBar({
             })}
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted",
-              )}
-              aria-label="Sort"
-            >
-              <span className="hidden text-muted-foreground sm:inline">Sort:</span>
-              <span>{SORT_LABELS[sort]}</span>
-              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[180px]">
-              {(Object.keys(SORT_LABELS) as FeedSort[]).map((s) => (
-                <DropdownMenuItem
-                  key={s}
-                  onClick={() => navigate({ search: (prev: any) => ({ ...prev, sort: s }) })}
-                  className={cn(s === sort && "font-semibold text-[var(--gold)]")}
-                >
-                  {SORT_LABELS[s]}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex shrink-0 items-center gap-2">
+            {!isDefault && (
+              <Link
+                to="/"
+                search={{ tab: "latest", sort: "new" }}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                aria-label="Reset filters"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Reset</span>
+              </Link>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted",
+                )}
+                aria-label="Sort"
+              >
+                <span className="hidden text-muted-foreground sm:inline">Sort:</span>
+                <span>{SORT_LABELS[sort]}</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                {(Object.keys(SORT_LABELS) as FeedSort[]).map((s) => (
+                  <DropdownMenuItem
+                    key={s}
+                    onClick={() => navigate({ search: (prev: any) => ({ ...prev, sort: s }) })}
+                    className={cn(s === sort && "font-semibold text-[var(--gold)]")}
+                  >
+                    {SORT_LABELS[s]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Tag chips */}
