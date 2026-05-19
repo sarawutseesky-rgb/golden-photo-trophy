@@ -9,7 +9,7 @@ export function PhotoGrid({ photos }: { photos: FeedPhoto[] }) {
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 xl:columns-5 [&>*]:mb-4">
       {photos.map((p) => (
         <PhotoCard key={p.id} photo={p} />
       ))}
