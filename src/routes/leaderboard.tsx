@@ -162,3 +162,60 @@ function RankBadge({ rank }: { rank: number }) {
     </div>
   );
 }
+
+function MyRankPanel({
+  me,
+  total,
+  highlighted,
+}: {
+  me: any | null;
+  total: number;
+  highlighted: boolean;
+}) {
+  if (!me) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground">
+        คุณยังไม่ติดอันดับในช่วงนี้ — อัปโหลดรูปและรับโหวตเพื่อขึ้นบอร์ด
+      </div>
+    );
+  }
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-4 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-4 py-3",
+        highlighted && "ring-1 ring-[var(--gold)]/40",
+      )}
+    >
+      <RankBadge rank={me.rank} />
+      <div className="flex flex-1 items-center gap-3 min-w-0">
+        {me.avatar_url ? (
+          <img
+            src={me.avatar_url}
+            alt={me.display_name}
+            className="h-10 w-10 rounded-full object-cover ring-1 ring-border"
+          />
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
+            {me.display_name?.charAt(0)?.toUpperCase() || "?"}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold">
+            อันดับของคุณ · {me.display_name}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            อันดับ {me.rank} จาก {total} · {me.total_photos} รูป · เฉลี่ย {me.avg_score.toFixed(2)}★
+          </div>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className="text-lg font-bold tabular-nums">
+          {me.total_votes.toLocaleString()}
+        </div>
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          votes
+        </div>
+      </div>
+    </div>
+  );
+}
