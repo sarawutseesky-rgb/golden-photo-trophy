@@ -53,6 +53,27 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -108,6 +129,7 @@ export type Database = {
           tags: string[]
           title: string
           user_id: string
+          view_count: number
           vote_count: number
           width: number | null
         }
@@ -127,6 +149,7 @@ export type Database = {
           tags?: string[]
           title: string
           user_id: string
+          view_count?: number
           vote_count?: number
           width?: number | null
         }
@@ -146,6 +169,7 @@ export type Database = {
           tags?: string[]
           title?: string
           user_id?: string
+          view_count?: number
           vote_count?: number
           width?: number | null
         }
@@ -283,6 +307,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_photo_view: { Args: { _photo_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
