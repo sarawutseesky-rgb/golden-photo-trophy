@@ -6,6 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { unreadCount } from "@/lib/notifications.functions";
 import { checkAdmin } from "@/lib/profile.functions";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { CommandPalette, SearchTrigger, useCommandPalette } from "@/components/app/CommandPalette";
+import { Search } from "lucide-react";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -14,6 +16,7 @@ export function Header() {
   const checkAdminFn = useServerFn(checkAdmin);
   const [count, setCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+  const palette = useCommandPalette();
 
   useEffect(() => {
     if (!user) return;
@@ -70,6 +73,15 @@ export function Header() {
           )}
         </nav>
         <div className="flex items-center gap-2">
+          <SearchTrigger onOpen={() => palette.setOpen(true)} />
+          <button
+            type="button"
+            onClick={() => palette.setOpen(true)}
+            aria-label="Search"
+            className="rounded-md p-2 hover:bg-muted sm:hidden"
+          >
+            <Search className="h-4 w-4" />
+          </button>
           {user ? (
             <>
               <Link
@@ -115,6 +127,7 @@ export function Header() {
           )}
         </div>
       </div>
+      <CommandPalette open={palette.open} setOpen={palette.setOpen} />
     </header>
   );
 }
