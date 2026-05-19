@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { usePhotosRealtime } from "@/hooks/use-photos-realtime";
+import { installStaleBundleGuard } from "@/lib/stale-bundle-guard";
 
 function NotFoundComponent() {
   return (
@@ -148,6 +149,7 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    installStaleBundleGuard();
     const { data: sub } = supabase.auth.onAuthStateChange(() => {
       router.invalidate();
       queryClient.invalidateQueries();
