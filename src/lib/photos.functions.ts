@@ -79,6 +79,20 @@ export const getPopularTags = createServerFn({ method: "GET" })
     return { tags };
   });
 
+export const getRankOnePhoto = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_SELECT)
+      .eq("status", "active")
+      .not("rank_one_since", "is", null)
+      .order("rank_one_since", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { photo: data ?? null };
+  });
+
 export const getPhoto = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
