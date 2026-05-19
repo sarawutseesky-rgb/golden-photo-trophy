@@ -297,7 +297,7 @@ function PhotoLeaderboard({ range }: { range: Range }) {
               </div>
             </div>
           </Link>
-          <div className="text-right">
+          <div className="w-[72px] text-right">
             <div className="flex items-center justify-end gap-1 text-lg font-bold tabular-nums text-[var(--gold)]">
               {e.avg_score.toFixed(2)}
               <Star className="h-4 w-4 fill-current" />
