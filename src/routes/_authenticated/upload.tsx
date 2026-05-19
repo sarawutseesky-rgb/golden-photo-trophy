@@ -106,7 +106,7 @@ function UploadPage() {
             {quota && (
               <div className="mt-4 max-w-xs">
                 <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>โควต้าเดือนนี้</span>
+                  <span>โควต้าวันนี้</span>
                   <span className="font-medium text-foreground">{quota.used}/{quota.limit}</span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -124,7 +124,7 @@ function UploadPage() {
       {remaining === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
           <p className="text-base font-medium">โควต้าครบแล้ว</p>
-          <p className="mt-1 text-sm text-muted-foreground">คุณใช้สิทธิ์อัปโหลดครบ {quota!.limit} รูปในเดือนนี้แล้ว แล้วพบกันใหม่เดือนหน้า</p>
+          <p className="mt-1 text-sm text-muted-foreground">คุณใช้สิทธิ์อัปโหลดครบ {quota!.limit} รูปในวันนี้แล้ว แล้วพบกันใหม่พรุ่งนี้</p>
         </div>
       ) : (
         <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-5">
