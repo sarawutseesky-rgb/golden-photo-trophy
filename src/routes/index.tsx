@@ -12,7 +12,7 @@ import { FeedFilterBar, type FeedTab, type FeedSort } from "@/components/app/Fee
 const feedSearchSchema = z.object({
   tab: fallback(z.enum(["latest", "trending", "top-week", "following"]), "latest").default("latest"),
   sort: fallback(z.enum(["new", "score", "votes"]), "new").default("new"),
-  tag: fallback(z.string().optional(), undefined),
+  tag: z.string().optional(),
 });
 
 export const Route = createFileRoute("/")({
