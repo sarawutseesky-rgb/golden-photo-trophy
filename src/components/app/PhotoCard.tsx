@@ -241,9 +241,13 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
         )}
         {/* Bottom info strip */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 via-black/40 to-transparent px-2.5 py-2 text-xs text-white">
-          <span className="font-semibold">
-            ★ {Number(photo.avg_score).toFixed(1)}
-            <span className="ml-1 opacity-75">· {photo.vote_count}</span>
+          <span
+            className="inline-flex items-center gap-1 font-semibold"
+            aria-label={`คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก 5 ดาว`}
+          >
+            <StarRow count={Math.round(Number(photo.avg_score))} size={12} />
+            <span className="tabular-nums">{Number(photo.avg_score).toFixed(1)}</span>
+            <span className="opacity-75">· {photo.vote_count}</span>
           </span>
           <span className="flex items-center gap-2 opacity-90">
             <span className="inline-flex items-center gap-0.5">
