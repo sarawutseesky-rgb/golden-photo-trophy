@@ -90,13 +90,16 @@ export function FeedFilterBar({
                 </Tooltip>
               );
             })}
-            {([1, 2, 3, 4, 5] as const).map((n) => (
+            {([1, 2, 3, 4, 5] as const).map((n) => {
+              const starActive = location.pathname === `/stars/${n}`;
+              return (
                 <Tooltip key={`stars-${n}`}>
                   <TooltipTrigger asChild>
                     <Link
                       to="/stars/$n"
                       params={{ n: String(n) }}
                       role="tab"
+                      aria-selected={starActive}
                       className={cn(
                         "inline-flex shrink-0 items-center gap-0.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       )}
@@ -116,7 +119,8 @@ export function FeedFilterBar({
                     ดูภาพที่ได้ {n} ดาว
                   </TooltipContent>
                 </Tooltip>
-              ))}
+              );
+            })}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
