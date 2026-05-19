@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Star } from "lucide-react";
+import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { castVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
@@ -17,6 +17,11 @@ export type FeedPhoto = {
   vote_count: number;
   milestone_stars: number;
   user_id?: string;
+  view_count?: number;
+  comment_count?: number;
+  current_rank?: number | null;
+  rank_one_since?: string | null;
+  created_at?: string;
   profiles?: { display_name: string; avatar_url: string | null } | null;
 };
 
@@ -30,6 +35,16 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
 
   const isOwner = !!user && photo.user_id === user.id;
   const hasVoted = myScore != null;
+
+  const now = Date.now();
+  const createdMs = photo.created_at ? new Date(photo.created_at).getTime() : 0;
+  const isNew = createdMs > 0 && now - createdMs < 48 * 60 * 60 * 1000;
+  const isRankOne = photo.current_rank === 1;
+  const rankOneSinceMs = photo.rank_one_since ? new Date(photo.rank_one_since).getTime() : 0;
+  const isRising =
+    !isRankOne &&
+    rankOneSinceMs > 0 &&
+    now - rankOneSinceMs < 24 * 60 * 60 * 1000;
 
   const handleVote = async (score: number) => {
     if (!user) return toast.error("เข้าสู่ระบบเพื่อโหวต");
@@ -90,7 +105,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
   };
 
   return (
-    <article className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60">
+    <article className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg">
       <Link
         to="/photo/$id"
         params={{ id: photo.id }}
@@ -101,14 +116,51 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
           src={photo.image_url}
           alt={photo.title}
           loading="lazy"
-          className="block w-full h-auto transition-transform duration-500 group-hover:scale-[1.02]"
+          className="block w-full h-auto transition-transform duration-500 group-hover:scale-[1.05]"
         />
-        <div className="pointer-events-none absolute right-2 top-2 rounded-md bg-background/80 px-2 py-1 backdrop-blur">
-          <StarRow count={photo.milestone_stars} size={12} />
+        {/* Badges top-left */}
+        <div className="pointer-events-none absolute left-2 top-2 flex flex-wrap gap-1">
+          {isRankOne && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[var(--gold)]/95 px-1.5 py-0.5 text-[10px] font-bold text-background shadow">
+              <Trophy className="h-3 w-3" /> #1
+            </span>
+          )}
+          {isRising && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-orange-500/95 px-1.5 py-0.5 text-[10px] font-bold text-white shadow">
+              <Flame className="h-3 w-3" /> Rising
+            </span>
+          )}
+          {isNew && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/95 px-1.5 py-0.5 text-[10px] font-bold text-white shadow">
+              <Sparkles className="h-3 w-3" /> New
+            </span>
+          )}
+          {photo.milestone_stars > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-1.5 py-0.5 text-[10px] font-bold text-[var(--gold)] shadow backdrop-blur">
+              ✨ {photo.milestone_stars}
+            </span>
+          )}
         </div>
-        <div className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-background/80 px-2 py-1 text-xs font-medium backdrop-blur">
-          ★ {Number(photo.avg_score).toFixed(1)}{" "}
-          <span className="text-muted-foreground">· {photo.vote_count}</span>
+        {/* Milestone star row top-right (compact) */}
+        {photo.milestone_stars > 0 && (
+          <div className="pointer-events-none absolute right-2 top-2 rounded-md bg-background/80 px-2 py-1 backdrop-blur">
+            <StarRow count={photo.milestone_stars} size={10} />
+          </div>
+        )}
+        {/* Bottom info strip */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 via-black/40 to-transparent px-2.5 py-2 text-xs text-white">
+          <span className="font-semibold">
+            ★ {Number(photo.avg_score).toFixed(1)}
+            <span className="ml-1 opacity-75">· {photo.vote_count}</span>
+          </span>
+          <span className="flex items-center gap-2 opacity-90">
+            <span className="inline-flex items-center gap-0.5">
+              <Eye className="h-3 w-3" /> {photo.view_count ?? 0}
+            </span>
+            <span className="inline-flex items-center gap-0.5">
+              <MessageCircle className="h-3 w-3" /> {photo.comment_count ?? 0}
+            </span>
+          </span>
         </div>
       </Link>
       <div className="p-3">
@@ -125,7 +177,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
           by {photo.profiles?.display_name ?? "Anonymous"}
         </p>
         <div
-          className="mt-2 flex items-center gap-0.5"
+          className="mt-2 flex items-center gap-0.5 opacity-70 transition-opacity group-hover:opacity-100"
           onMouseLeave={() => setHover(null)}
           aria-label="ให้คะแนนรูปนี้"
         >
