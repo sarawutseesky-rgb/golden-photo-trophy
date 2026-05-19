@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { normalizeDistribution } from "@/lib/utils";
 
 const PHOTO_SELECT = `
   id, user_id, title, description, tags, image_url, width, height,
