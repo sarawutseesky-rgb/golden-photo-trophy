@@ -139,7 +139,7 @@ export function FeedFilterBar({
         </div>
 
         {/* Tag chips */}
-        {tags.length > 0 && (
+        {showTags && tags.length > 0 && (
           <div
             className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0"
             aria-label="Tag filters"
