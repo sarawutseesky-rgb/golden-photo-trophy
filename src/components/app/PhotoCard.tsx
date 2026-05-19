@@ -36,14 +36,53 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     if (isOwner) return toast.error("โหวตรูปตัวเองไม่ได้");
     if (hasVoted || busy) return;
     setBusy(true);
-    setMyScore(score); // optimistic
+    setMyScore(score);
+
+    // Snapshot current caches for rollback
+    const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
+    const photoKey = ["photo", photo.id] as const;
+    const prevPhoto = qc.getQueryData<any>(photoKey);
+
+    // Optimistic update on feed caches
+    qc.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
+      if (!old?.photos) return old;
+      return {
+        ...old,
+        photos: old.photos.map((ph: any) => {
+          if (ph.id !== photo.id) return ph;
+          const oldCount = ph.vote_count ?? 0;
+          const oldAvg = Number(ph.avg_score ?? 0);
+          const newCount = oldCount + 1;
+          const newAvg = newCount > 0 ? Number(((oldAvg * oldCount + score) / newCount).toFixed(2)) : 0;
+          return { ...ph, vote_count: newCount, avg_score: newAvg };
+        }),
+      };
+    });
+
+    // Optimistic update on detail cache if present
+    if (prevPhoto?.photo) {
+      const dist = [...(prevPhoto.distribution ?? [0, 0, 0, 0, 0])];
+      dist[score - 1] = (dist[score - 1] ?? 0) + 1;
+      const newCount = dist.reduce((a: number, b: number) => a + b, 0);
+      const sum = dist.reduce((acc: number, c: number, i: number) => acc + c * (i + 1), 0);
+      const newAvg = newCount > 0 ? Number((sum / newCount).toFixed(2)) : 0;
+      qc.setQueryData(photoKey, {
+        ...prevPhoto,
+        distribution: dist,
+        photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
+      });
+    }
+
     try {
       await vote({ data: { photo_id: photo.id, score } });
       toast.success(`ให้ ${score}★ แล้ว`);
       qc.invalidateQueries({ queryKey: ["feed"] });
-      qc.invalidateQueries({ queryKey: ["photo", photo.id] });
+      qc.invalidateQueries({ queryKey: photoKey });
     } catch (e: any) {
       setMyScore(null);
+      // Rollback
+      prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
+      qc.setQueryData(photoKey, prevPhoto);
       toast.error(e.message ?? "โหวตไม่สำเร็จ");
     } finally {
       setBusy(false);
