@@ -4,12 +4,29 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeDistribution } from "@/lib/utils";
 
-const PHOTO_SELECT = `
+const PHOTO_BASE_SELECT = `
   id, user_id, title, description, tags, image_url, width, height,
   avg_score, vote_count, view_count, current_rank, rank_one_since,
-  milestone_stars, milestone_achieved_at, status, created_at,
-  profiles!photos_user_id_fkey ( id, display_name, avatar_url )
+  milestone_stars, milestone_achieved_at, status, created_at
 `;
+
+async function attachPhotoProfiles<T extends { user_id: string | null }>(photos: T[]) {
+  const userIds = Array.from(new Set(photos.map((photo) => photo.user_id).filter(Boolean)));
+
+  if (userIds.length === 0) {
+    return photos.map((photo) => ({ ...photo, profiles: null }));
+  }
+
+  const { data: profiles, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id, display_name, avatar_url")
+    .in("id", userIds);
+
+  if (error) throw new Error(error.message);
+
+  const profileMap = new Map((profiles ?? []).map((profile: any) => [profile.id, profile]));
+  return photos.map((photo) => ({ ...photo, profiles: photo.user_id ? (profileMap.get(photo.user_id) ?? null) : null }));
+}
 
 export const listFeed = createServerFn({ method: "GET" })
   .inputValidator(
@@ -27,7 +44,7 @@ export const listFeed = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const limit = Math.min(data.limit ?? 30, 60);
     const offset = Math.max(0, data.offset ?? 0);
-    let q = supabaseAdmin.from("photos").select(PHOTO_SELECT).eq("status", "active").range(offset, offset + limit - 1);
+    let q = supabaseAdmin.from("photos").select(PHOTO_BASE_SELECT).eq("status", "active").range(offset, offset + limit - 1);
     if (data.tag) q = q.contains("tags", [data.tag]);
     if (data.search) q = q.ilike("title", `%${data.search}%`);
     if (typeof data.stars === "number" && data.stars >= 1 && data.stars <= 5) {
@@ -66,7 +83,7 @@ export const listFeed = createServerFn({ method: "GET" })
     }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    const photos = rows ?? [];
+    const photos = await attachPhotoProfiles(rows ?? []);
     // Attach comment counts
     const ids = photos.map((p: any) => p.id);
     let countMap = new Map<string, number>();
@@ -111,19 +128,22 @@ export const getRankOnePhoto = createServerFn({ method: "GET" })
     // Prefer the photo currently holding #1 (rank_one_since set).
     const { data: held, error: heldErr } = await supabaseAdmin
       .from("photos")
-      .select(PHOTO_SELECT)
+      .select(PHOTO_BASE_SELECT)
       .eq("status", "active")
       .not("rank_one_since", "is", null)
       .order("rank_one_since", { ascending: true })
       .limit(1)
       .maybeSingle();
     if (heldErr) throw new Error(heldErr.message);
-    if (held) return { photo: held, held: true };
+    if (held) {
+      const [photo] = await attachPhotoProfiles([held]);
+      return { photo, held: true };
+    }
 
     // Fallback: top-rated active photo (so the spotlight always renders).
     const { data: top, error: topErr } = await supabaseAdmin
       .from("photos")
-      .select(PHOTO_SELECT)
+      .select(PHOTO_BASE_SELECT)
       .eq("status", "active")
       .gte("vote_count", 1)
       .order("avg_score", { ascending: false })
@@ -131,7 +151,9 @@ export const getRankOnePhoto = createServerFn({ method: "GET" })
       .limit(1)
       .maybeSingle();
     if (topErr) throw new Error(topErr.message);
-    return { photo: top ?? null, held: false };
+    if (!top) return { photo: null, held: false };
+    const [photo] = await attachPhotoProfiles([top]);
+    return { photo, held: false };
   });
 
 export const getTopTwoPhotos = createServerFn({ method: "GET" })
@@ -139,7 +161,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
     // #1 — same selection rule as getRankOnePhoto.
     const { data: held, error: heldErr } = await supabaseAdmin
       .from("photos")
-      .select(PHOTO_SELECT)
+      .select(PHOTO_BASE_SELECT)
       .eq("status", "active")
       .not("rank_one_since", "is", null)
       .order("rank_one_since", { ascending: true })
@@ -152,7 +174,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
     if (!first) {
       const { data: top, error: topErr } = await supabaseAdmin
         .from("photos")
-        .select(PHOTO_SELECT)
+        .select(PHOTO_BASE_SELECT)
         .eq("status", "active")
         .gte("vote_count", 1)
         .order("avg_score", { ascending: false })
@@ -166,7 +188,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
     // #2 — next top-rated active photo, excluding the #1 id.
     let secondQuery = supabaseAdmin
       .from("photos")
-      .select(PHOTO_SELECT)
+      .select(PHOTO_BASE_SELECT)
       .eq("status", "active")
       .gte("vote_count", 1)
       .order("avg_score", { ascending: false })
@@ -176,19 +198,25 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
     const { data: second, error: secondErr } = await secondQuery.maybeSingle();
     if (secondErr) throw new Error(secondErr.message);
 
-    return { first, second: second ?? null, held: isHeld };
+    const enriched = await attachPhotoProfiles([first, second].filter(Boolean) as any[]);
+    return {
+      first: enriched[0] ?? null,
+      second: enriched[1] ?? null,
+      held: isHeld,
+    };
   });
 
 export const getPhoto = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    const { data: photo, error } = await supabaseAdmin
+    const { data: photoRow, error } = await supabaseAdmin
       .from("photos")
-      .select(PHOTO_SELECT)
+      .select(PHOTO_BASE_SELECT)
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!photo) return { photo: null, distribution: [0, 0, 0, 0, 0], comments: [] };
+    if (!photoRow) return { photo: null, distribution: [0, 0, 0, 0, 0], comments: [] };
+    const [photo] = await attachPhotoProfiles([photoRow]);
 
     const { data: votes } = await supabaseAdmin.from("votes").select("score").eq("photo_id", data.id);
     const rawDistribution = [0, 0, 0, 0, 0];
@@ -197,14 +225,31 @@ export const getPhoto = createServerFn({ method: "GET" })
     });
     const distribution = normalizeDistribution(rawDistribution);
 
-    const { data: comments } = await supabaseAdmin
+    const { data: commentRows, error: commentsError } = await supabaseAdmin
       .from("comments")
-      .select("id, content, created_at, user_id, profiles!comments_user_id_fkey(id, display_name, avatar_url)")
+      .select("id, content, created_at, user_id")
       .eq("photo_id", data.id)
       .order("created_at", { ascending: false })
       .limit(100);
+    if (commentsError) throw new Error(commentsError.message);
 
-    return { photo, distribution, comments: comments ?? [] };
+    const commentUserIds = Array.from(new Set((commentRows ?? []).map((comment: any) => comment.user_id).filter(Boolean)));
+    let commentProfileMap = new Map<string, any>();
+    if (commentUserIds.length > 0) {
+      const { data: commentProfiles, error: commentProfilesError } = await supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", commentUserIds);
+      if (commentProfilesError) throw new Error(commentProfilesError.message);
+      commentProfileMap = new Map((commentProfiles ?? []).map((profile: any) => [profile.id, profile]));
+    }
+
+    const comments = (commentRows ?? []).map((comment: any) => ({
+      ...comment,
+      profiles: comment.user_id ? (commentProfileMap.get(comment.user_id) ?? null) : null,
+    }));
+
+    return { photo, distribution, comments };
   });
 
 export const getAdjacentPhotos = createServerFn({ method: "GET" })
