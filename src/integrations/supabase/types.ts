@@ -112,6 +112,30 @@ export type Database = {
           },
         ]
       }
+      photo_view_events: {
+        Row: {
+          created_at: string
+          id: string
+          photo_id: string
+          time_bucket: number
+          viewer_key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_id: string
+          time_bucket: number
+          viewer_key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_id?: string
+          time_bucket?: number
+          viewer_key?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           avg_score: number
