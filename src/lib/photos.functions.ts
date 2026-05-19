@@ -95,7 +95,7 @@ export const listFeed = createServerFn({ method: "GET" })
       q = q.order("created_at", { ascending: false });
     }
     const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
+    if (error) return fallbackOnSchemaCache(error, { photos: [] });
     const photos = await attachPhotoProfiles(rows ?? []);
     // Attach comment counts
     const ids = photos.map((p: any) => p.id);
@@ -116,12 +116,13 @@ export const listFeed = createServerFn({ method: "GET" })
 
 export const getPopularTags = createServerFn({ method: "GET" })
   .handler(async () => {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("photos")
       .select("tags")
       .eq("status", "active")
       .not("tags", "is", null)
       .limit(500);
+    if (error) return fallbackOnSchemaCache(error, { tags: [] });
     const counts = new Map<string, number>();
     (data ?? []).forEach((row: any) => {
       (row.tags ?? []).forEach((t: string) => {
@@ -147,7 +148,7 @@ export const getRankOnePhoto = createServerFn({ method: "GET" })
       .order("rank_one_since", { ascending: true })
       .limit(1)
       .maybeSingle();
-    if (heldErr) throw new Error(heldErr.message);
+    if (heldErr) return fallbackOnSchemaCache(heldErr, { photo: null, held: false });
     if (held) {
       const [photo] = await attachPhotoProfiles([held]);
       return { photo, held: true };
@@ -163,7 +164,7 @@ export const getRankOnePhoto = createServerFn({ method: "GET" })
       .order("vote_count", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (topErr) throw new Error(topErr.message);
+    if (topErr) return fallbackOnSchemaCache(topErr, { photo: null, held: false });
     if (!top) return { photo: null, held: false };
     const [photo] = await attachPhotoProfiles([top]);
     return { photo, held: false };
@@ -180,7 +181,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
       .order("rank_one_since", { ascending: true })
       .limit(1)
       .maybeSingle();
-    if (heldErr) throw new Error(heldErr.message);
+    if (heldErr) return fallbackOnSchemaCache(heldErr, { first: null, second: null, held: false });
 
     let first: any = held ?? null;
     const isHeld = !!held;
@@ -194,7 +195,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
         .order("vote_count", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (topErr) throw new Error(topErr.message);
+      if (topErr) return fallbackOnSchemaCache(topErr, { first: null, second: null, held: false });
       first = (top as any) ?? null;
     }
 
@@ -209,7 +210,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
       .limit(1);
     if (first?.id) secondQuery = secondQuery.neq("id", first.id);
     const { data: second, error: secondErr } = await secondQuery.maybeSingle();
-    if (secondErr) throw new Error(secondErr.message);
+    if (secondErr) return fallbackOnSchemaCache(secondErr, { first: null, second: null, held: false });
 
     const enriched = await attachPhotoProfiles([first, second].filter(Boolean) as any[]);
     return {
@@ -227,7 +228,7 @@ export const getPhoto = createServerFn({ method: "GET" })
       .select(PHOTO_BASE_SELECT)
       .eq("id", data.id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) return fallbackOnSchemaCache(error, { photo: null, distribution: [0, 0, 0, 0, 0], comments: [] });
     if (!photoRow) return { photo: null, distribution: [0, 0, 0, 0, 0], comments: [] };
     const [photo] = await attachPhotoProfiles([photoRow]);
 
@@ -244,7 +245,7 @@ export const getPhoto = createServerFn({ method: "GET" })
       .eq("photo_id", data.id)
       .order("created_at", { ascending: false })
       .limit(100);
-    if (commentsError) throw new Error(commentsError.message);
+    if (commentsError) return fallbackOnSchemaCache(commentsError, { photo, distribution, comments: [] });
 
     const commentUserIds = Array.from(new Set((commentRows ?? []).map((comment: any) => comment.user_id).filter(Boolean)));
     let commentProfileMap = new Map<string, any>();
@@ -253,7 +254,7 @@ export const getPhoto = createServerFn({ method: "GET" })
         .from("profiles")
         .select("id, display_name, avatar_url")
         .in("id", commentUserIds);
-      if (commentProfilesError) throw new Error(commentProfilesError.message);
+      if (commentProfilesError) return fallbackOnSchemaCache(commentProfilesError, { photo, distribution, comments: commentRows ?? [] });
       commentProfileMap = new Map((commentProfiles ?? []).map((profile: any) => [profile.id, profile]));
     }
 
@@ -268,11 +269,12 @@ export const getPhoto = createServerFn({ method: "GET" })
 export const getAdjacentPhotos = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    const { data: cur } = await supabaseAdmin
+    const { data: cur, error } = await supabaseAdmin
       .from("photos")
       .select("id, created_at")
       .eq("id", data.id)
       .maybeSingle();
+    if (error) return fallbackOnSchemaCache(error, { prev: null, next: null });
     if (!cur) return { prev: null, next: null };
 
     // "next" in feed = older photo (feed is newest first)
@@ -300,11 +302,12 @@ export const getAdjacentPhotos = createServerFn({ method: "GET" })
 export const getUserProfile = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("id, display_name, avatar_url, bio, created_at")
       .eq("id", data.id)
       .maybeSingle();
+    if (profileError) return fallbackOnSchemaCache(profileError, { profile: null, photos: [], stats: null });
     if (!profile) return { profile: null, photos: [], stats: null };
 
     const { data: photos } = await supabaseAdmin
