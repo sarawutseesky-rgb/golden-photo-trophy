@@ -6,6 +6,7 @@ import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X } from "
 import { toast } from "sonner";
 import { getPhoto, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
+import { incrementPhotoView } from "@/lib/follows.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
 import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
@@ -45,6 +46,7 @@ function PhotoDetail() {
   const report = useServerFn(reportPhoto);
   const editPhoto = useServerFn(updatePhoto);
   const removePhoto = useServerFn(deletePhoto);
+  const bumpView = useServerFn(incrementPhotoView);
 
   const { data, isLoading } = useQuery({ queryKey: ["photo", id], queryFn: () => fetchPhoto({ data: { id } }) });
   const { data: myVote } = useQuery({
@@ -92,6 +94,10 @@ function PhotoDetail() {
       supabase.removeChannel(ch);
     };
   }, [id, qc]);
+
+  useEffect(() => {
+    bumpView({ data: { photo_id: id } }).catch(() => {});
+  }, [id, bumpView]);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
   if (!data?.photo) return <div className="py-12 text-center text-muted-foreground">Photo not found.</div>;

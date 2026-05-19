@@ -73,16 +73,24 @@ export const getUserProfile = createServerFn({ method: "GET" })
 
     const { data: photos } = await supabaseAdmin
       .from("photos")
-      .select("id, title, image_url, avg_score, vote_count, milestone_stars, created_at")
+      .select("id, title, image_url, avg_score, vote_count, view_count, milestone_stars, created_at")
       .eq("user_id", data.id)
       .eq("status", "active")
       .order("created_at", { ascending: false });
+
+    const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
+      supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("following_id", data.id),
+      supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", data.id),
+    ]);
 
     const stats = {
       total_photos: photos?.length ?? 0,
       total_votes: photos?.reduce((s, p) => s + (p.vote_count ?? 0), 0) ?? 0,
       total_stars: photos?.reduce((s, p) => s + (p.milestone_stars ?? 0), 0) ?? 0,
       highest_score: photos?.reduce((m, p) => Math.max(m, Number(p.avg_score ?? 0)), 0) ?? 0,
+      total_views: photos?.reduce((s, p) => s + (p.view_count ?? 0), 0) ?? 0,
+      followers: followersCount ?? 0,
+      following: followingCount ?? 0,
     };
     return { profile, photos: photos ?? [], stats };
   });
