@@ -185,6 +185,7 @@ export function FeedFilterBar({
                       : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground",
                   )}
                   aria-label="แสดงทุกแท็ก"
+                      aria-current={!tag ? "true" : undefined}
                 >
                   All
                 </Link>
@@ -206,6 +207,7 @@ export function FeedFilterBar({
                           : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground",
                       )}
                       aria-label={active ? `ล้างแท็ก ${t}` : `กรองด้วยแท็ก ${t}`}
+                      aria-current={active ? "true" : undefined}
                     >
                       <span>#{t}</span>
                       <span className="text-[10px] opacity-60">{count}</span>
