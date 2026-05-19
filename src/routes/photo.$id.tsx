@@ -96,6 +96,23 @@ function PhotoDetail() {
   }, [id, qc]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const THROTTLE_MS = 30 * 60 * 1000; // 30 นาที
+    const key = `photo-view:${id}`;
+    try {
+      // กันซ้ำภายใน session (ครั้งเดียวต่อการเปิด tab)
+      if (sessionStorage.getItem(key)) return;
+      // กันซ้ำข้าม session ด้วย throttle 30 นาที
+      const last = Number(localStorage.getItem(key) || 0);
+      if (last && Date.now() - last < THROTTLE_MS) {
+        sessionStorage.setItem(key, "1");
+        return;
+      }
+      sessionStorage.setItem(key, "1");
+      localStorage.setItem(key, String(Date.now()));
+    } catch {
+      // storage ไม่พร้อมใช้ (private mode ฯลฯ) — ปล่อยให้นับตามปกติ
+    }
     bumpView({ data: { photo_id: id } }).catch(() => {});
   }, [id, bumpView]);
 
