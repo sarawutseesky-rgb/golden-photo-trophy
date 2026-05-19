@@ -53,7 +53,7 @@ function LeaderboardPage() {
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     setFlash(true);
-    window.setTimeout(() => setFlash(false), 1600);
+    window.setTimeout(() => setFlash(false), 5000);
   }, []);
 
   return (
@@ -125,8 +125,7 @@ function LeaderboardPage() {
               className={cn(
                 "flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40",
                 me?.user_id === e.user_id && "bg-[var(--gold)]/5",
-                me?.user_id === e.user_id && flash &&
-                  "ring-2 ring-[var(--gold)] transition-shadow duration-500",
+                me?.user_id === e.user_id && flash && "me-row-flash",
               )}
             >
               <RankBadge rank={e.rank} />
