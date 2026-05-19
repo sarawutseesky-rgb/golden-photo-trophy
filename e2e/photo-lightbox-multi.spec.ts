@@ -1,9 +1,12 @@
 import { test, expect } from "@playwright/test";
 
-// Sample several photos from the feed, hard-refresh into each /photo/$id,
-// and exercise open → X close → reopen on every one to confirm none of them
-// produce a blank screen or pageerror.
-const SAMPLE_SIZE = 3;
+// Sample 5–10 random photos from the feed, hard-refresh into each /photo/$id,
+// and exercise open → X close → reopen → X close on every one to confirm
+// none of them produce a blank screen or pageerror.
+const SAMPLE_MIN = 5;
+const SAMPLE_MAX = 10;
+const SAMPLE_SIZE =
+  Math.floor(Math.random() * (SAMPLE_MAX - SAMPLE_MIN + 1)) + SAMPLE_MIN;
 
 test.describe("Photo detail — lightbox across multiple photos", () => {
   test("hard refresh + open/close/reopen on a sample of photos", async ({
