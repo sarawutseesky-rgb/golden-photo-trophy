@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Users as UsersIcon,
   Star,
+  Users,
 } from "lucide-react";
 
 import {
@@ -36,6 +37,7 @@ const navItems = [
   { title: "Top", url: "/top", icon: Trophy },
   { title: "Hall of Fame", url: "/hall-of-fame", icon: Award },
   { title: "Trending", url: "/trending", icon: TrendingUp },
+  { title: "Leaderboard", url: "/leaderboard", icon: Users },
 ];
 
 export function AppSidebar() {

@@ -13,6 +13,7 @@ import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as TopRouteImport } from './routes/top'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -46,6 +47,11 @@ const SignupRoute = SignupRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HallOfFameRoute = HallOfFameRouteImport.update({
@@ -123,6 +129,7 @@ const AuthenticatedAdminAdminDashboardRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hall-of-fame': typeof HallOfFameRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/top': typeof TopRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/hall-of-fame': typeof HallOfFameRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/top': typeof TopRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/hall-of-fame': typeof HallOfFameRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/top': typeof TopRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/hall-of-fame'
+    | '/leaderboard'
     | '/login'
     | '/signup'
     | '/top'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/hall-of-fame'
+    | '/leaderboard'
     | '/login'
     | '/signup'
     | '/top'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/hall-of-fame'
+    | '/leaderboard'
     | '/login'
     | '/signup'
     | '/top'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   HallOfFameRoute: typeof HallOfFameRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   TopRoute: typeof TopRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hall-of-fame': {
@@ -432,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   HallOfFameRoute: HallOfFameRoute,
+  LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   TopRoute: TopRoute,
