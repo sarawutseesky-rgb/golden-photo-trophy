@@ -186,10 +186,14 @@ function MyRankPanel({
   me,
   total,
   highlighted,
+  canScroll,
+  onScrollToMe,
 }: {
   me: any | null;
   total: number;
   highlighted: boolean;
+  canScroll: boolean;
+  onScrollToMe: () => void;
 }) {
   if (!me) {
     return (
@@ -198,10 +202,15 @@ function MyRankPanel({
       </div>
     );
   }
+  const Wrapper: any = canScroll ? "button" : "div";
   return (
-    <div
+    <Wrapper
+      type={canScroll ? "button" : undefined}
+      onClick={canScroll ? onScrollToMe : undefined}
+      title={canScroll ? "ไปยังแถวของฉันในตาราง" : undefined}
       className={cn(
-        "flex items-center gap-4 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-4 py-3",
+        "flex w-full items-center gap-4 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-4 py-3 text-left",
+        canScroll && "cursor-pointer hover:bg-[var(--gold)]/10 transition-colors",
         highlighted && "ring-1 ring-[var(--gold)]/40",
       )}
     >
@@ -235,6 +244,11 @@ function MyRankPanel({
           votes
         </div>
       </div>
-    </div>
+      {canScroll && (
+        <span className="hidden sm:inline text-xs font-medium text-[var(--gold)]">
+          ไปยังแถวของฉัน ↓
+        </span>
+      )}
+    </Wrapper>
   );
 }
