@@ -13,6 +13,7 @@ import { VoteDistribution } from "@/components/app/VoteDistribution";
 import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
+import { applyOptimisticVote } from "@/lib/votes.helpers";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
@@ -141,19 +142,9 @@ function PhotoDetail() {
 
     // Optimistic update — detail cache
     if (prevPhoto?.photo) {
-      const dist = normalizeDistribution(prevPhoto.distribution);
-      const oldScore = prevVote?.score as number | null | undefined;
-      if (oldScore && oldScore >= 1 && oldScore <= 5) dist[oldScore - 1] = Math.max(0, dist[oldScore - 1] - 1);
-      dist[score - 1] += 1;
-      const newCount = dist.reduce((a, b) => a + b, 0);
-      const sum = dist.reduce((acc, c, i) => acc + c * (i + 1), 0);
-      const newAvg = newCount > 0 ? Number((sum / newCount).toFixed(2)) : 0;
-      qc.setQueryData(photoKey, {
-        ...prevPhoto,
-        distribution: dist,
-        photo: { ...prevPhoto.photo, vote_count: newCount, avg_score: newAvg },
-      });
-      if (debug) logDebug(`vote ${score}★ (optimistic)`, newAvg, newCount);
+      const next = applyOptimisticVote(prevPhoto, score, prevVote?.score);
+      qc.setQueryData(photoKey, next);
+      if (debug) logDebug(`vote ${score}★ (optimistic)`, next.photo.avg_score, next.photo.vote_count);
     }
 
     // Optimistic update — feed caches
