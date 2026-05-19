@@ -85,16 +85,17 @@ export function FeedFilterBar({
                 params={{ n: String(n) }}
                 role="tab"
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-1 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground",
+                  "inline-flex shrink-0 items-center gap-0.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground",
                 )}
                 activeProps={{
                   className:
-                    "inline-flex shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-sm font-medium transition border-[var(--gold)]/60 bg-[var(--gold)]/10 text-foreground shadow-sm",
+                    "inline-flex shrink-0 items-center gap-0.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition border-[var(--gold)]/60 bg-[var(--gold)]/10 text-foreground shadow-sm",
                 }}
                 aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                title={`ดูภาพที่ได้ ${n} ดาว`}
               >
                 <span>{n}</span>
-                <Star className="h-3.5 w-3.5 fill-[var(--gold)] text-[var(--gold)]" />
+                <Star className="h-3.5 w-3.5 fill-[var(--gold)] text-[var(--gold)]" aria-hidden="true" />
               </Link>
             ))}
           </div>
