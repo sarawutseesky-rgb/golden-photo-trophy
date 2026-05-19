@@ -70,6 +70,7 @@ function PhotoDetail() {
   const [editDesc, setEditDesc] = useState("");
   const [editTags, setEditTags] = useState("");
   const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [debugLog, setDebugLog] = useState<
     Array<{ t: number; action: string; avg: number; count: number; latencyMs?: number }>
   >([]);
