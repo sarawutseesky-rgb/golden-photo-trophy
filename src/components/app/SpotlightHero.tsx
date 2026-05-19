@@ -111,8 +111,11 @@ export function SpotlightHero() {
 
           {/* Stats row */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-            <div className="inline-flex items-center gap-1.5">
-              <Star className="h-4 w-4 fill-[var(--gold)] text-[var(--gold)]" />
+            <div
+              className="inline-flex items-center gap-1.5"
+              aria-label={`คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(2)} จาก 5 ดาว`}
+            >
+              <StarRow count={Math.round(Number(photo.avg_score))} size={16} />
               <span className="font-semibold">{Number(photo.avg_score).toFixed(2)}</span>
               <span className="text-muted-foreground">· {photo.vote_count} votes</span>
             </div>
@@ -189,8 +192,11 @@ export function SpotlightHero() {
             >
               {runnerUp.title}
             </Link>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Star className="h-3.5 w-3.5 fill-[var(--gold)] text-[var(--gold)]" />
+            <div
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              aria-label={`คะแนนเฉลี่ย ${Number(runnerUp.avg_score).toFixed(2)} จาก 5 ดาว`}
+            >
+              <StarRow count={Math.round(Number(runnerUp.avg_score))} size={12} />
               <span className="font-semibold text-foreground">
                 {Number(runnerUp.avg_score).toFixed(2)}
               </span>
