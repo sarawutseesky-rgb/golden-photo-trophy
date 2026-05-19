@@ -81,6 +81,8 @@ summary{cursor:pointer}a{color:#fbbf24}</style></head><body>
 <h1>SSR error buffer (${entries.length})</h1>
 <div class="bar">
   <a href="?clear=1">clear</a> ·
+  <a href="?format=json">view JSON</a> ·
+  <a href="?format=json&download=1">download JSON</a> ·
   <a href="?off=1">disable debug</a> ·
   <a href="/">home</a>
 </div>${rows}</body></html>`;
@@ -103,9 +105,12 @@ function handleDebugRoute(request: Request): Response {
     return new Response(null, { status: 302, headers: { location: "/__ssr-debug" } });
   }
   if (url.searchParams.get("format") === "json") {
-    return new Response(JSON.stringify(getSsrErrorBuffer(), null, 2), {
-      headers: { "content-type": "application/json" },
-    });
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (url.searchParams.get("download") === "1") {
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      headers["content-disposition"] = `attachment; filename="ssr-errors-${stamp}.json"`;
+    }
+    return new Response(JSON.stringify(getSsrErrorBuffer(), null, 2), { headers });
   }
   return new Response(renderDebugBufferPage(), {
     headers: { "content-type": "text/html; charset=utf-8" },
