@@ -1,10 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { castVote } from "@/lib/votes.functions";
+import { castVote, getMyVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
 import { cn, normalizeDistribution } from "@/lib/utils";
 import { StarRow } from "./StarRow";
@@ -34,7 +34,25 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState<{ score: number; avg: number; count: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [hydratedFromServer, setHydratedFromServer] = useState(false);
   const quickRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  // Hydrate existing vote on mount / refresh so screen readers can announce "โหวตแล้ว"
+  const fetchMyVote = useServerFn(getMyVote);
+  const isOwner = !!user && photo.user_id === user.id;
+  useQuery({
+    queryKey: ["my-vote", photo.id, user?.id ?? "anon"],
+    queryFn: async () => {
+      const res = await fetchMyVote({ data: { photo_id: photo.id } });
+      if (res.score != null) {
+        setMyScore(res.score);
+        setHydratedFromServer(true);
+      }
+      return res;
+    },
+    enabled: !!user && !isOwner,
+    staleTime: 60_000,
+  });
 
   const focusQuick = (idx: number) => {
     const clamped = Math.max(0, Math.min(4, idx));
@@ -66,7 +84,6 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     }
   };
 
-  const isOwner = !!user && photo.user_id === user.id;
   const hasVoted = myScore != null;
 
   const now = Date.now();
@@ -87,6 +104,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     setMyScore(score);
     setErrorMsg(null);
     setConfirmed(null);
+    setHydratedFromServer(false);
 
     // Snapshot current caches for rollback
     const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
@@ -154,9 +172,11 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
       : `โหวตด่วนสำหรับรูป ${photo.title} คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก ${photo.vote_count} โหวต`;
   const liveStatus = (() => {
     if (errorMsg) return errorMsg;
-    if (busy && myScore != null) return `กำลังส่งคะแนน ${myScore} ดาว`;
+    if (busy && myScore != null) return `สถานะการโหวต: กำลังส่งคะแนน ${myScore} ดาว กรุณารอสักครู่`;
     if (confirmed)
-      return `โหวต ${confirmed.score} ดาวเรียบร้อย คะแนนเฉลี่ยใหม่ ${confirmed.avg.toFixed(1)} จาก ${confirmed.count} โหวต`;
+      return `โหวตสำเร็จ! คุณให้คะแนนรูปนี้ ${confirmed.score} ดาว คะแนนเฉลี่ยใหม่ ${confirmed.avg.toFixed(1)} จาก ${confirmed.count} โหวต`;
+    if (hydratedFromServer && myScore != null)
+      return `คุณได้โหวตรูปนี้ไว้แล้ว ${myScore} ดาว`;
     if (!hasVoted && hover != null) return `เลือก ${hover} ดาว`;
     return "";
   })();
