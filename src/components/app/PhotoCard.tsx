@@ -135,6 +135,17 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
     }
   };
 
+  const voteGroupLabel = isOwner
+    ? `โหวตด่วนสำหรับรูป ${photo.title} (เจ้าของรูปโหวตเองไม่ได้)`
+    : hasVoted
+      ? `คุณให้คะแนนรูป ${photo.title} ${myScore} จาก 5 ดาวแล้ว`
+      : `โหวตด่วนสำหรับรูป ${photo.title} คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก ${photo.vote_count} โหวต`;
+  const liveStatus = busy
+    ? "กำลังส่งคะแนน"
+    : hasVoted
+      ? `โหวต ${myScore} ดาวเรียบร้อย`
+      : "";
+
   return (
     <article className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg">
       <Link
@@ -197,16 +208,24 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
         <div
           className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100"
           onMouseLeave={() => setHover(null)}
-          aria-label="โหวตด่วน"
         >
-          <div className="flex items-center gap-0.5 rounded-full bg-background/85 px-3 py-1.5 shadow-lg backdrop-blur">
+          <div
+            role="radiogroup"
+            aria-label={voteGroupLabel}
+            aria-disabled={hasVoted || busy || isOwner}
+            className="flex items-center gap-0.5 rounded-full bg-background/85 px-3 py-1.5 shadow-lg backdrop-blur"
+          >
             {[1, 2, 3, 4, 5].map((n) => {
               const filled = (hover ?? myScore ?? 0) >= n;
+              const checked = myScore === n;
               return (
                 <button
                   key={`quick-${n}`}
                   ref={(el) => { quickRefs.current[n - 1] = el; }}
                   type="button"
+                  role="radio"
+                  aria-checked={checked}
+                  aria-disabled={hasVoted || busy || isOwner}
                   disabled={hasVoted || busy || isOwner}
                   onMouseEnter={() => !hasVoted && setHover(n)}
                   onFocus={() => !hasVoted && setHover(n)}
@@ -217,7 +236,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
                     handleVote(n);
                   }}
                   className="p-0.5 disabled:cursor-not-allowed"
-                  aria-label={`โหวตด่วน ${n} ดาว`}
+                  aria-label={`ให้ ${n} จาก 5 ดาว`}
                   title={
                     isOwner
                       ? "โหวตรูปตัวเองไม่ได้"
@@ -227,6 +246,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
                   }
                 >
                   <Star
+                    aria-hidden="true"
                     className={cn(
                       "h-6 w-6 transition",
                       filled
@@ -238,6 +258,14 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
               );
             })}
           </div>
+          <span
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          >
+            {liveStatus}
+          </span>
         </div>
       </Link>
       <div className="p-3">
