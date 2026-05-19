@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronDown, X, Flame, Sparkles, RotateCcw } from "lucide-react";
@@ -45,6 +45,7 @@ export function FeedFilterBar({
   showTags?: boolean;
 }) {
   const navigate = useNavigate({ from: "/" });
+  const location = useLocation();
   const tagsFn = useServerFn(getPopularTags);
   const { data } = useQuery({ queryKey: ["popular-tags"], queryFn: () => tagsFn() });
   const tags = data?.tags ?? [];
@@ -89,13 +90,16 @@ export function FeedFilterBar({
                 </Tooltip>
               );
             })}
-            {([1, 2, 3, 4, 5] as const).map((n) => (
+            {([1, 2, 3, 4, 5] as const).map((n) => {
+              const starActive = location.pathname === `/stars/${n}`;
+              return (
                 <Tooltip key={`stars-${n}`}>
                   <TooltipTrigger asChild>
                     <Link
                       to="/stars/$n"
                       params={{ n: String(n) }}
                       role="tab"
+                      aria-selected={starActive}
                       className={cn(
                         "inline-flex shrink-0 items-center gap-0.5 rounded-full border border-transparent px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       )}
@@ -115,7 +119,8 @@ export function FeedFilterBar({
                     ดูภาพที่ได้ {n} ดาว
                   </TooltipContent>
                 </Tooltip>
-              ))}
+              );
+            })}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
