@@ -11,7 +11,7 @@ const PAGE_SIZE = 24;
 type FeedParams = {
   sort?: "new" | "top" | "hof" | "trending" | "votes";
   tag?: string;
-  range?: "all" | "week";
+  range?: "all" | "day" | "week" | "month" | "year";
   following_of?: string | null;
 };
 
