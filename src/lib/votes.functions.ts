@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isDuplicateVoteError } from "@/lib/votes.helpers";
 
 export const castVote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -11,7 +12,7 @@ export const castVote = createServerFn({ method: "POST" })
       .from("votes")
       .insert({ photo_id: data.photo_id, voter_id: context.userId, score: data.score });
     if (error) {
-      if (error.code === "23505") throw new Error("You already voted on this photo");
+      if (isDuplicateVoteError(error)) throw new Error("You already voted on this photo");
       throw new Error(error.message);
     }
     return { ok: true };
