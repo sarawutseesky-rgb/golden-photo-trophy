@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth-context";
 import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 import { FeedFilterBar, type FeedTab, type FeedSort } from "@/components/app/FeedFilterBar";
 import { SpotlightHero } from "@/components/app/SpotlightHero";
-import { createFileRoute } from "@tanstack/react-router";
 
 const feedSearchSchema = z.object({
   tab: fallback(z.enum(["latest", "trending", "top-week", "following"]), "latest").default("latest"),
