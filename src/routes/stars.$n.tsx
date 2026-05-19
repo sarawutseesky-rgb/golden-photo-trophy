@@ -81,10 +81,12 @@ function StarsPage() {
 
       <FeedFilterBar showSort={false} showTags={false} />
 
-      <InfinitePhotoFeed
-        queryKey={["stars", n]}
-        params={{ sort: "new", stars: level }}
-      />
+      <div id="feed-panel" role="tabpanel">
+        <InfinitePhotoFeed
+          queryKey={["stars", n]}
+          params={{ sort: "new", stars: level }}
+        />
+      </div>
     </div>
   );
 }
