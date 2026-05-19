@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { decideMilestone } from "@/lib/milestone-rules";
+import {
+  buildMaxLaterScoreMap,
+  decideMilestone,
+} from "@/lib/milestone-rules";
 
 export const Route = createFileRoute("/api/public/cron/rank")({
   server: {
@@ -8,71 +11,80 @@ export const Route = createFileRoute("/api/public/cron/rank")({
       POST: async () => {
         const now = new Date();
 
-        // Find the current #1 among qualified photos
-        const { data: top } = await supabaseAdmin
+        // Pull all active photos. We need every later-uploaded photo for the
+        // "no later upload outscores me" check.
+        const { data: rows, error } = await supabaseAdmin
           .from("photos")
-          .select("id, user_id, milestone_stars, milestone_achieved_at, rank_one_since")
+          .select(
+            "id, user_id, created_at, avg_score, vote_count, milestone_stars, milestone_achieved_at",
+          )
           .eq("status", "active")
-          .gte("vote_count", 10)
-          .order("avg_score", { ascending: false })
-          .order("vote_count", { ascending: false })
-          .order("id", { ascending: true })
-          .limit(1)
-          .maybeSingle();
+          .order("created_at", { ascending: true });
 
-        // Reset rank_one_since for any photo that's no longer #1
-        if (top) {
-          await supabaseAdmin
-            .from("photos")
-            .update({ rank_one_since: null })
-            .neq("id", top.id)
-            .not("rank_one_since", "is", null);
-        } else {
-          await supabaseAdmin.from("photos").update({ rank_one_since: null }).not("rank_one_since", "is", null);
+        if (error) {
+          return Response.json({ ok: false, error: error.message }, { status: 500 });
         }
 
-        if (!top) return Response.json({ ok: true, top: null });
+        const photos = (rows ?? []).map((r: any) => ({
+          id: r.id as string,
+          user_id: r.user_id as string,
+          created_at: r.created_at as string,
+          milestone_stars: (r.milestone_stars ?? 0) as number,
+          milestone_achieved_at: (r.milestone_achieved_at ?? []) as string[],
+          total_score: Number(r.avg_score ?? 0) * Number(r.vote_count ?? 0),
+        }));
 
-        const decision = decideMilestone(
-          {
-            id: top.id,
-            milestone_stars: top.milestone_stars ?? 0,
-            milestone_achieved_at: (top.milestone_achieved_at ?? []) as string[],
-            rank_one_since: top.rank_one_since ?? null,
-          },
-          now,
-        );
+        const maxLater = buildMaxLaterScoreMap(photos);
 
-        if (decision.startClock) {
-          await supabaseAdmin
-            .from("photos")
-            .update({ rank_one_since: now.toISOString() })
-            .eq("id", top.id);
+        const updates: {
+          id: string;
+          user_id: string;
+          newStars: number;
+          newlyAchievedAt: string[];
+          prevStars: number;
+          merged: string[];
+        }[] = [];
+
+        for (const p of photos) {
+          const d = decideMilestone(p, maxLater.get(p.id) ?? -Infinity, now);
+          if (d.newStars > p.milestone_stars) {
+            updates.push({
+              id: p.id,
+              user_id: p.user_id,
+              newStars: d.newStars,
+              newlyAchievedAt: d.newlyAchievedAt,
+              prevStars: p.milestone_stars,
+              merged: [...p.milestone_achieved_at, ...d.newlyAchievedAt],
+            });
+          }
         }
 
-        if (decision.newlyAchievedAt.length > 0) {
-          const achieved = (top.milestone_achieved_at ?? []) as string[];
+        for (const u of updates) {
           await supabaseAdmin
             .from("photos")
             .update({
-              milestone_stars: decision.newStars,
-              milestone_achieved_at: [...achieved, ...decision.newlyAchievedAt],
+              milestone_stars: u.newStars,
+              milestone_achieved_at: u.merged,
             })
-            .eq("id", top.id);
+            .eq("id", u.id);
 
           await supabaseAdmin.from("notifications").insert({
-            user_id: top.user_id,
+            user_id: u.user_id,
             type: "milestone",
-            photo_id: top.id,
-            message: `Your photo earned ${decision.newStars}★ for holding #1!`,
+            photo_id: u.id,
+            message: `Your photo earned ${u.newStars}★ milestone!`,
           });
         }
 
         return Response.json({
           ok: true,
-          top: top.id,
-          stars: decision.newStars,
-          elapsed_ms: decision.elapsedMs,
+          evaluated: photos.length,
+          awarded: updates.length,
+          awards: updates.map((u) => ({
+            id: u.id,
+            prev: u.prevStars,
+            now: u.newStars,
+          })),
         });
       },
     },
