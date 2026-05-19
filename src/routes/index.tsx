@@ -8,7 +8,10 @@ import { SpotlightHero } from "@/components/app/SpotlightHero";
 import { EmptyState } from "@/components/app/EmptyState";
 
 const feedSearchSchema = z.object({
-  tab: fallback(z.enum(["latest", "trending", "top-week", "following"]), "latest").default("latest"),
+  tab: fallback(
+    z.enum(["latest", "trending", "top-day", "top-week", "top-month", "top-year", "following"]),
+    "latest",
+  ).default("latest"),
   sort: fallback(z.enum(["new", "score", "votes"]), "new").default("new"),
   tag: z.string().optional(),
 });
@@ -27,21 +30,42 @@ export const Route = createFileRoute("/")({
 function buildFeedParams(tab: FeedTab, sort: FeedSort, tag: string | undefined, userId: string | null) {
   // Base sort: tab determines default ordering, sort overrides if not "new"
   let backendSort: "new" | "top" | "trending" | "votes" = "new";
-  let range: "all" | "week" = "all";
+  let range: "all" | "day" | "week" | "month" | "year" = "all";
   let following_of: string | null = null;
 
   if (tab === "trending") backendSort = "trending";
+  else if (tab === "top-day") {
+    backendSort = "top";
+    range = "day";
+  }
   else if (tab === "top-week") {
     backendSort = "top";
     range = "week";
-  } else if (tab === "following") {
+  }
+  else if (tab === "top-month") {
+    backendSort = "top";
+    range = "month";
+  }
+  else if (tab === "top-year") {
+    backendSort = "top";
+    range = "year";
+  }
+  else if (tab === "following") {
     following_of = userId;
   }
 
   // Sort override (only when user explicitly picks something other than the default for this tab)
   if (sort === "score") backendSort = "top";
   else if (sort === "votes") backendSort = "votes";
-  else if (sort === "new" && tab !== "trending" && tab !== "top-week") backendSort = "new";
+  else if (
+    sort === "new" &&
+    tab !== "trending" &&
+    tab !== "top-day" &&
+    tab !== "top-week" &&
+    tab !== "top-month" &&
+    tab !== "top-year"
+  )
+    backendSort = "new";
 
   return { sort: backendSort, range, tag, following_of };
 }

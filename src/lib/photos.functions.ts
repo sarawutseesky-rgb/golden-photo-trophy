@@ -19,7 +19,7 @@ export const listFeed = createServerFn({ method: "GET" })
       sort?: "new" | "top" | "hof" | "trending" | "votes";
       tag?: string;
       search?: string;
-      range?: "all" | "week";
+      range?: "all" | "day" | "week" | "month" | "year";
       following_of?: string | null;
     }) => d,
   )
@@ -29,8 +29,14 @@ export const listFeed = createServerFn({ method: "GET" })
     let q = supabaseAdmin.from("photos").select(PHOTO_SELECT).eq("status", "active").range(offset, offset + limit - 1);
     if (data.tag) q = q.contains("tags", [data.tag]);
     if (data.search) q = q.ilike("title", `%${data.search}%`);
-    if (data.range === "week") {
-      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const RANGE_MS: Record<string, number> = {
+      day: 24 * 60 * 60 * 1000,
+      week: 7 * 24 * 60 * 60 * 1000,
+      month: 30 * 24 * 60 * 60 * 1000,
+      year: 365 * 24 * 60 * 60 * 1000,
+    };
+    if (data.range && data.range !== "all" && RANGE_MS[data.range]) {
+      const since = new Date(Date.now() - RANGE_MS[data.range]).toISOString();
       q = q.gte("created_at", since);
     }
     if (data.following_of) {
