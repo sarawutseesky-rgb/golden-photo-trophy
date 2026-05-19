@@ -11,7 +11,7 @@ const RANGE_MS: Record<Exclude<Range, "all">, number> = {
 };
 
 export const getMemberLeaderboard = createServerFn({ method: "GET" })
-  .inputValidator((d: { range?: Range; limit?: number }) => d)
+  .inputValidator((d: { range?: Range; limit?: number; viewer_id?: string | null }) => d)
   .handler(async ({ data }) => {
     const range: Range = data.range ?? "all";
     const limit = Math.min(Math.max(data.limit ?? 50, 1), 100);
@@ -52,34 +52,47 @@ export const getMemberLeaderboard = createServerFn({ method: "GET" })
     const ranked = Array.from(agg.values())
       .filter((u) => u.total_votes > 0)
       .sort((a, b) => b.total_votes - a.total_votes || b.weighted_score - a.weighted_score)
-      .slice(0, limit);
+      .map((r, i) => ({ ...r, rank: i + 1 }));
 
-    if (ranked.length === 0) return { entries: [] as any[] };
+    const totalRanked = ranked.length;
+    const top = ranked.slice(0, limit);
+
+    // Find viewer's full-list entry (may be outside top N)
+    const viewerId = data.viewer_id ?? null;
+    const viewerRow = viewerId ? ranked.find((r) => r.user_id === viewerId) ?? null : null;
+
+    if (top.length === 0 && !viewerRow) {
+      return { entries: [] as any[], me: null, total: 0 };
+    }
+
+    const ids = new Set<string>(top.map((r) => r.user_id));
+    if (viewerRow) ids.add(viewerRow.user_id);
 
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id, display_name, avatar_url")
-      .in(
-        "id",
-        ranked.map((r) => r.user_id),
-      );
+      .in("id", Array.from(ids));
     const pmap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
 
+    const toEntry = (r: typeof ranked[number]) => {
+      const p = pmap.get(r.user_id);
+      return {
+        rank: r.rank,
+        user_id: r.user_id,
+        display_name: p?.display_name ?? "Unknown",
+        avatar_url: p?.avatar_url ?? null,
+        total_votes: r.total_votes,
+        total_photos: r.total_photos,
+        avg_score:
+          r.total_votes > 0
+            ? Number((r.weighted_score / r.total_votes).toFixed(2))
+            : 0,
+      };
+    };
+
     return {
-      entries: ranked.map((r, i) => {
-        const p = pmap.get(r.user_id);
-        return {
-          rank: i + 1,
-          user_id: r.user_id,
-          display_name: p?.display_name ?? "Unknown",
-          avatar_url: p?.avatar_url ?? null,
-          total_votes: r.total_votes,
-          total_photos: r.total_photos,
-          avg_score:
-            r.total_votes > 0
-              ? Number((r.weighted_score / r.total_votes).toFixed(2))
-              : 0,
-        };
-      }),
+      entries: top.map(toEntry),
+      me: viewerRow ? toEntry(viewerRow) : null,
+      total: totalRanked,
     };
   });
