@@ -15,6 +15,7 @@ export const listFeed = createServerFn({ method: "GET" })
   .inputValidator(
     (d: {
       limit?: number;
+      offset?: number;
       sort?: "new" | "top" | "hof" | "trending" | "votes";
       tag?: string;
       search?: string;
@@ -24,7 +25,8 @@ export const listFeed = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const limit = Math.min(data.limit ?? 30, 60);
-    let q = supabaseAdmin.from("photos").select(PHOTO_SELECT).eq("status", "active").limit(limit);
+    const offset = Math.max(0, data.offset ?? 0);
+    let q = supabaseAdmin.from("photos").select(PHOTO_SELECT).eq("status", "active").range(offset, offset + limit - 1);
     if (data.tag) q = q.contains("tags", [data.tag]);
     if (data.search) q = q.ilike("title", `%${data.search}%`);
     if (data.range === "week") {
