@@ -54,7 +54,22 @@ export const listFeed = createServerFn({ method: "GET" })
     }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { photos: rows ?? [] };
+    const photos = rows ?? [];
+    // Attach comment counts
+    const ids = photos.map((p: any) => p.id);
+    let countMap = new Map<string, number>();
+    if (ids.length > 0) {
+      const { data: cRows } = await supabaseAdmin
+        .from("comments")
+        .select("photo_id")
+        .in("photo_id", ids);
+      (cRows ?? []).forEach((r: any) => {
+        countMap.set(r.photo_id, (countMap.get(r.photo_id) ?? 0) + 1);
+      });
+    }
+    return {
+      photos: photos.map((p: any) => ({ ...p, comment_count: countMap.get(p.id) ?? 0 })),
+    };
   });
 
 export const getPopularTags = createServerFn({ method: "GET" })
