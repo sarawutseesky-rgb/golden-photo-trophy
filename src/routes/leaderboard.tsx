@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Trophy, Medal } from "lucide-react";
 import { getMemberLeaderboard } from "@/lib/leaderboard.functions";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 type Range = "day" | "week" | "month" | "year" | "all";
 
@@ -32,13 +33,18 @@ export const Route = createFileRoute("/leaderboard")({
 
 function LeaderboardPage() {
   const [range, setRange] = useState<Range>("week");
+  const { user } = useAuth();
   const fn = useServerFn(getMemberLeaderboard);
   const { data, isLoading } = useQuery({
-    queryKey: ["member-leaderboard", range],
-    queryFn: () => fn({ data: { range, limit: 50 } }),
+    queryKey: ["member-leaderboard", range, user?.id ?? null],
+    queryFn: () =>
+      fn({ data: { range, limit: 50, viewer_id: user?.id ?? null } }),
   });
 
   const entries = data?.entries ?? [];
+  const me = data?.me ?? null;
+  const total = data?.total ?? 0;
+  const meInTop = !!me && entries.some((e: any) => e.user_id === me.user_id);
 
   return (
     <div className="space-y-6">
@@ -71,6 +77,10 @@ function LeaderboardPage() {
         ))}
       </div>
 
+      {user && (
+        <MyRankPanel me={me} total={total} highlighted={meInTop} />
+      )}
+
       {isLoading ? (
         <div className="py-12 text-center text-muted-foreground">Loading…</div>
       ) : entries.length === 0 ? (
@@ -82,7 +92,10 @@ function LeaderboardPage() {
           {entries.map((e: any) => (
             <li
               key={e.user_id}
-              className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40"
+              className={cn(
+                "flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40",
+                me?.user_id === e.user_id && "bg-[var(--gold)]/5",
+              )}
             >
               <RankBadge rank={e.rank} />
               <Link
@@ -146,6 +159,63 @@ function RankBadge({ rank }: { rank: number }) {
   return (
     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground tabular-nums">
       {rank}
+    </div>
+  );
+}
+
+function MyRankPanel({
+  me,
+  total,
+  highlighted,
+}: {
+  me: any | null;
+  total: number;
+  highlighted: boolean;
+}) {
+  if (!me) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground">
+        คุณยังไม่ติดอันดับในช่วงนี้ — อัปโหลดรูปและรับโหวตเพื่อขึ้นบอร์ด
+      </div>
+    );
+  }
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-4 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-4 py-3",
+        highlighted && "ring-1 ring-[var(--gold)]/40",
+      )}
+    >
+      <RankBadge rank={me.rank} />
+      <div className="flex flex-1 items-center gap-3 min-w-0">
+        {me.avatar_url ? (
+          <img
+            src={me.avatar_url}
+            alt={me.display_name}
+            className="h-10 w-10 rounded-full object-cover ring-1 ring-border"
+          />
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
+            {me.display_name?.charAt(0)?.toUpperCase() || "?"}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold">
+            อันดับของคุณ · {me.display_name}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            อันดับ {me.rank} จาก {total} · {me.total_photos} รูป · เฉลี่ย {me.avg_score.toFixed(2)}★
+          </div>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className="text-lg font-bold tabular-nums">
+          {me.total_votes.toLocaleString()}
+        </div>
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          votes
+        </div>
+      </div>
     </div>
   );
 }
