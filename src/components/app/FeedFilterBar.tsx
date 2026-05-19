@@ -29,10 +29,14 @@ export function FeedFilterBar({
   tab,
   sort,
   tag,
+  showSort = true,
+  showTags = true,
 }: {
-  tab: FeedTab;
-  sort: FeedSort;
+  tab?: FeedTab;
+  sort?: FeedSort;
   tag?: string;
+  showSort?: boolean;
+  showTags?: boolean;
 }) {
   const navigate = useNavigate({ from: "/" });
   const tagsFn = useServerFn(getPopularTags);
@@ -40,6 +44,7 @@ export function FeedFilterBar({
   const tags = data?.tags ?? [];
 
   const isDefault = tab === "latest" && sort === "new" && !tag;
+  const activeSort: FeedSort = sort ?? "new";
 
   return (
     <div className="sticky top-[57px] z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:-mx-6 md:px-6">
