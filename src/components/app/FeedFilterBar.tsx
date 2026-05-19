@@ -94,8 +94,10 @@ export function FeedFilterBar({
                 aria-label={`${n} star${n === 1 ? "" : "s"}`}
                 title={`ดูภาพที่ได้ ${n} ดาว`}
               >
-                <span>{n}</span>
-                <Star className="h-3.5 w-3.5 fill-[var(--gold)] text-[var(--gold)]" aria-hidden="true" />
+                <span>
+                  {n}
+                  <span className="text-[var(--gold)]">★</span>
+                </span>
               </Link>
             ))}
           </div>
