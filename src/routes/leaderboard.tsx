@@ -53,7 +53,7 @@ function LeaderboardPage() {
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     setFlash(true);
-    window.setTimeout(() => setFlash(false), 1600);
+    window.setTimeout(() => setFlash(false), 5000);
   }, []);
 
   return (
