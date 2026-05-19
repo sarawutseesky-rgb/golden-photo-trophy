@@ -132,6 +132,7 @@ function PhotoDetail() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (switching) return;
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
@@ -148,7 +149,7 @@ function PhotoDetail() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [adjacent?.prev?.id, adjacent?.next?.id, lightboxOpen, editOpen, navigate]);
+  }, [adjacent?.prev?.id, adjacent?.next?.id, lightboxOpen, editOpen, navigate, switching]);
 
   if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
   if (!data?.photo) return <div className="py-12 text-center text-muted-foreground">Photo not found.</div>;
@@ -370,7 +371,7 @@ function PhotoDetail() {
           <span className="text-foreground">{p.title}</span>
         </nav>
         <div className="flex items-center gap-1.5">
-          {adjacent?.prev ? (
+          {adjacent?.prev && !switching ? (
             <Link
               to="/photo/$id"
               params={{ id: adjacent.prev.id }}
@@ -385,7 +386,7 @@ function PhotoDetail() {
               <ArrowLeft className="h-3.5 w-3.5" /> ก่อนหน้า
             </span>
           )}
-          {adjacent?.next ? (
+          {adjacent?.next && !switching ? (
             <Link
               to="/photo/$id"
               params={{ id: adjacent.next.id }}
