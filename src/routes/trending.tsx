@@ -4,7 +4,7 @@ import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 export const Route = createFileRoute("/trending")({
   head: () => ({
     meta: [
-      { title: "Trending — StarShot" },
+      { title: "Trending — SEESTAR" },
       { name: "description", content: "Photos with the most engagement right now." },
     ],
   }),

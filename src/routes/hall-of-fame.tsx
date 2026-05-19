@@ -4,7 +4,7 @@ import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 export const Route = createFileRoute("/hall-of-fame")({
   head: () => ({
     meta: [
-      { title: "Hall of Fame — StarShot" },
+      { title: "Hall of Fame — SEESTAR" },
       { name: "description", content: "Photos that earned three or more milestone stars." },
     ],
   }),

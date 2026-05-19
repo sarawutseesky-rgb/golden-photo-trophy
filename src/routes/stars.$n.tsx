@@ -16,8 +16,8 @@ export const Route = createFileRoute("/stars/$n")({
   },
   head: ({ params }) => {
     const n = params.n;
-    const title = `${n}★ Photos — StarShot`;
-    const description = `Browse all photos that earned exactly ${n} milestone star${n === "1" ? "" : "s"} on StarShot.`;
+    const title = `${n}★ Photos — SEESTAR`;
+    const description = `Browse all photos that earned exactly ${n} milestone star${n === "1" ? "" : "s"} on SEESTAR.`;
     return {
       meta: [
         { title },

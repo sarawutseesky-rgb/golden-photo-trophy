@@ -8,7 +8,7 @@ import { compressImage, getImageDims } from "@/lib/image-compress";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/upload")({
-  head: () => ({ meta: [{ title: "Upload — StarShot" }] }),
+  head: () => ({ meta: [{ title: "Upload — SEESTAR" }] }),
   component: UploadPage,
 });
 

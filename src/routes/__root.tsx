@@ -80,12 +80,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StarShot — Photo voting & star ranking" },
+      { title: "SEESTAR — Photo voting & star ranking" },
       {
         name: "description",
         content: "Upload photos, vote 1–5 stars, and earn milestone stars by holding the #1 spot.",
       },
-      { property: "og:title", content: "StarShot" },
+      { property: "og:title", content: "SEESTAR" },
       { property: "og:description", content: "Photo community where the best shots earn permanent star badges." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

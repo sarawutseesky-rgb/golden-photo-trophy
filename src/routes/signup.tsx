@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Sign up — StarShot" }] }),
+  head: () => ({ meta: [{ title: "Sign up — SEESTAR" }] }),
   component: SignupPage,
 });
 

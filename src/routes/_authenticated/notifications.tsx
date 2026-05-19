@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listNotifications, markAllRead } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — StarShot" }] }),
+  head: () => ({ meta: [{ title: "Notifications — SEESTAR" }] }),
   component: NotifPage,
 });
 

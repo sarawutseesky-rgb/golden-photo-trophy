@@ -5,7 +5,7 @@ import { listReports, removePhoto, resolveReport } from "@/lib/admin.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin")({
-  head: () => ({ meta: [{ title: "Admin — StarShot" }] }),
+  head: () => ({ meta: [{ title: "Admin — SEESTAR" }] }),
   component: AdminPage,
 });
 
