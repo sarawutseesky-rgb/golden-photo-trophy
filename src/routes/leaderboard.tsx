@@ -276,7 +276,7 @@ function PhotoLeaderboard({ range }: { range: Range }) {
       {entries.map((e: any) => (
         <li
           key={e.photo_id}
-          className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40"
+          className="flex min-h-[80px] items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40"
         >
           <RankBadge rank={e.rank} />
           <Link
@@ -297,7 +297,7 @@ function PhotoLeaderboard({ range }: { range: Range }) {
               </div>
             </div>
           </Link>
-          <div className="text-right">
+          <div className="w-[72px] text-right">
             <div className="flex items-center justify-end gap-1 text-lg font-bold tabular-nums text-[var(--gold)]">
               {e.avg_score.toFixed(2)}
               <Star className="h-4 w-4 fill-current" />
@@ -308,9 +308,12 @@ function PhotoLeaderboard({ range }: { range: Range }) {
           </div>
         </li>
       ))}
+      {query.isFetchingNextPage &&
+        Array.from({ length: Math.min(PAGE_SIZE, 6) }).map((_, i) => (
+          <SkeletonRow key={`sk-${i}`} index={i} />
+        ))}
     </ol>
       <div ref={sentinelRef} />
-      {query.isFetchingNextPage && <PhotoLeaderboardSkeleton count={4} compact />}
       {query.hasNextPage ? (
         <div className="flex justify-center">
           <button
@@ -331,33 +334,36 @@ function PhotoLeaderboard({ range }: { range: Range }) {
   );
 }
 
-function PhotoLeaderboardSkeleton({ count = 8, compact = false }: { count?: number; compact?: boolean }) {
+function SkeletonRow({ index = 0 }: { index?: number }) {
+  return (
+    <li
+      className="flex min-h-[80px] items-center gap-4 border-b border-border px-4 py-3 last:border-b-0"
+      aria-hidden="true"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      <div className="h-9 w-9 shrink-0 rounded-full shimmer" />
+      <div className="h-14 w-14 shrink-0 rounded-md shimmer" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="h-4 w-2/3 rounded shimmer" />
+        <div className="h-3 w-1/3 rounded shimmer" />
+      </div>
+      <div className="w-[72px] space-y-2 text-right">
+        <div className="ml-auto h-5 w-16 rounded shimmer" />
+        <div className="ml-auto h-3 w-12 rounded shimmer" />
+      </div>
+    </li>
+  );
+}
+
+function PhotoLeaderboardSkeleton({ count = 8 }: { count?: number }) {
   return (
     <ol
-      className={cn(
-        "overflow-hidden rounded-xl border border-border bg-card",
-        compact && "border-dashed",
-      )}
+      className="overflow-hidden rounded-xl border border-border bg-card"
       aria-busy="true"
       aria-label="กำลังโหลดอันดับ"
     >
       {Array.from({ length: count }).map((_, i) => (
-        <li
-          key={i}
-          className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0"
-          style={{ animationDelay: `${i * 60}ms` }}
-        >
-          <div className="h-9 w-9 shrink-0 rounded-full shimmer" />
-          <div className="h-14 w-14 shrink-0 rounded-md shimmer" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-2/3 rounded shimmer" />
-            <div className="h-3 w-1/3 rounded shimmer" />
-          </div>
-          <div className="space-y-2 text-right">
-            <div className="ml-auto h-5 w-16 rounded shimmer" />
-            <div className="ml-auto h-3 w-12 rounded shimmer" />
-          </div>
-        </li>
+        <SkeletonRow key={i} index={i} />
       ))}
     </ol>
   );
