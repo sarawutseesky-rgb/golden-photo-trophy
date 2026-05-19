@@ -16,6 +16,7 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { usePhotosRealtime } from "@/hooks/use-photos-realtime";
 
 function NotFoundComponent() {
   return (
@@ -143,8 +144,14 @@ function RootComponent() {
             </div>
           </div>
           <Toaster />
+          <PhotosRealtimeBridge />
         </SidebarProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function PhotosRealtimeBridge() {
+  usePhotosRealtime();
+  return null;
 }
