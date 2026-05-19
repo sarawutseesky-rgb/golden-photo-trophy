@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -45,6 +45,16 @@ function LeaderboardPage() {
   const me = data?.me ?? null;
   const total = data?.total ?? 0;
   const meInTop = !!me && entries.some((e: any) => e.user_id === me.user_id);
+  const meRowRef = useRef<HTMLLIElement | null>(null);
+  const [flash, setFlash] = useState(false);
+
+  const scrollToMe = useCallback(() => {
+    const el = meRowRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlash(true);
+    window.setTimeout(() => setFlash(false), 1600);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -78,7 +88,13 @@ function LeaderboardPage() {
       </div>
 
       {user && (
-        <MyRankPanel me={me} total={total} highlighted={meInTop} />
+        <MyRankPanel
+          me={me}
+          total={total}
+          highlighted={meInTop}
+          canScroll={meInTop}
+          onScrollToMe={scrollToMe}
+        />
       )}
 
       {isLoading ? (
@@ -92,9 +108,12 @@ function LeaderboardPage() {
           {entries.map((e: any) => (
             <li
               key={e.user_id}
+              ref={me?.user_id === e.user_id ? meRowRef : undefined}
               className={cn(
                 "flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40",
                 me?.user_id === e.user_id && "bg-[var(--gold)]/5",
+                me?.user_id === e.user_id && flash &&
+                  "ring-2 ring-[var(--gold)] transition-shadow duration-500",
               )}
             >
               <RankBadge rank={e.rank} />
@@ -167,10 +186,14 @@ function MyRankPanel({
   me,
   total,
   highlighted,
+  canScroll,
+  onScrollToMe,
 }: {
   me: any | null;
   total: number;
   highlighted: boolean;
+  canScroll: boolean;
+  onScrollToMe: () => void;
 }) {
   if (!me) {
     return (
@@ -179,10 +202,15 @@ function MyRankPanel({
       </div>
     );
   }
+  const Wrapper: any = canScroll ? "button" : "div";
   return (
-    <div
+    <Wrapper
+      type={canScroll ? "button" : undefined}
+      onClick={canScroll ? onScrollToMe : undefined}
+      title={canScroll ? "ไปยังแถวของฉันในตาราง" : undefined}
       className={cn(
-        "flex items-center gap-4 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-4 py-3",
+        "flex w-full items-center gap-4 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-4 py-3 text-left",
+        canScroll && "cursor-pointer hover:bg-[var(--gold)]/10 transition-colors",
         highlighted && "ring-1 ring-[var(--gold)]/40",
       )}
     >
@@ -216,6 +244,11 @@ function MyRankPanel({
           votes
         </div>
       </div>
-    </div>
+      {canScroll && (
+        <span className="hidden sm:inline text-xs font-medium text-[var(--gold)]">
+          ไปยังแถวของฉัน ↓
+        </span>
+      )}
+    </Wrapper>
   );
 }
