@@ -273,10 +273,14 @@ function PhotoDetail() {
         <button
           type="button"
           onClick={() => setLightboxOpen(true)}
-          className="group relative block w-full overflow-hidden rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+          className="group relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-black/40 focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
           aria-label="เปิดดูรูปขนาดเต็ม"
         >
-          <img src={p.image_url} alt={p.title} className="w-full transition group-hover:opacity-95" />
+          <img
+            src={p.image_url}
+            alt={p.title}
+            className="block h-auto max-h-[85vh] w-auto max-w-full object-contain transition group-hover:opacity-95"
+          />
           <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-background/70 px-2 py-1 text-[10px] uppercase tracking-wide text-foreground/80 opacity-0 backdrop-blur transition group-hover:opacity-100">
             คลิกเพื่อขยาย
           </span>
