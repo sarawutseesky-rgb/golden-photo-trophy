@@ -120,7 +120,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
       .maybeSingle();
     if (heldErr) throw new Error(heldErr.message);
 
-    let first = held ?? null;
+    let first: any = held ?? null;
     const isHeld = !!held;
     if (!first) {
       const { data: top, error: topErr } = await supabaseAdmin
@@ -133,7 +133,7 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
         .limit(1)
         .maybeSingle();
       if (topErr) throw new Error(topErr.message);
-      first = top ?? null;
+      first = (top as any) ?? null;
     }
 
     // #2 — next top-rated active photo, excluding the #1 id.
