@@ -130,6 +130,29 @@ function PhotoDetail() {
     setSwitching(false);
   }, [id]);
 
+  // Prefetch adjacent photo data + preload images for instant navigation
+  useEffect(() => {
+    if (!adjacent) return;
+    const targets = [adjacent.prev, adjacent.next].filter(Boolean) as Array<{ id: string; image_url?: string }>;
+    targets.forEach((t) => {
+      qc.prefetchQuery({
+        queryKey: ["photo", t.id],
+        queryFn: () => fetchPhoto({ data: { id: t.id } }),
+        staleTime: 60_000,
+      });
+      qc.prefetchQuery({
+        queryKey: ["photo-adjacent", t.id],
+        queryFn: () => fetchAdjacent({ data: { id: t.id } }),
+        staleTime: 60_000,
+      });
+      if (t.image_url && typeof window !== "undefined") {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = t.image_url;
+      }
+    });
+  }, [adjacent, qc, fetchPhoto, fetchAdjacent]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (switching) return;
