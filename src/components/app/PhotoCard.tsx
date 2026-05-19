@@ -22,10 +22,17 @@ export type FeedPhoto = {
   current_rank?: number | null;
   rank_one_since?: string | null;
   created_at?: string;
+  milestone_achieved_at?: string[] | null;
   profiles?: { display_name: string; avatar_url: string | null } | null;
 };
 
-export function PhotoCard({ photo }: { photo: FeedPhoto }) {
+export function PhotoCard({
+  photo,
+  showMilestoneTimeline = false,
+}: {
+  photo: FeedPhoto;
+  showMilestoneTimeline?: boolean;
+}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const vote = useServerFn(castVote);
