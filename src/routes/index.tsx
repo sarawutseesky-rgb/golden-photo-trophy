@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth-context";
 import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 import { FeedFilterBar, type FeedTab, type FeedSort } from "@/components/app/FeedFilterBar";
 import { SpotlightHero } from "@/components/app/SpotlightHero";
+import { EmptyState } from "@/components/app/EmptyState";
 
 const feedSearchSchema = z.object({
   tab: fallback(z.enum(["latest", "trending", "top-week", "following"]), "latest").default("latest"),
@@ -59,17 +60,33 @@ function HomePage() {
       <SpotlightHero />
       <FeedFilterBar tab={tab} sort={sort} tag={tag} />
       {tab === "following" && !user ? (
-        <div className="flex h-60 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border text-muted-foreground">
-          <p>เข้าสู่ระบบเพื่อดูฟีดของคนที่คุณติดตาม</p>
-          <Link to="/login" className="rounded-md bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground">
-            Login
-          </Link>
-        </div>
+        <EmptyState
+          variant="follow"
+          title="ติดตามช่างภาพที่คุณชอบ"
+          description="เข้าสู่ระบบเพื่อสร้างฟีดส่วนตัวจากผู้ที่คุณติดตาม และไม่พลาดรูปใหม่ ๆ"
+          actions={[
+            { kind: "link", to: "/login", label: "เริ่มโหวต / เข้าสู่ระบบ", primary: true },
+            { kind: "link", to: "/signup", label: "สมัครสมาชิก" },
+          ]}
+        />
       ) : (
         <InfinitePhotoFeed
           queryKey={[tab, sort, tag ?? null, params.following_of ?? null]}
           params={params}
           enabled={tab !== "following" || !!user}
+          emptyState={
+            !user ? (
+              <EmptyState
+                variant="vote"
+                title="ยังไม่มีรูปให้ดูตอนนี้"
+                description="เข้าสู่ระบบเพื่อเริ่มโหวตและอัปโหลดรูปของคุณเองให้ชุมชน"
+                actions={[
+                  { kind: "link", to: "/login", label: "เริ่มโหวต", primary: true },
+                  { kind: "link", to: "/signup", label: "สมัครสมาชิก" },
+                ]}
+              />
+            ) : undefined
+          }
         />
       )}
     </div>
