@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, X, Flame, Sparkles, Trophy, Users, RotateCcw } from "lucide-react";
+import { ChevronDown, X, Flame, Sparkles, Trophy, Users, RotateCcw, Calendar, CalendarDays, CalendarRange } from "lucide-react";
 import { getPopularTags } from "@/lib/photos.functions";
 import { cn } from "@/lib/utils";
 import {
@@ -11,13 +11,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type FeedTab = "latest" | "trending" | "top-week" | "following";
+export type FeedTab = "latest" | "trending" | "top-day" | "top-week" | "top-month" | "top-year" | "following";
 export type FeedSort = "new" | "score" | "votes";
 
 const TABS: { id: FeedTab; label: string; icon: any }[] = [
   { id: "latest", label: "Latest", icon: Sparkles },
   { id: "trending", label: "Trending", icon: Flame },
+  { id: "top-day", label: "Top day", icon: Calendar },
   { id: "top-week", label: "Top this week", icon: Trophy },
+  { id: "top-month", label: "Top month", icon: CalendarDays },
+  { id: "top-year", label: "Top year", icon: CalendarRange },
   { id: "following", label: "Following", icon: Users },
 ];
 
