@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
 import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, normalizeDistribution } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
