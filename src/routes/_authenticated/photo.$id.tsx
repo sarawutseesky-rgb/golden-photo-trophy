@@ -191,6 +191,7 @@ function PhotoDetail() {
     const prevPhoto = qc.getQueryData<any>(photoKey);
     const prevVote = qc.getQueryData<any>(voteKey);
     const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
+    const prevInfinite = qc.getQueriesData<any>({ queryKey: ["feed-infinite"] });
 
     setBusy(true);
     // Optimistic update — vote cache
@@ -204,18 +205,25 @@ function PhotoDetail() {
     }
 
     // Optimistic update — feed caches
+    const patchVote = (ph: any) => {
+      if (!ph || ph.id !== id) return ph;
+      const oldCount = ph.vote_count ?? 0;
+      const oldAvg = Number(ph.avg_score ?? 0);
+      const newCount = oldCount + 1;
+      const newAvg = newCount > 0 ? Number(((oldAvg * oldCount + score) / newCount).toFixed(2)) : 0;
+      return { ...ph, vote_count: newCount, avg_score: newAvg };
+    };
     qc.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
       if (!old?.photos) return old;
+      return { ...old, photos: old.photos.map(patchVote) };
+    });
+    qc.setQueriesData({ queryKey: ["feed-infinite"] }, (old: any) => {
+      if (!old?.pages) return old;
       return {
         ...old,
-        photos: old.photos.map((ph: any) => {
-          if (ph.id !== id) return ph;
-          const oldCount = ph.vote_count ?? 0;
-          const oldAvg = Number(ph.avg_score ?? 0);
-          const newCount = oldCount + 1;
-          const newAvg = newCount > 0 ? Number(((oldAvg * oldCount + score) / newCount).toFixed(2)) : 0;
-          return { ...ph, vote_count: newCount, avg_score: newAvg };
-        }),
+        pages: old.pages.map((p: any) =>
+          p?.photos ? { ...p, photos: p.photos.map(patchVote) } : p,
+        ),
       };
     });
 
@@ -239,6 +247,7 @@ function PhotoDetail() {
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
       prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
+      prevInfinite.forEach(([key, data]) => qc.setQueryData(key, data));
       toast.error(e.message ?? "โหวตไม่สำเร็จ");
       if (debug) logDebug(`vote ${score}★ (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
     } finally {
@@ -253,6 +262,7 @@ function PhotoDetail() {
     const prevPhoto = qc.getQueryData<any>(photoKey);
     const prevVote = qc.getQueryData<any>(voteKey);
     const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
+    const prevInfinite = qc.getQueriesData<any>({ queryKey: ["feed-infinite"] });
 
     setBusy(true);
     qc.setQueryData(voteKey, { score: null });
@@ -271,21 +281,28 @@ function PhotoDetail() {
     }
 
     // Optimistic update — feed caches
+    const patchUnvote = (ph: any) => {
+      if (!ph || ph.id !== id) return ph;
+      const oldCount = ph.vote_count ?? 0;
+      const oldAvg = Number(ph.avg_score ?? 0);
+      const prevScore = prevVote?.score ?? 0;
+      const newCount = Math.max(0, oldCount - 1);
+      const newAvg = newCount > 0
+        ? Number(((oldAvg * oldCount - prevScore) / newCount).toFixed(2))
+        : 0;
+      return { ...ph, vote_count: newCount, avg_score: newAvg };
+    };
     qc.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
       if (!old?.photos) return old;
+      return { ...old, photos: old.photos.map(patchUnvote) };
+    });
+    qc.setQueriesData({ queryKey: ["feed-infinite"] }, (old: any) => {
+      if (!old?.pages) return old;
       return {
         ...old,
-        photos: old.photos.map((ph: any) => {
-          if (ph.id !== id) return ph;
-          const oldCount = ph.vote_count ?? 0;
-          const oldAvg = Number(ph.avg_score ?? 0);
-          const prevScore = prevVote?.score ?? 0;
-          const newCount = Math.max(0, oldCount - 1);
-          const newAvg = newCount > 0
-            ? Number(((oldAvg * oldCount - prevScore) / newCount).toFixed(2))
-            : 0;
-          return { ...ph, vote_count: newCount, avg_score: newAvg };
-        }),
+        pages: old.pages.map((p: any) =>
+          p?.photos ? { ...p, photos: p.photos.map(patchUnvote) } : p,
+        ),
       };
     });
 
@@ -308,6 +325,7 @@ function PhotoDetail() {
       qc.setQueryData(photoKey, prevPhoto);
       qc.setQueryData(voteKey, prevVote);
       prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
+      prevInfinite.forEach(([key, data]) => qc.setQueryData(key, data));
       toast.error(e.message ?? "ยกเลิกโหวตไม่สำเร็จ");
       if (debug) logDebug(`unvote (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
     } finally {
