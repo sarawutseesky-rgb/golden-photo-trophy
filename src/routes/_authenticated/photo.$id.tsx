@@ -9,6 +9,7 @@ import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functio
 import { incrementPhotoView } from "@/lib/follows.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
+import { VoteDistribution } from "@/components/app/VoteDistribution";
 import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
@@ -123,7 +124,6 @@ function PhotoDetail() {
   const isOwner = user?.id === p.user_id;
   const hasVoted = myVote?.score != null;
   const normalizedDist = normalizeDistribution(data.distribution);
-  const total = normalizedDist.reduce((a, b) => a + b, 0) || 1;
   const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
 
   const handleVote = async (score: number) => {
@@ -588,23 +588,7 @@ function PhotoDetail() {
             </div>
           )}
 
-          <div className="mt-4 space-y-1">
-          {[5, 4, 3, 2, 1].map((s) => {
-              const c = normalizedDist[s - 1] ?? 0;
-              return (
-                <div key={s} className="flex items-center gap-2 text-xs">
-                  <span className="w-4 text-muted-foreground">{s}★</span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded bg-muted">
-                    <div
-                      className="h-full bg-[var(--gold)]"
-                      style={{ width: `${(c / total) * 100}%` }}
-                    />
-                  </div>
-                  <span className="w-6 text-right text-muted-foreground">{c}</span>
-                </div>
-              );
-            })}
-          </div>
+          <VoteDistribution distribution={normalizedDist} />
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
