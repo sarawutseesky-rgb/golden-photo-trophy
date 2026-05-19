@@ -1,0 +1,1 @@
+ALTER TABLE public.photos REPLICA IDENTITY FULL;
