@@ -108,26 +108,34 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
 
     // Snapshot current caches for rollback
     const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
+    const prevInfinite = qc.getQueriesData<any>({ queryKey: ["feed-infinite"] });
     const photoKey = ["photo", photo.id] as const;
     const prevPhoto = qc.getQueryData<any>(photoKey);
 
     // Optimistic update on feed caches
     let optimisticAvg = Number(photo.avg_score ?? 0);
     let optimisticCount = (photo.vote_count ?? 0) + 1;
+    const patchPhoto = (ph: any) => {
+      if (!ph || ph.id !== photo.id) return ph;
+      const oldCount = ph.vote_count ?? 0;
+      const oldAvg = Number(ph.avg_score ?? 0);
+      const newCount = oldCount + 1;
+      const newAvg = newCount > 0 ? Number(((oldAvg * oldCount + score) / newCount).toFixed(2)) : 0;
+      optimisticAvg = newAvg;
+      optimisticCount = newCount;
+      return { ...ph, vote_count: newCount, avg_score: newAvg };
+    };
     qc.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
       if (!old?.photos) return old;
+      return { ...old, photos: old.photos.map(patchPhoto) };
+    });
+    qc.setQueriesData({ queryKey: ["feed-infinite"] }, (old: any) => {
+      if (!old?.pages) return old;
       return {
         ...old,
-        photos: old.photos.map((ph: any) => {
-          if (ph.id !== photo.id) return ph;
-          const oldCount = ph.vote_count ?? 0;
-          const oldAvg = Number(ph.avg_score ?? 0);
-          const newCount = oldCount + 1;
-          const newAvg = newCount > 0 ? Number(((oldAvg * oldCount + score) / newCount).toFixed(2)) : 0;
-          optimisticAvg = newAvg;
-          optimisticCount = newCount;
-          return { ...ph, vote_count: newCount, avg_score: newAvg };
-        }),
+        pages: old.pages.map((p: any) =>
+          p?.photos ? { ...p, photos: p.photos.map(patchPhoto) } : p,
+        ),
       };
     });
 
@@ -156,6 +164,7 @@ export function PhotoCard({ photo }: { photo: FeedPhoto }) {
       setConfirmed(null);
       // Rollback
       prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
+      prevInfinite.forEach(([key, data]) => qc.setQueryData(key, data));
       qc.setQueryData(photoKey, prevPhoto);
       const msg = e?.message ?? "โหวตไม่สำเร็จ";
       toast.error(msg);
