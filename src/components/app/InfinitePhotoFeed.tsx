@@ -21,11 +21,13 @@ export function InfinitePhotoFeed({
   params,
   enabled = true,
   emptyState,
+  showMilestoneTimeline = false,
 }: {
   queryKey: unknown[];
   params: FeedParams;
   enabled?: boolean;
   emptyState?: ReactNode;
+  showMilestoneTimeline?: boolean;
 }) {
   const fn = useServerFn(listFeed);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -80,7 +82,7 @@ export function InfinitePhotoFeed({
     <div>
       <div className="columns-1 gap-4 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 [&>*]:mb-4">
         {photos.map((p) => (
-          <PhotoCard key={p.id} photo={p} />
+          <PhotoCard key={p.id} photo={p} showMilestoneTimeline={showMilestoneTimeline} />
         ))}
       </div>
       {query.hasNextPage && (
