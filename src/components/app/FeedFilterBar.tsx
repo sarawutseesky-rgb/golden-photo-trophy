@@ -173,36 +173,49 @@ export function FeedFilterBar({
             className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0"
             aria-label="Tag filters"
           >
-            <Link
-              to="/"
-              search={(prev: any) => ({ ...prev, tag: undefined })}
-              className={cn(
-                "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition",
-                !tag
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground",
-              )}
-            >
-              All
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to="/"
+                  search={(prev: any) => ({ ...prev, tag: undefined })}
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    !tag
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+                  )}
+                  aria-label="แสดงทุกแท็ก"
+                >
+                  All
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={6}>แสดงทุกแท็ก</TooltipContent>
+            </Tooltip>
             {tags.map(({ tag: t, count }) => {
               const active = tag === t;
               return (
-                <Link
-                  key={t}
-                  to="/"
-                  search={(prev: any) => ({ ...prev, tag: active ? undefined : t })}
-                  className={cn(
-                    "inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition",
-                    active
-                      ? "border-[var(--gold)] bg-[var(--gold)]/15 text-foreground"
-                      : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground",
-                  )}
-                >
-                  <span>#{t}</span>
-                  <span className="text-[10px] opacity-60">{count}</span>
-                  {active && <X className="h-3 w-3" />}
-                </Link>
+                <Tooltip key={t}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/"
+                      search={(prev: any) => ({ ...prev, tag: active ? undefined : t })}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        active
+                          ? "border-[var(--gold)] bg-[var(--gold)]/15 text-foreground"
+                          : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+                      )}
+                      aria-label={active ? `ล้างแท็ก ${t}` : `กรองด้วยแท็ก ${t}`}
+                    >
+                      <span>#{t}</span>
+                      <span className="text-[10px] opacity-60">{count}</span>
+                      {active && <X className="h-3 w-3" />}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={6}>
+                    {active ? `ล้างแท็ก #${t}` : `กรองด้วย #${t} (${count} ภาพ)`}
+                  </TooltipContent>
+                </Tooltip>
               );
             })}
           </div>
