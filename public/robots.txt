@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://golden-photo-trophy.lovable.app/sitemap.xml
