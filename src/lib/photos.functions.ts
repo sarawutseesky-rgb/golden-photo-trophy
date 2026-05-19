@@ -79,6 +79,34 @@ export const getPopularTags = createServerFn({ method: "GET" })
     return { tags };
   });
 
+export const getRankOnePhoto = createServerFn({ method: "GET" })
+  .handler(async () => {
+    // Prefer the photo currently holding #1 (rank_one_since set).
+    const { data: held, error: heldErr } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_SELECT)
+      .eq("status", "active")
+      .not("rank_one_since", "is", null)
+      .order("rank_one_since", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (heldErr) throw new Error(heldErr.message);
+    if (held) return { photo: held, held: true };
+
+    // Fallback: top-rated active photo (so the spotlight always renders).
+    const { data: top, error: topErr } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_SELECT)
+      .eq("status", "active")
+      .gte("vote_count", 1)
+      .order("avg_score", { ascending: false })
+      .order("vote_count", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (topErr) throw new Error(topErr.message);
+    return { photo: top ?? null, held: false };
+  });
+
 export const getPhoto = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
