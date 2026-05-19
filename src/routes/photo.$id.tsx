@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
 import { THRESHOLDS_DAYS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, normalizeDistribution } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
@@ -99,10 +99,7 @@ function PhotoDetail() {
   const p = data.photo as any;
   const isOwner = user?.id === p.user_id;
   const hasVoted = myVote?.score != null;
-  const normalizedDist: number[] = (() => {
-    const base = Array.isArray(data.distribution) ? data.distribution : [];
-    return [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
-  })();
+  const normalizedDist = normalizeDistribution(data.distribution);
   const total = normalizedDist.reduce((a, b) => a + b, 0) || 1;
   const progress = nextMilestoneProgress(p.milestone_stars, p.rank_one_since);
 
@@ -121,8 +118,7 @@ function PhotoDetail() {
 
     // Optimistic update — detail cache
     if (prevPhoto?.photo) {
-      const base = Array.isArray(prevPhoto.distribution) ? prevPhoto.distribution : [];
-      const dist = [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
+      const dist = normalizeDistribution(prevPhoto.distribution);
       const oldScore = prevVote?.score as number | null | undefined;
       if (oldScore && oldScore >= 1 && oldScore <= 5) dist[oldScore - 1] = Math.max(0, dist[oldScore - 1] - 1);
       dist[score - 1] += 1;
@@ -191,8 +187,7 @@ function PhotoDetail() {
     setBusy(true);
     qc.setQueryData(voteKey, { score: null });
     if (prevPhoto?.photo && prevVote?.score) {
-      const base = Array.isArray(prevPhoto.distribution) ? prevPhoto.distribution : [];
-      const dist = [0, 1, 2, 3, 4].map((i) => Number(base[i] ?? 0) || 0);
+      const dist = normalizeDistribution(prevPhoto.distribution);
       dist[prevVote.score - 1] = Math.max(0, dist[prevVote.score - 1] - 1);
       const newCount = dist.reduce((a, b) => a + b, 0);
       const sum = dist.reduce((acc, c, i) => acc + c * (i + 1), 0);

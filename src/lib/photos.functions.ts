@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { normalizeDistribution } from "@/lib/utils";
 
 const PHOTO_SELECT = `
   id, user_id, title, description, tags, image_url, width, height,
@@ -44,10 +45,11 @@ export const getPhoto = createServerFn({ method: "GET" })
     if (!photo) return { photo: null, distribution: [0, 0, 0, 0, 0], comments: [] };
 
     const { data: votes } = await supabaseAdmin.from("votes").select("score").eq("photo_id", data.id);
-    const distribution = [0, 0, 0, 0, 0];
+    const rawDistribution = [0, 0, 0, 0, 0];
     (votes ?? []).forEach((v) => {
-      if (v.score >= 1 && v.score <= 5) distribution[v.score - 1]++;
+      if (v.score >= 1 && v.score <= 5) rawDistribution[v.score - 1]++;
     });
+    const distribution = normalizeDistribution(rawDistribution);
 
     const { data: comments } = await supabaseAdmin
       .from("comments")
