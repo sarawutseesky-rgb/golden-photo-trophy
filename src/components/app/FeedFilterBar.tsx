@@ -100,7 +100,7 @@ export function FeedFilterBar({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {!isDefault && (
+            {showSort && !isDefault && (
               <Link
                 to="/"
                 search={{ tab: "latest", sort: "new" }}
@@ -112,7 +112,7 @@ export function FeedFilterBar({
               </Link>
             )}
 
-            <DropdownMenu>
+            {showSort && (<DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted",
@@ -120,7 +120,7 @@ export function FeedFilterBar({
                 aria-label="Sort"
               >
                 <span className="hidden text-muted-foreground sm:inline">Sort:</span>
-                <span>{SORT_LABELS[sort]}</span>
+                <span>{SORT_LABELS[activeSort]}</span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[180px]">
@@ -128,13 +128,13 @@ export function FeedFilterBar({
                   <DropdownMenuItem
                     key={s}
                     onClick={() => navigate({ search: (prev: any) => ({ ...prev, sort: s }) })}
-                    className={cn(s === sort && "font-semibold text-[var(--gold)]")}
+                    className={cn(s === activeSort && "font-semibold text-[var(--gold)]")}
                   >
                     {SORT_LABELS[s]}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu>)}
           </div>
         </div>
 
