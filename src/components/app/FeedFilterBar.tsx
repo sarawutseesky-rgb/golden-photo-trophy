@@ -29,10 +29,14 @@ export function FeedFilterBar({
   tab,
   sort,
   tag,
+  showSort = true,
+  showTags = true,
 }: {
-  tab: FeedTab;
-  sort: FeedSort;
+  tab?: FeedTab;
+  sort?: FeedSort;
   tag?: string;
+  showSort?: boolean;
+  showTags?: boolean;
 }) {
   const navigate = useNavigate({ from: "/" });
   const tagsFn = useServerFn(getPopularTags);
@@ -40,6 +44,7 @@ export function FeedFilterBar({
   const tags = data?.tags ?? [];
 
   const isDefault = tab === "latest" && sort === "new" && !tag;
+  const activeSort: FeedSort = sort ?? "new";
 
   return (
     <div className="sticky top-[57px] z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:-mx-6 md:px-6">
@@ -95,7 +100,7 @@ export function FeedFilterBar({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {!isDefault && (
+            {showSort && !isDefault && (
               <Link
                 to="/"
                 search={{ tab: "latest", sort: "new" }}
@@ -107,7 +112,7 @@ export function FeedFilterBar({
               </Link>
             )}
 
-            <DropdownMenu>
+            {showSort && (<DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted",
@@ -115,7 +120,7 @@ export function FeedFilterBar({
                 aria-label="Sort"
               >
                 <span className="hidden text-muted-foreground sm:inline">Sort:</span>
-                <span>{SORT_LABELS[sort]}</span>
+                <span>{SORT_LABELS[activeSort]}</span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[180px]">
@@ -123,18 +128,18 @@ export function FeedFilterBar({
                   <DropdownMenuItem
                     key={s}
                     onClick={() => navigate({ search: (prev: any) => ({ ...prev, sort: s }) })}
-                    className={cn(s === sort && "font-semibold text-[var(--gold)]")}
+                    className={cn(s === activeSort && "font-semibold text-[var(--gold)]")}
                   >
                     {SORT_LABELS[s]}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu>)}
           </div>
         </div>
 
         {/* Tag chips */}
-        {tags.length > 0 && (
+        {showTags && tags.length > 0 && (
           <div
             className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0"
             aria-label="Tag filters"
