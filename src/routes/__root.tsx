@@ -86,13 +86,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Upload photos, vote 1–5 stars, and earn milestone stars by holding the #1 spot.",
       },
       { property: "og:title", content: "SEESTAR — Photo voting & star ranking" },
-      { property: "og:description", content: "SEESTAR — Photo voting & star ranking" },
+      { property: "og:description", content: "A photo community where members upload, vote 1–5 stars, and earn milestone stars by holding the #1 spot." },
+      { property: "og:site_name", content: "SEESTAR" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "SEESTAR — Photo voting & star ranking" },
-      { name: "description", content: "SEESTAR — Photo voting & star ranking" },
-      { name: "twitter:description", content: "SEESTAR — Photo voting & star ranking" },
+      { name: "twitter:description", content: "A photo community where members upload, vote 1–5 stars, and earn milestone stars by holding the #1 spot." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a54d796a-7a80-46b4-a9d0-7fcff96ee139/id-preview-7a1d3d44--dd98fcee-23e3-47c2-870d-c2e5aa99588b.lovable.app-1779189167161.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a54d796a-7a80-46b4-a9d0-7fcff96ee139/id-preview-7a1d3d44--dd98fcee-23e3-47c2-870d-c2e5aa99588b.lovable.app-1779189167161.png" },
     ],
@@ -100,6 +100,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "SEESTAR",
+              url: "https://golden-photo-trophy.lovable.app",
+            },
+            {
+              "@type": "WebSite",
+              name: "SEESTAR",
+              url: "https://golden-photo-trophy.lovable.app",
+            },
+          ],
+        }),
       },
     ],
   }),
