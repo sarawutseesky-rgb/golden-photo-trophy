@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X } from "lucide-react";
+import { Star, Share2, Flag, ArrowLeft, CheckCircle2, Pencil, Trash2, X, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
@@ -465,6 +465,20 @@ function PhotoDetail() {
             <span className="text-3xl font-bold">{Number(p.avg_score).toFixed(1)}</span>
             <span className="text-sm text-muted-foreground">/ 5 · {p.vote_count} votes</span>
           </div>
+
+          {(hasVoted || isOwner) && (
+            <div
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-xs text-muted-foreground"
+              data-testid="view-count"
+              aria-live="polite"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              <span className="tabular-nums font-semibold text-foreground">
+                {Number(p.view_count ?? 0).toLocaleString()}
+              </span>
+              <span>วิว</span>
+            </div>
+          )}
 
           {!isOwner && user && (
             <div className="mt-3">
