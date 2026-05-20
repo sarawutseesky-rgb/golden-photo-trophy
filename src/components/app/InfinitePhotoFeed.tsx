@@ -63,7 +63,10 @@ export function InfinitePhotoFeed({
     return () => io.disconnect();
   }, [query.hasNextPage, query.isFetchingNextPage, query.fetchNextPage]);
 
-  if (query.isLoading) return <PhotoGridSkeleton count={12} />;
+  if (query.isLoading) {
+    if (renderLoading) return <>{renderLoading()}</>;
+    return <PhotoGridSkeleton count={12} />;
+  }
 
   const photos: FeedPhoto[] = (query.data?.pages ?? []).flatMap((p) => p?.photos ?? []);
 
