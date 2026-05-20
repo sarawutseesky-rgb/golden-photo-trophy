@@ -767,7 +767,7 @@ function PhotoDetail() {
             </div>
           )}
 
-          <VoteDistribution distribution={normalizedDist} />
+          <VoteDistribution distribution={normalizedDist} busy={busy} />
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
