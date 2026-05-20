@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
 import { applyOptimisticVote } from "@/lib/votes.helpers";
 import { isDuplicateVoteMessage, toastDuplicateVote, toastVoteSuccess } from "@/lib/vote-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
@@ -585,16 +586,32 @@ function PhotoDetail() {
 
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Rating</div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold">{Number(p.avg_score).toFixed(1)}</span>
-            <span className="text-sm text-muted-foreground">/ 5 · {p.vote_count} votes</span>
-          </div>
-          <div
-            className="mt-1"
-            aria-label={`คะแนนเฉลี่ย ${Number(p.avg_score).toFixed(1)} จาก 5 ดาว`}
-          >
-            <StarRow count={Math.round(Number(p.avg_score))} size={18} />
-          </div>
+          {busy ? (
+            <>
+              <div className="flex items-baseline gap-2" aria-busy="true" aria-label="กำลังอัปเดตคะแนน">
+                <Skeleton className="h-8 w-12 rounded-sm" />
+                <Skeleton className="h-4 w-24 rounded-sm" />
+              </div>
+              <div className="mt-1 flex gap-1" aria-hidden="true">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Skeleton key={`avg-skel-${n}`} className="h-[18px] w-[18px] rounded-full" />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold">{Number(p.avg_score).toFixed(1)}</span>
+                <span className="text-sm text-muted-foreground">/ 5 · {p.vote_count} votes</span>
+              </div>
+              <div
+                className="mt-1"
+                aria-label={`คะแนนเฉลี่ย ${Number(p.avg_score).toFixed(1)} จาก 5 ดาว`}
+              >
+                <StarRow count={Math.round(Number(p.avg_score))} size={18} />
+              </div>
+            </>
+          )}
 
           <div
             className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-xs text-muted-foreground"
@@ -633,8 +650,18 @@ function PhotoDetail() {
               ) : (
                 <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
               )}
-              <div className="mt-1 flex gap-1" onMouseLeave={() => setHover(null)}>
-                {[1, 2, 3, 4, 5].map((n) => (
+              <div
+                className="mt-1 flex gap-1"
+                onMouseLeave={() => setHover(null)}
+                aria-busy={busy}
+              >
+                {busy ? (
+                  [1, 2, 3, 4, 5].map((n) => (
+                    <span key={`vote-skel-${n}`} className="inline-block" aria-hidden="true">
+                      <Skeleton className="h-7 w-7 rounded-full" />
+                    </span>
+                  ))
+                ) : [1, 2, 3, 4, 5].map((n) => (
                   <motion.button
                     key={n}
                     disabled={hasVoted || busy}
@@ -669,16 +696,27 @@ function PhotoDetail() {
                 className="mt-2 text-xs text-muted-foreground"
                 aria-live="polite"
                 data-testid="vote-summary"
+                aria-busy={busy}
               >
-                เฉลี่ย{" "}
-                <span className="font-semibold text-foreground tabular-nums">
-                  {Number(p.avg_score).toFixed(1)}
-                </span>{" "}
-                ★ จาก{" "}
-                <span className="font-semibold text-foreground tabular-nums">
-                  {p.vote_count}
-                </span>{" "}
-                โหวต
+                {busy ? (
+                  <span className="inline-flex items-center gap-1.5" aria-hidden="true">
+                    <Skeleton className="h-3 w-10 rounded-sm" />
+                    <Skeleton className="h-3 w-8 rounded-sm" />
+                    <Skeleton className="h-3 w-10 rounded-sm" />
+                  </span>
+                ) : (
+                  <>
+                    เฉลี่ย{" "}
+                    <span className="font-semibold text-foreground tabular-nums">
+                      {Number(p.avg_score).toFixed(1)}
+                    </span>{" "}
+                    ★ จาก{" "}
+                    <span className="font-semibold text-foreground tabular-nums">
+                      {p.vote_count}
+                    </span>{" "}
+                    โหวต
+                  </>
+                )}
               </div>
               <button
                 type="button"
