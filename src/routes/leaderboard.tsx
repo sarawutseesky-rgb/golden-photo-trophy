@@ -86,7 +86,9 @@ function LeaderboardPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold">
-            <Trophy className="h-7 w-7 text-[var(--gold)]" />
+            <IconShimmer className="h-7 w-7">
+              <Trophy className="h-7 w-7 text-[var(--gold)]" />
+            </IconShimmer>
             {mode === "members" ? "อันดับสมาชิก" : "อันดับภาพถ่าย"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
