@@ -410,6 +410,58 @@ function PhotoLeaderboardSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
+function AvatarWithSkeleton({
+  url,
+  name,
+  className,
+  fallbackTextClassName,
+}: {
+  url: string | null;
+  name?: string | null;
+  className?: string;
+  fallbackTextClassName?: string;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const showImage = !!url && !errored;
+  const showShimmer = !!url && !loaded && !errored;
+  const initial = name?.charAt(0)?.toUpperCase() || "?";
+  return (
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden rounded-full bg-muted",
+        className,
+      )}
+    >
+      {showShimmer && <div className="absolute inset-0 shimmer" />}
+      {!showImage && (
+        <div
+          className={cn(
+            "flex h-full w-full items-center justify-center font-bold text-muted-foreground",
+            fallbackTextClassName,
+          )}
+        >
+          {initial}
+        </div>
+      )}
+      {showImage && (
+        <img
+          src={url!}
+          alt={name ?? ""}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+          className={cn(
+            "h-full w-full object-cover transition-opacity duration-300",
+            loaded ? "opacity-100" : "opacity-0",
+          )}
+        />
+      )}
+    </div>
+  );
+}
+
+
 function RankBadge({ rank }: { rank: number }) {
 
   return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
