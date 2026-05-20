@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/profile/me")({
 
 function EditProfilePage() {
   const { user, loading: authLoading } = useAuth();
+  const updateFn = useServerFn(updateProfile);
   const { theme, toggle: toggleTheme } = useTheme();
 
   const [displayName, setDisplayName] = useState("");
