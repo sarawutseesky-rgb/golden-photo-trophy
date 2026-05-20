@@ -23,12 +23,14 @@ export function InfinitePhotoFeed({
   enabled = true,
   emptyState,
   showMilestoneTimeline = false,
+  renderLoading,
 }: {
   queryKey: unknown[];
   params: FeedParams;
   enabled?: boolean;
   emptyState?: ReactNode;
   showMilestoneTimeline?: boolean;
+  renderLoading?: () => ReactNode;
 }) {
   const fn = useServerFn(listFeed);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -61,7 +63,10 @@ export function InfinitePhotoFeed({
     return () => io.disconnect();
   }, [query.hasNextPage, query.isFetchingNextPage, query.fetchNextPage]);
 
-  if (query.isLoading) return <PhotoGridSkeleton count={12} />;
+  if (query.isLoading) {
+    if (renderLoading) return <>{renderLoading()}</>;
+    return <PhotoGridSkeleton count={12} />;
+  }
 
   const photos: FeedPhoto[] = (query.data?.pages ?? []).flatMap((p) => p?.photos ?? []);
 
