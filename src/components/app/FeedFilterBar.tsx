@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, X, Flame, Sparkles, RotateCcw, Users } from "lucide-react";
+import { ChevronDown, X, Flame, Sparkles, RotateCcw, Users, ArrowUpDown } from "lucide-react";
 import { getPopularTags } from "@/lib/photos.functions";
 import { cn } from "@/lib/utils";
 import {
@@ -52,6 +52,7 @@ export function FeedFilterBar({
 
   const isDefault = tab === "latest" && sort === "new" && !tag;
   const activeSort: FeedSort = sort ?? "new";
+  const sortActive = activeSort !== "new";
 
   return (
     <div className="sticky top-[57px] z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:-mx-6 md:px-6">
@@ -172,11 +173,15 @@ export function FeedFilterBar({
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger
                     className={cn(
-                      "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      sortActive
+                        ? "border-[var(--gold)]/70 bg-[var(--gold)]/15 text-foreground shadow-sm hover:bg-[var(--gold)]/20"
+                        : "border-border bg-card text-foreground hover:bg-muted",
                     )}
                     aria-label="Sort"
                   >
-                    <span className="hidden text-muted-foreground sm:inline">Sort:</span>
+                    <ArrowUpDown className={cn("h-3.5 w-3.5", sortActive ? "text-[var(--gold)]" : "opacity-70")} />
+                    <span className="hidden text-muted-foreground sm:inline">เรียง:</span>
                     <span>{SORT_LABELS[activeSort]}</span>
                     <ChevronDown className="h-3.5 w-3.5 opacity-60" />
                   </DropdownMenuTrigger>
@@ -197,6 +202,29 @@ export function FeedFilterBar({
             </DropdownMenu>)}
           </div>
         </div>
+
+        {/* Active filter banner */}
+        {tag && (
+          <div
+            className="flex flex-wrap items-center gap-2 rounded-md border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-3 py-2 text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="text-muted-foreground">กำลังกรอง:</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-background/70 px-2 py-0.5 font-medium text-foreground">
+              #{tag}
+            </span>
+            <Link
+              to="/"
+              search={(prev: any) => ({ ...prev, tag: undefined })}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="ล้างตัวกรองแท็ก"
+            >
+              <X className="h-3.5 w-3.5" />
+              ล้างตัวกรอง
+            </Link>
+          </div>
+        )}
 
         {/* Tag chips */}
         {showTags && tags.length > 0 && (
