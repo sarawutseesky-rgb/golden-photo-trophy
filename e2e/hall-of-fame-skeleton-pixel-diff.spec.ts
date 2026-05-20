@@ -27,10 +27,10 @@ const FOOTER_TID = "photo-card-footer";
 const SK_TILE_TID = "photo-card-skeleton";
 const CARD_TID = "photo-card";
 
-// Sample the first three tiles. Iterating over multiple indices guarantees
-// the selector logic actually walks past `.first()` and confirms layout
-// equivalence holds for every column of the masonry grid.
-const TILE_INDICES = [0, 1, 2] as const;
+// Sample tiles 1–6 so every column of the widest masonry layout
+// (xl:columns-5) is covered at least once. A selector bug or per-column
+// layout regression can't slip through by hiding in an unsampled tile.
+const TILE_INDICES = [0, 1, 2, 3, 4, 5] as const;
 
 async function shotPng(loc: Locator): Promise<PNG> {
   await loc.waitFor({ state: "visible", timeout: 20_000 });
