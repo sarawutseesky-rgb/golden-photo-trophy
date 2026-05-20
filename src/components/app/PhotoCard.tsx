@@ -168,10 +168,16 @@ export function PhotoCard({
 
     try {
       await vote({ data: { photo_id: photo.id, score } });
-      toast.success(`ให้ ${score}★ แล้ว`);
+      toast.success(`ให้ ${score}★ แล้ว`, {
+        description: `คะแนนเฉลี่ยใหม่ ${optimisticAvg.toFixed(2)} จาก ${optimisticCount} โหวต`,
+      });
       setConfirmed({ score, avg: optimisticAvg, count: optimisticCount });
       qc.invalidateQueries({ queryKey: ["feed"] });
+      qc.invalidateQueries({ queryKey: ["feed-infinite"] });
       qc.invalidateQueries({ queryKey: photoKey });
+      qc.invalidateQueries({ queryKey: ["my-vote", photo.id] });
+      qc.invalidateQueries({ queryKey: ["spotlight-top-two"] });
+      qc.invalidateQueries({ queryKey: ["community-stats-today"] });
     } catch (e: any) {
       setMyScore(null);
       setConfirmed(null);
