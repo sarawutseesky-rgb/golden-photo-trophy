@@ -80,7 +80,7 @@ export function InfinitePhotoFeed({
 
   return (
     <div>
-      <div className="columns-1 gap-4 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 [&>*]:mb-4">
+      <div className="columns-1 gap-4 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 min-[2200px]:columns-7 min-[2800px]:columns-8 [&>*]:mb-4">
         {photos.map((p) => (
           <PhotoCard key={p.id} photo={p} showMilestoneTimeline={showMilestoneTimeline} />
         ))}
