@@ -68,7 +68,7 @@ export function SpotlightHero() {
         </Link>
 
         {/* Content */}
-        <div className="flex flex-col justify-center gap-4 p-5 md:p-7">
+        <div className="flex flex-col justify-center gap-3 p-4 md:p-5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--gold)]">
             <Sparkles className="h-3.5 w-3.5" />
             {held ? "Spotlight · Holding #1" : "Spotlight · Top of the feed"}
