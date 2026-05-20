@@ -22,8 +22,10 @@ const BREAKPOINTS = [
   { name: "desktop", width: 1280, height: 800 },
 ] as const;
 
-const STRIP_SEL = ".pointer-events-none.absolute.inset-x-0.bottom-0";
-const FOOTER_SEL = ".p-3";
+const STRIP_TID = "photo-card-bottom-strip";
+const FOOTER_TID = "photo-card-footer";
+const SK_TILE_TID = "photo-card-skeleton";
+const CARD_TID = "photo-card";
 
 async function shotPng(loc: Locator): Promise<PNG> {
   await loc.waitFor({ state: "visible", timeout: 20_000 });
@@ -52,7 +54,7 @@ function fit(src: PNG, w: number, h: number): PNG {
   return out;
 }
 
-async function captureSkeleton(page: Page, sel: string) {
+async function captureSkeleton(page: Page, regionTid: string) {
   await page.route("**/_serverFn/**", async (route) => {
     if (/photo|feed|hof/i.test(route.request().url())) {
       await new Promise((r) => setTimeout(r, 1500));
@@ -60,15 +62,23 @@ async function captureSkeleton(page: Page, sel: string) {
     await route.continue();
   });
   await page.goto("/hall-of-fame");
-  const loc = page.locator(`[aria-busy="true"] > div`).first().locator(sel).first();
+  const loc = page
+    .getByTestId(SK_TILE_TID)
+    .first()
+    .getByTestId(regionTid)
+    .first();
   const png = await shotPng(loc);
   await page.unroute("**/_serverFn/**");
   return png;
 }
 
-async function captureReal(page: Page, sel: string) {
+async function captureReal(page: Page, regionTid: string) {
   await page.goto("/?tab=latest&sort=new");
-  const loc = page.locator("article").first().locator(sel).first();
+  const loc = page
+    .getByTestId(CARD_TID)
+    .first()
+    .getByTestId(regionTid)
+    .first();
   const png = await shotPng(loc);
   return png;
 }
@@ -78,8 +88,8 @@ test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
     test(`${bp.name}: bottom strip matches real card envelope`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      const sk = await captureSkeleton(page, STRIP_SEL);
-      const real = await captureReal(page, STRIP_SEL);
+      const sk = await captureSkeleton(page, STRIP_TID);
+      const real = await captureReal(page, STRIP_TID);
 
       // ENVELOPE assertion — height pixel-exact, width within rounding.
       expect(
@@ -128,8 +138,8 @@ test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
     test(`${bp.name}: footer block matches real card envelope`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      const sk = await captureSkeleton(page, FOOTER_SEL);
-      const real = await captureReal(page, FOOTER_SEL);
+      const sk = await captureSkeleton(page, FOOTER_TID);
+      const real = await captureReal(page, FOOTER_TID);
 
       // Footer height: skeleton may be ≤8px taller (placeholder vs line-box rounding),
       // never shorter (would cause an upward jump on swap).

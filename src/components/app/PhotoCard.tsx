@@ -204,7 +204,10 @@ export function PhotoCard({
   })();
 
   return (
-    <article className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg">
+    <article
+      data-testid="photo-card"
+      className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg"
+    >
       <Link
         to="/photo/$id"
         params={{ id: photo.id }}
@@ -247,7 +250,10 @@ export function PhotoCard({
           </div>
         )}
         {/* Bottom info strip */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 via-black/40 to-transparent px-2.5 py-2 text-xs text-white">
+        <div
+          data-testid="photo-card-bottom-strip"
+          className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 via-black/40 to-transparent px-2.5 py-2 text-xs text-white"
+        >
           <span
             className="inline-flex items-center gap-1 font-semibold"
             aria-label={`คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก 5 ดาว`}
@@ -329,7 +335,7 @@ export function PhotoCard({
           </span>
         </div>
       </Link>
-      <div className="p-3">
+      <div data-testid="photo-card-footer" className="p-3">
         <h3 className="line-clamp-1 text-sm font-semibold">
           <Link
             to="/photo/$id"
