@@ -49,7 +49,7 @@ export function Header() {
           <SidebarTrigger className="-ml-1 hidden md:inline-flex" />
           <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <Star className="h-5 w-5 fill-[var(--gold)] text-[var(--gold)]" />
-            <span>SEESTAR</span>
+            <span>SEESTAR Ranking</span>
           </Link>
         </div>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
