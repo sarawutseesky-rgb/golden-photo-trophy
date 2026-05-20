@@ -25,114 +25,126 @@ const FOOTER_TID = "photo-card-footer";
 const SK_TILE_TID = "photo-card-skeleton";
 const CARD_TID = "photo-card";
 
-async function getStripSize(page: Page, parentTid: string): Promise<Strip> {
+// Indices of the tiles we sample. Checking the first three guards against
+// selector bugs that only ever pick up the first element on the page.
+const TILE_INDICES = [0, 1, 2] as const;
+
+async function getStripSize(page: Page, parentTid: string, idx: number): Promise<Strip> {
   const handle = page
     .getByTestId(parentTid)
-    .first()
+    .nth(idx)
     .getByTestId(STRIP_TID)
     .first();
   await handle.waitFor({ state: "visible", timeout: 15_000 });
   const box = await handle.boundingBox();
-  if (!box) throw new Error(`No bounding box for [data-testid=${parentTid}] [data-testid=${STRIP_TID}]`);
+  if (!box)
+    throw new Error(
+      `No bounding box for [data-testid=${parentTid}][${idx}] [data-testid=${STRIP_TID}]`,
+    );
   return { width: Math.round(box.width), height: Math.round(box.height) };
 }
 
 test.describe("Hall of Fame — Skeleton matches real card layout", () => {
   for (const bp of BREAKPOINTS) {
-    test(`${bp.name} (${bp.width}x${bp.height}): skeleton bottom strip matches real card`, async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: bp.width, height: bp.height });
+    for (const idx of TILE_INDICES) {
+      test(`${bp.name} (${bp.width}x${bp.height}) — tile #${idx + 1}: skeleton strip matches real card`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      // --- 1. Capture skeleton bottom strip on /hall-of-fame ---
-      // Slow the feed request so the skeleton is on-screen long enough to measure.
-      await page.route("**/_serverFn/**", async (route) => {
-        const url = route.request().url();
-        if (/photo|feed|hof/i.test(url)) {
-          await new Promise((r) => setTimeout(r, 1200));
-        }
-        await route.continue();
+        // Slow the feed request so the skeleton stays on-screen long enough.
+        await page.route("**/_serverFn/**", async (route) => {
+          if (/photo|feed|hof/i.test(route.request().url())) {
+            await new Promise((r) => setTimeout(r, 1500));
+          }
+          await route.continue();
+        });
+        await page.goto("/hall-of-fame");
+
+        // Ensure at least (idx + 1) skeleton tiles are rendered.
+        await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
+          timeout: 15_000,
+        });
+        const skeleton = await getStripSize(page, SK_TILE_TID, idx);
+        await page.unroute("**/_serverFn/**");
+
+        await page.goto("/?tab=latest&sort=new");
+        // Ensure at least (idx + 1) real cards exist before measuring.
+        await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
+          timeout: 20_000,
+        });
+        const real = await getStripSize(page, CARD_TID, idx);
+
+        // Height must match within 1px — what prevents the swap-in "jump".
+        expect(
+          Math.abs(skeleton.height - real.height),
+          `Strip height mismatch at ${bp.name} tile#${idx + 1}: skeleton=${skeleton.height}px real=${real.height}px`,
+        ).toBeLessThanOrEqual(1);
+
+        // Width should be within a tight tolerance (full column width).
+        expect(
+          Math.abs(skeleton.width - real.width),
+          `Strip width mismatch at ${bp.name} tile#${idx + 1}: skeleton=${skeleton.width}px real=${real.width}px`,
+        ).toBeLessThanOrEqual(4);
+
+        // Sanity: catches collapse-to-zero regressions.
+        expect(skeleton.height).toBeGreaterThanOrEqual(24);
+        expect(real.height).toBeGreaterThanOrEqual(24);
       });
-
-      await page.goto("/hall-of-fame");
-      const skeleton = await getStripSize(page, SK_TILE_TID);
-      await page.unroute("**/_serverFn/**");
-
-      // --- 2. Capture real card bottom strip on the latest feed ---
-      // PhotoCard is the same component Hall of Fame renders once data loads.
-      await page.goto("/?tab=latest&sort=new");
-      const realCard = page.getByTestId(CARD_TID).first();
-      await realCard.waitFor({ state: "visible", timeout: 20_000 });
-      const real = await getStripSize(page, CARD_TID);
-
-      // --- 3. Layout equivalence assertions ---
-      // Height must match exactly (within 1px for sub-pixel rounding) — this
-      // is what prevents the "jump" when the skeleton swaps out for a card.
-      expect(
-        Math.abs(skeleton.height - real.height),
-        `Strip height mismatch at ${bp.name}: skeleton=${skeleton.height}px real=${real.height}px`,
-      ).toBeLessThanOrEqual(1);
-
-      // Width should be within a tight tolerance — both strips span the full
-      // column width of the masonry tile.
-      expect(
-        Math.abs(skeleton.width - real.width),
-        `Strip width mismatch at ${bp.name}: skeleton=${skeleton.width}px real=${real.width}px`,
-      ).toBeLessThanOrEqual(4);
-
-      // Sanity: the strip must have non-trivial size (catches regressions
-      // where the skeleton accidentally collapses).
-      expect(skeleton.height).toBeGreaterThanOrEqual(24);
-      expect(real.height).toBeGreaterThanOrEqual(24);
-    });
+    }
   }
 });
 
 test.describe("Hall of Fame — Skeleton card footer matches real card footer", () => {
   for (const bp of BREAKPOINTS) {
-    test(`${bp.name}: footer (title + author) block heights match`, async ({ page }) => {
-      await page.setViewportSize({ width: bp.width, height: bp.height });
+    for (const idx of TILE_INDICES) {
+      test(`${bp.name} — tile #${idx + 1}: footer block height matches real card`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      await page.route("**/_serverFn/**", async (route) => {
-        const url = route.request().url();
-        if (/photo|feed|hof/i.test(url)) {
-          await new Promise((r) => setTimeout(r, 1200));
-        }
-        await route.continue();
+        await page.route("**/_serverFn/**", async (route) => {
+          if (/photo|feed|hof/i.test(route.request().url())) {
+            await new Promise((r) => setTimeout(r, 1500));
+          }
+          await route.continue();
+        });
+        await page.goto("/hall-of-fame");
+
+        await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
+          timeout: 15_000,
+        });
+        const skeletonFooter = page
+          .getByTestId(SK_TILE_TID)
+          .nth(idx)
+          .getByTestId(FOOTER_TID)
+          .first();
+        const skBox = await skeletonFooter.boundingBox();
+        await page.unroute("**/_serverFn/**");
+
+        await page.goto("/?tab=latest&sort=new");
+        await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
+          timeout: 20_000,
+        });
+        const realFooter = page
+          .getByTestId(CARD_TID)
+          .nth(idx)
+          .getByTestId(FOOTER_TID)
+          .first();
+        const realBox = await realFooter.boundingBox();
+
+        expect(skBox && realBox).toBeTruthy();
+        const skH = Math.round(skBox!.height);
+        const realH = Math.round(realBox!.height);
+        expect(
+          skH,
+          `Footer too short at ${bp.name} tile#${idx + 1}: skeleton=${skH}px real=${realH}px`,
+        ).toBeGreaterThanOrEqual(realH - 1);
+        expect(
+          skH - realH,
+          `Footer too tall at ${bp.name} tile#${idx + 1}: skeleton=${skH}px real=${realH}px`,
+        ).toBeLessThanOrEqual(8);
       });
-      await page.goto("/hall-of-fame");
-
-      const skeletonFooter = page
-        .getByTestId(SK_TILE_TID)
-        .first()
-        .getByTestId(FOOTER_TID)
-        .first();
-      await skeletonFooter.waitFor({ state: "visible", timeout: 15_000 });
-      const skBox = await skeletonFooter.boundingBox();
-      await page.unroute("**/_serverFn/**");
-
-      await page.goto("/?tab=latest&sort=new");
-      const realFooter = page
-        .getByTestId(CARD_TID)
-        .first()
-        .getByTestId(FOOTER_TID)
-        .first();
-      await realFooter.waitFor({ state: "visible", timeout: 20_000 });
-      const realBox = await realFooter.boundingBox();
-
-      expect(skBox && realBox).toBeTruthy();
-      // Footer should reserve ≥ real height (never shorter — avoids upward jump).
-      // Allow skeleton to be up to 4px taller (line-height vs placeholder rounding).
-      const skH = Math.round(skBox!.height);
-      const realH = Math.round(realBox!.height);
-      expect(
-        skH,
-        `Footer too short at ${bp.name}: skeleton=${skH}px real=${realH}px`,
-      ).toBeGreaterThanOrEqual(realH - 1);
-      expect(
-        skH - realH,
-        `Footer too tall at ${bp.name}: skeleton=${skH}px real=${realH}px`,
-      ).toBeLessThanOrEqual(8);
-    });
+    }
   }
 });
