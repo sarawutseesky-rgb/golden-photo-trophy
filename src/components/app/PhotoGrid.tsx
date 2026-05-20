@@ -1,4 +1,5 @@
 import { PhotoCard, type FeedPhoto } from "./PhotoCard";
+import { Star } from "lucide-react";
 
 const MASONRY_COLS =
   "columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 [&>*]:mb-4";
