@@ -59,7 +59,7 @@ function PhotoDetail() {
     queryKey: ["photo-adjacent", id],
     queryFn: () => fetchAdjacent({ data: { id } }),
   });
-  const { data: myVote } = useQuery({
+  const { data: myVote, isLoading: myVoteLoading } = useQuery({
     queryKey: ["my-vote", id, user?.id],
     queryFn: async () => {
       try {
@@ -210,6 +210,26 @@ function PhotoDetail() {
                   <Skeleton key={`avg-skel-${n}`} className="h-[18px] w-[18px] rounded-full" />
                 ))}
               </div>
+              <div className="mt-2 inline-flex items-center gap-1.5" aria-hidden="true">
+                <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                <Skeleton className="h-3 w-12 rounded-sm" />
+                <Skeleton className="h-3 w-6 rounded-sm" />
+              </div>
+              {user && (
+                <div className="mt-3" aria-hidden="true">
+                  <Skeleton className="h-4 w-32 rounded-sm" />
+                  <div className="mt-1 flex gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Skeleton key={`qv-skel-${n}`} className="h-7 w-7 rounded-full" />
+                    ))}
+                  </div>
+                  <div className="mt-2 inline-flex items-center gap-1.5">
+                    <Skeleton className="h-3 w-10 rounded-sm" />
+                    <Skeleton className="h-3 w-8 rounded-sm" />
+                    <Skeleton className="h-3 w-10 rounded-sm" />
+                  </div>
+                </div>
+              )}
               <VoteDistribution distribution={[]} loading={true} />
             </div>
             <div className="rounded-xl border border-border bg-card p-4 space-y-2">
@@ -676,85 +696,87 @@ function PhotoDetail() {
 
           {!isOwner && user && (
             <div className="mt-3">
-              {hasVoted ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <div
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--gold)]"
-                    data-testid="voted-badge"
-                    aria-live="polite"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    คุณโหวตแล้ว · {myVote!.score}★
+              {busy || myVoteLoading ? (
+                <>
+                  <Skeleton className="h-4 w-32 rounded-sm" aria-hidden="true" />
+                  <div className="mt-1 flex gap-1" aria-hidden="true">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Skeleton key={`vote-skel-${n}`} className="h-7 w-7 rounded-full" />
+                    ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleUnvote}
-                    disabled={busy}
-                    data-testid="unvote-button"
-                    className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
-                  >
-                    ยกเลิกโหวต
-                  </button>
-                </div>
-              ) : (
-                <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
-              )}
-              <div
-                className="mt-1 flex gap-1"
-                onMouseLeave={() => setHover(null)}
-                aria-busy={busy}
-              >
-                {busy ? (
-                  [1, 2, 3, 4, 5].map((n) => (
-                    <span key={`vote-skel-${n}`} className="inline-block" aria-hidden="true">
-                      <Skeleton className="h-7 w-7 rounded-full" />
-                    </span>
-                  ))
-                ) : [1, 2, 3, 4, 5].map((n) => (
-                  <motion.button
-                    key={n}
-                    disabled={hasVoted || busy}
-                    onMouseEnter={() => !hasVoted && !busy && setHover(n)}
-                    onClick={() => {
-                      setBouncedStar(n);
-                      setTimeout(() => setBouncedStar(null), 400);
-                      handleVote(n);
-                    }}
-                    className="disabled:cursor-not-allowed"
-                    aria-label={`Rate ${n} stars`}
-                    whileTap={{ scale: 0.85 }}
-                    animate={
-                      bouncedStar === n
-                        ? { scale: [1, 1.5, 1], rotate: [0, 15, -15, 0] }
-                        : { scale: 1, rotate: 0 }
-                    }
-                    transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                  >
-                    <Star
-                      className={cn(
-                        "h-7 w-7 transition",
-                        (hover ?? myVote?.score ?? 0) >= n
-                          ? "fill-[var(--gold)] text-[var(--gold)]"
-                          : "text-muted-foreground/40",
-                      )}
-                    />
-                  </motion.button>
-                ))}
-              </div>
-              <div
-                className="mt-2 text-xs text-muted-foreground"
-                aria-live="polite"
-                data-testid="vote-summary"
-                aria-busy={busy}
-              >
-                {busy ? (
-                  <span className="inline-flex items-center gap-1.5" aria-hidden="true">
+                  <div className="mt-2 inline-flex items-center gap-1.5" aria-hidden="true">
                     <Skeleton className="h-3 w-10 rounded-sm" />
                     <Skeleton className="h-3 w-8 rounded-sm" />
                     <Skeleton className="h-3 w-10 rounded-sm" />
-                  </span>
-                ) : (
-                  <>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {hasVoted ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--gold)]"
+                        data-testid="voted-badge"
+                        aria-live="polite"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        คุณโหวตแล้ว · {myVote!.score}★
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleUnvote}
+                        disabled={busy}
+                        data-testid="unvote-button"
+                        className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                      >
+                        ยกเลิกโหวต
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
+                  )}
+                  <div
+                    className="mt-1 flex gap-1"
+                    onMouseLeave={() => setHover(null)}
+                    aria-busy={busy}
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <motion.button
+                        key={n}
+                        disabled={hasVoted || busy}
+                        onMouseEnter={() => !hasVoted && !busy && setHover(n)}
+                        onClick={() => {
+                          setBouncedStar(n);
+                          setTimeout(() => setBouncedStar(null), 400);
+                          handleVote(n);
+                        }}
+                        className="disabled:cursor-not-allowed"
+                        aria-label={`Rate ${n} stars`}
+                        whileTap={{ scale: 0.85 }}
+                        animate={
+                          bouncedStar === n
+                            ? { scale: [1, 1.5, 1], rotate: [0, 15, -15, 0] }
+                            : { scale: 1, rotate: 0 }
+                        }
+                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                      >
+                        <Star
+                          className={cn(
+                            "h-7 w-7 transition",
+                            (hover ?? myVote?.score ?? 0) >= n
+                              ? "fill-[var(--gold)] text-[var(--gold)]"
+                              : "text-muted-foreground/40",
+                          )}
+                        />
+                      </motion.button>
+                    ))}
+                  </div>
+                  <div
+                    className="mt-2 text-xs text-muted-foreground"
+                    aria-live="polite"
+                    data-testid="vote-summary"
+                    aria-busy={busy}
+                  >
                     เฉลี่ย{" "}
                     <span className="font-semibold text-foreground tabular-nums">
                       {Number(p.avg_score).toFixed(1)}
@@ -764,9 +786,9 @@ function PhotoDetail() {
                       {p.vote_count}
                     </span>{" "}
                     โหวต
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => setDebug((d) => !d)}
