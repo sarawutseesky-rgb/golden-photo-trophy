@@ -59,7 +59,7 @@ function PhotoDetail() {
     queryKey: ["photo-adjacent", id],
     queryFn: () => fetchAdjacent({ data: { id } }),
   });
-  const { data: myVote } = useQuery({
+  const { data: myVote, isLoading: myVoteLoading } = useQuery({
     queryKey: ["my-vote", id, user?.id],
     queryFn: async () => {
       try {
