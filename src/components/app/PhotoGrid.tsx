@@ -29,13 +29,17 @@ export function PhotoGridSkeleton({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
+          data-testid="photo-card-skeleton"
           className="break-inside-avoid overflow-hidden rounded-xl border border-border bg-card"
           style={{ animationDelay: `${i * 60}ms` }}
         >
           {/* Image area with reserved bottom info strip (stars + score) */}
           <div className={`relative ${aspects[i % aspects.length]} shimmer`}>
             {/* Bottom strip — mirror PhotoCard: text-xs (line-height 1rem) + py-2 + gap-2 */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/55 to-transparent px-2.5 py-2 text-xs">
+            <div
+              data-testid="photo-card-bottom-strip"
+              className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/55 to-transparent px-2.5 py-2 text-xs"
+            >
               {/* Left: 5-star row + avg score + vote count — sized to match real <StarRow size={12}/> + tabular text */}
               <span className="inline-flex h-4 items-center gap-1 font-semibold leading-none">
                 <span className="inline-flex items-center gap-0.5">
@@ -65,7 +69,7 @@ export function PhotoGridSkeleton({ count = 8 }: { count?: number }) {
             </div>
           </div>
           {/* Footer: title + author — matches real card's p-3 block (text-sm + text-xs) */}
-          <div className="space-y-2 p-3">
+          <div data-testid="photo-card-footer" className="space-y-2 p-3">
             <div className="h-[18px] w-3/4 rounded shimmer" />
             <div className="h-4 w-1/2 rounded shimmer" />
           </div>
