@@ -17,16 +17,23 @@ const BREAKPOINTS = [
   { name: "desktop", width: 1280, height: 800 },
 ] as const;
 
-// Selector for the bottom info strip inside a card/skeleton tile. Both the
-// real card and the skeleton use the exact same Tailwind classes.
-const STRIP_SEL =
-  ".pointer-events-none.absolute.inset-x-0.bottom-0";
+// data-testid hooks defined on both PhotoCard and PhotoGridSkeleton so the
+// selectors target exactly one element per tile, even on pages with many
+// cards and other overlays.
+const STRIP_TID = "photo-card-bottom-strip";
+const FOOTER_TID = "photo-card-footer";
+const SK_TILE_TID = "photo-card-skeleton";
+const CARD_TID = "photo-card";
 
-async function getStripSize(page: Page, parentSel: string): Promise<Strip> {
-  const handle = page.locator(`${parentSel} ${STRIP_SEL}`).first();
+async function getStripSize(page: Page, parentTid: string): Promise<Strip> {
+  const handle = page
+    .getByTestId(parentTid)
+    .first()
+    .getByTestId(STRIP_TID)
+    .first();
   await handle.waitFor({ state: "visible", timeout: 15_000 });
   const box = await handle.boundingBox();
-  if (!box) throw new Error(`No bounding box for ${parentSel} ${STRIP_SEL}`);
+  if (!box) throw new Error(`No bounding box for [data-testid=${parentTid}] [data-testid=${STRIP_TID}]`);
   return { width: Math.round(box.width), height: Math.round(box.height) };
 }
 
@@ -48,15 +55,15 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
       });
 
       await page.goto("/hall-of-fame");
-      const skeleton = await getStripSize(page, '[aria-busy="true"] > div');
+      const skeleton = await getStripSize(page, SK_TILE_TID);
       await page.unroute("**/_serverFn/**");
 
       // --- 2. Capture real card bottom strip on the latest feed ---
       // PhotoCard is the same component Hall of Fame renders once data loads.
       await page.goto("/?tab=latest&sort=new");
-      const realCard = page.locator("article").first();
+      const realCard = page.getByTestId(CARD_TID).first();
       await realCard.waitFor({ state: "visible", timeout: 20_000 });
-      const real = await getStripSize(page, "article");
+      const real = await getStripSize(page, CARD_TID);
 
       // --- 3. Layout equivalence assertions ---
       // Height must match exactly (within 1px for sub-pixel rounding) — this
@@ -95,16 +102,21 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
       });
       await page.goto("/hall-of-fame");
 
-      // Skeleton footer is the .p-3 block directly after the skeleton image area
       const skeletonFooter = page
-        .locator('[aria-busy="true"] > div > .p-3')
+        .getByTestId(SK_TILE_TID)
+        .first()
+        .getByTestId(FOOTER_TID)
         .first();
       await skeletonFooter.waitFor({ state: "visible", timeout: 15_000 });
       const skBox = await skeletonFooter.boundingBox();
       await page.unroute("**/_serverFn/**");
 
       await page.goto("/?tab=latest&sort=new");
-      const realFooter = page.locator("article > .p-3").first();
+      const realFooter = page
+        .getByTestId(CARD_TID)
+        .first()
+        .getByTestId(FOOTER_TID)
+        .first();
       await realFooter.waitFor({ state: "visible", timeout: 20_000 });
       const realBox = await realFooter.boundingBox();
 
