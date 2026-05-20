@@ -52,7 +52,7 @@ export function SpotlightHero() {
         <Link
           to="/photo/$id"
           params={{ id: photo.id }}
-          className="group relative block aspect-[4/3] overflow-hidden md:aspect-auto md:min-h-[280px]"
+          className="group relative block aspect-[3/2] overflow-hidden md:aspect-auto md:min-h-[190px]"
           aria-label={`Spotlight: ${photo.title}`}
         >
           <img
