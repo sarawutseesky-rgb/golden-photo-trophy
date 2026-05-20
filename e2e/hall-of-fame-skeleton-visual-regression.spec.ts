@@ -52,6 +52,44 @@ async function getStripSize(page: Page, parentTid: string, idx: number): Promise
   return { width: Math.round(box.width), height: Math.round(box.height) };
 }
 
+/**
+ * Wait until the masonry grid for `tid` resolves to exactly `expectedCols`
+ * visible columns AND stays stable across consecutive samples. CSS
+ * `columns-*` reflows during slow loads, so asserting immediately can
+ * flake (tiles briefly stack in 1 column before settling). Column count
+ * is derived from distinct rounded x-origins of tile bounding boxes.
+ */
+async function waitForStableColumns(
+  page: Page,
+  tid: string,
+  expectedCols: number,
+  { timeout = 15_000, stableSamples = 3, interval = 100 } = {},
+) {
+  const deadline = Date.now() + timeout;
+  let streak = 0;
+  let lastSeen = -1;
+  while (Date.now() < deadline) {
+    const xs = await page.getByTestId(tid).evaluateAll((els) =>
+      els
+        .map((el) => (el as HTMLElement).getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => Math.round(r.x / 4) * 4),
+    );
+    const cols = new Set(xs).size;
+    if (cols === expectedCols) {
+      streak += 1;
+      if (streak >= stableSamples) return;
+    } else {
+      streak = 0;
+    }
+    lastSeen = cols;
+    await page.waitForTimeout(interval);
+  }
+  throw new Error(
+    `Masonry columns for [data-testid=${tid}] did not stabilise at ${expectedCols} within ${timeout}ms (last seen=${lastSeen})`,
+  );
+}
+
 test.describe("Hall of Fame — Skeleton matches real card layout", () => {
   for (const bp of BREAKPOINTS) {
     for (const idx of tileIndices(bp.cols)) {
