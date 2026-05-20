@@ -224,17 +224,13 @@ function LeaderboardPage() {
                 data-testid="member-leaderboard-card-content"
                 className="relative z-10 flex w-full flex-col items-center gap-2 min-w-0"
               >
-                {e.avatar_url ? (
-                  <img
-                    src={e.avatar_url}
-                    alt={e.display_name}
-                    className="h-16 w-16 rounded-full object-cover ring-2 ring-background"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground ring-2 ring-background">
-                    {e.display_name?.charAt(0)?.toUpperCase() || "?"}
-                  </div>
-                )}
+                <AvatarWithSkeleton
+                  url={e.avatar_url ?? null}
+                  name={e.display_name}
+                  className="h-16 w-16 ring-2 ring-background"
+                  fallbackTextClassName="text-lg"
+                />
+
                 <div className="min-w-0 w-full">
                   <div className="truncate font-semibold">{e.display_name}</div>
                   <div className="text-xs text-muted-foreground">
