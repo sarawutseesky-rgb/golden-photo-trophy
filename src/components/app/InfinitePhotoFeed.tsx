@@ -88,7 +88,7 @@ export function InfinitePhotoFeed({
     <div>
       <div
         className={cn(
-          "columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 min-[2200px]:columns-7 min-[2800px]:columns-8",
+          "columns-2 md:columns-3 lg:columns-4 xl:columns-4 2xl:columns-4",
           "gap-3 sm:gap-4 xl:gap-5 2xl:gap-6",
           "[column-fill:_balance] [&>*]:mb-3 sm:[&>*]:mb-4 xl:[&>*]:mb-5 2xl:[&>*]:mb-6",
           "[&>*]:break-inside-avoid [&>*]:[-webkit-column-break-inside:avoid]",
