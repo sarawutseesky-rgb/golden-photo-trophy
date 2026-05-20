@@ -176,6 +176,12 @@ function LeaderboardPage() {
               ref={me?.user_id === e.user_id ? meRowRef : undefined}
               className={cn(
                 "relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-4 py-5 text-center transition-colors hover:bg-accent/40",
+                e.rank === 1 &&
+                  "border-[var(--gold)]/60 bg-gradient-to-b from-[var(--gold)]/15 to-transparent shadow-[0_0_24px_-8px_var(--gold)]",
+                e.rank === 2 &&
+                  "border-zinc-300/50 bg-gradient-to-b from-zinc-300/10 to-transparent",
+                e.rank === 3 &&
+                  "border-amber-700/50 bg-gradient-to-b from-amber-700/10 to-transparent",
                 me?.user_id === e.user_id && "bg-[var(--gold)]/5",
                 me?.user_id === e.user_id && flash && "me-row-flash",
               )}
