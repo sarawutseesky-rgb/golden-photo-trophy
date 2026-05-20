@@ -328,7 +328,13 @@ export function PhotoCard({
             aria-busy={busy}
             className="relative flex items-center gap-0.5 rounded-full bg-background/85 px-3 py-1.5 shadow-lg backdrop-blur"
           >
-            {[1, 2, 3, 4, 5].map((n) => {
+            {busy ? (
+              [1, 2, 3, 4, 5].map((n) => (
+                <span key={`quick-skel-${n}`} className="p-0.5" aria-hidden="true">
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                </span>
+              ))
+            ) : [1, 2, 3, 4, 5].map((n) => {
               const filled = (hover ?? myScore ?? 0) >= n;
               const checked = myScore === n;
               return (
