@@ -27,6 +27,11 @@ const FOOTER_TID = "photo-card-footer";
 const SK_TILE_TID = "photo-card-skeleton";
 const CARD_TID = "photo-card";
 
+// Sample the first three tiles. Iterating over multiple indices guarantees
+// the selector logic actually walks past `.first()` and confirms layout
+// equivalence holds for every column of the masonry grid.
+const TILE_INDICES = [0, 1, 2] as const;
+
 async function shotPng(loc: Locator): Promise<PNG> {
   await loc.waitFor({ state: "visible", timeout: 20_000 });
   const buf = await loc.screenshot();
@@ -54,7 +59,7 @@ function fit(src: PNG, w: number, h: number): PNG {
   return out;
 }
 
-async function captureSkeleton(page: Page, regionTid: string) {
+async function captureSkeleton(page: Page, regionTid: string, idx: number) {
   await page.route("**/_serverFn/**", async (route) => {
     if (/photo|feed|hof/i.test(route.request().url())) {
       await new Promise((r) => setTimeout(r, 1500));
@@ -62,9 +67,12 @@ async function captureSkeleton(page: Page, regionTid: string) {
     await route.continue();
   });
   await page.goto("/hall-of-fame");
+  await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
+    timeout: 15_000,
+  });
   const loc = page
     .getByTestId(SK_TILE_TID)
-    .first()
+    .nth(idx)
     .getByTestId(regionTid)
     .first();
   const png = await shotPng(loc);
@@ -72,11 +80,14 @@ async function captureSkeleton(page: Page, regionTid: string) {
   return png;
 }
 
-async function captureReal(page: Page, regionTid: string) {
+async function captureReal(page: Page, regionTid: string, idx: number) {
   await page.goto("/?tab=latest&sort=new");
+  await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
+    timeout: 20_000,
+  });
   const loc = page
     .getByTestId(CARD_TID)
-    .first()
+    .nth(idx)
     .getByTestId(regionTid)
     .first();
   const png = await shotPng(loc);
@@ -85,20 +96,21 @@ async function captureReal(page: Page, regionTid: string) {
 
 test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
   for (const bp of BREAKPOINTS) {
-    test(`${bp.name}: bottom strip matches real card envelope`, async ({ page }, testInfo) => {
+    for (const idx of TILE_INDICES) {
+    test(`${bp.name} — tile #${idx + 1}: bottom strip matches real card envelope`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      const sk = await captureSkeleton(page, STRIP_TID);
-      const real = await captureReal(page, STRIP_TID);
+      const sk = await captureSkeleton(page, STRIP_TID, idx);
+      const real = await captureReal(page, STRIP_TID, idx);
 
       // ENVELOPE assertion — height pixel-exact, width within rounding.
       expect(
         Math.abs(sk.height - real.height),
-        `bottom strip height drift at ${bp.name}: skeleton=${sk.height}px real=${real.height}px`,
+        `bottom strip height drift at ${bp.name} tile#${idx + 1}: skeleton=${sk.height}px real=${real.height}px`,
       ).toBeLessThanOrEqual(1);
       expect(
         Math.abs(sk.width - real.width),
-        `bottom strip width drift at ${bp.name}: skeleton=${sk.width}px real=${real.width}px`,
+        `bottom strip width drift at ${bp.name} tile#${idx + 1}: skeleton=${sk.width}px real=${real.width}px`,
       ).toBeLessThanOrEqual(4);
 
       // PIXEL DIFF — normalise to common canvas, attach images + diff for inspection.
@@ -113,15 +125,15 @@ test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
       });
       const ratio = numDiff / (W * H);
 
-      await testInfo.attach(`skeleton-${bp.name}-strip.png`, {
+      await testInfo.attach(`skeleton-${bp.name}-tile${idx + 1}-strip.png`, {
         body: PNG.sync.write(a),
         contentType: "image/png",
       });
-      await testInfo.attach(`real-${bp.name}-strip.png`, {
+      await testInfo.attach(`real-${bp.name}-tile${idx + 1}-strip.png`, {
         body: PNG.sync.write(b),
         contentType: "image/png",
       });
-      await testInfo.attach(`diff-${bp.name}-strip.png`, {
+      await testInfo.attach(`diff-${bp.name}-tile${idx + 1}-strip.png`, {
         body: PNG.sync.write(diff),
         contentType: "image/png",
       });
@@ -131,25 +143,25 @@ test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
       // skeleton's structure changed dramatically (e.g. strip moved or vanished).
       expect(
         ratio,
-        `bottom strip pixel diff too high at ${bp.name}: ${(ratio * 100).toFixed(1)}% (>70%)`,
+        `bottom strip pixel diff too high at ${bp.name} tile#${idx + 1}: ${(ratio * 100).toFixed(1)}% (>70%)`,
       ).toBeLessThan(0.7);
     });
 
-    test(`${bp.name}: footer block matches real card envelope`, async ({ page }, testInfo) => {
+    test(`${bp.name} — tile #${idx + 1}: footer block matches real card envelope`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      const sk = await captureSkeleton(page, FOOTER_TID);
-      const real = await captureReal(page, FOOTER_TID);
+      const sk = await captureSkeleton(page, FOOTER_TID, idx);
+      const real = await captureReal(page, FOOTER_TID, idx);
 
       // Footer height: skeleton may be ≤8px taller (placeholder vs line-box rounding),
       // never shorter (would cause an upward jump on swap).
       expect(
         sk.height,
-        `footer too short at ${bp.name}: skeleton=${sk.height}px real=${real.height}px`,
+        `footer too short at ${bp.name} tile#${idx + 1}: skeleton=${sk.height}px real=${real.height}px`,
       ).toBeGreaterThanOrEqual(real.height - 1);
       expect(
         sk.height - real.height,
-        `footer too tall at ${bp.name}: skeleton=${sk.height}px real=${real.height}px`,
+        `footer too tall at ${bp.name} tile#${idx + 1}: skeleton=${sk.height}px real=${real.height}px`,
       ).toBeLessThanOrEqual(8);
       expect(Math.abs(sk.width - real.width)).toBeLessThanOrEqual(4);
 
@@ -164,23 +176,24 @@ test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
       });
       const ratio = numDiff / (W * H);
 
-      await testInfo.attach(`skeleton-${bp.name}-footer.png`, {
+      await testInfo.attach(`skeleton-${bp.name}-tile${idx + 1}-footer.png`, {
         body: PNG.sync.write(a),
         contentType: "image/png",
       });
-      await testInfo.attach(`real-${bp.name}-footer.png`, {
+      await testInfo.attach(`real-${bp.name}-tile${idx + 1}-footer.png`, {
         body: PNG.sync.write(b),
         contentType: "image/png",
       });
-      await testInfo.attach(`diff-${bp.name}-footer.png`, {
+      await testInfo.attach(`diff-${bp.name}-tile${idx + 1}-footer.png`, {
         body: PNG.sync.write(diff),
         contentType: "image/png",
       });
 
       expect(
         ratio,
-        `footer pixel diff too high at ${bp.name}: ${(ratio * 100).toFixed(1)}% (>70%)`,
+        `footer pixel diff too high at ${bp.name} tile#${idx + 1}: ${(ratio * 100).toFixed(1)}% (>70%)`,
       ).toBeLessThan(0.7);
     });
+    }
   }
 });
