@@ -18,7 +18,7 @@ export const getMemberLeaderboard = createServerFn({ method: "GET" })
 
     let q = supabaseAdmin
       .from("photos")
-      .select("user_id, vote_count, avg_score, created_at")
+      .select("user_id, vote_count, avg_score, created_at, image_url")
       .eq("status", "active");
 
     if (range !== "all") {
@@ -31,21 +31,43 @@ export const getMemberLeaderboard = createServerFn({ method: "GET" })
 
     const agg = new Map<
       string,
-      { user_id: string; total_votes: number; total_photos: number; weighted_score: number }
+      {
+        user_id: string;
+        total_votes: number;
+        total_photos: number;
+        weighted_score: number;
+        top_photo_url: string | null;
+        top_photo_score: number;
+        top_photo_votes: number;
+      }
     >();
     for (const r of rows ?? []) {
       const uid = (r as any).user_id as string;
       const votes = Number((r as any).vote_count ?? 0);
       const avg = Number((r as any).avg_score ?? 0);
+      const img = ((r as any).image_url as string | null) ?? null;
       const prev = agg.get(uid) ?? {
         user_id: uid,
         total_votes: 0,
         total_photos: 0,
         weighted_score: 0,
+        top_photo_url: null,
+        top_photo_score: -1,
+        top_photo_votes: -1,
       };
       prev.total_votes += votes;
       prev.total_photos += 1;
       prev.weighted_score += avg * votes;
+      // Pick the photo with the highest avg_score (tiebreak by votes) as the showcase
+      if (
+        img &&
+        (avg > prev.top_photo_score ||
+          (avg === prev.top_photo_score && votes > prev.top_photo_votes))
+      ) {
+        prev.top_photo_url = img;
+        prev.top_photo_score = avg;
+        prev.top_photo_votes = votes;
+      }
       agg.set(uid, prev);
     }
 
@@ -87,6 +109,7 @@ export const getMemberLeaderboard = createServerFn({ method: "GET" })
           r.total_votes > 0
             ? Number((r.weighted_score / r.total_votes).toFixed(2))
             : 0,
+        top_photo_url: r.top_photo_url,
       };
     };
 
