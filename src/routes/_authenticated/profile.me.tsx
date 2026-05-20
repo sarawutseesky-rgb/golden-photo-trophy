@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { updateProfile } from "@/lib/profile.functions";
 import { compressImage } from "@/lib/image-compress";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/profile/me")({
 function EditProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const updateFn = useServerFn(updateProfile);
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -218,6 +222,30 @@ function EditProfilePage() {
             placeholder="Tell others about yourself…"
           />
           <div className="mt-1 text-right text-xs text-muted-foreground">{bio.length}/500</div>
+        </div>
+
+        {/* Theme */}
+        <div className="rounded-lg border border-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {theme === "dark" ? (
+                <Moon className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Sun className="h-4 w-4 text-muted-foreground" />
+              )}
+              <div>
+                <p className="text-sm font-medium">Appearance</p>
+                <p className="text-xs text-muted-foreground">
+                  {theme === "dark" ? "Dark mode" : "Light mode"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={toggleTheme}
+              aria-label="Toggle dark mode"
+            />
+          </div>
         </div>
 
         {/* Actions */}
