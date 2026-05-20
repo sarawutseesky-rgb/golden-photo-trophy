@@ -261,13 +261,6 @@
       );
     }
   }
-  /* When the element isn't visible, stop animating entirely. */
-  @supports (animation-timeline: view()) {
-    .shimmer::after {
-      animation-timeline: view();
-      animation-range: cover 0% cover 100%;
-    }
-  }
   @media (prefers-reduced-motion: reduce) {
     .shimmer::after {
       animation: none;
