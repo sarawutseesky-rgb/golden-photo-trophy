@@ -122,7 +122,7 @@ function HomePage() {
                     onClick: () =>
                       navigate({
                         to: "/",
-                        search: (prev) => ({ ...prev, tag: undefined }),
+                        search: { tab, sort },
                       }),
                   },
                   { kind: "link", to: "/", label: "กลับไปหน้าฟีดหลัก" },
