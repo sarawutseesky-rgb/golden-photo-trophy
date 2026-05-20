@@ -15,6 +15,7 @@ import { THRESHOLDS_HOURS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
 import { applyOptimisticVote } from "@/lib/votes.helpers";
+import { isDuplicateVoteMessage, toastDuplicateVote, toastVoteSuccess } from "@/lib/vote-toast";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
@@ -234,7 +235,6 @@ function PhotoDetail() {
         const cur = qc.getQueryData<any>(photoKey);
         const avg = Number(cur?.photo?.avg_score ?? p.avg_score ?? 0);
         const count = Number(cur?.photo?.vote_count ?? p.vote_count ?? 0);
-        const { toastVoteSuccess } = await import("@/lib/vote-toast");
         toastVoteSuccess(score, avg, count);
       }
       qc.invalidateQueries({ queryKey: photoKey });
@@ -255,7 +255,6 @@ function PhotoDetail() {
       prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
       prevInfinite.forEach(([key, data]) => qc.setQueryData(key, data));
       const msg = e?.message ?? "โหวตไม่สำเร็จ";
-      const { isDuplicateVoteMessage, toastDuplicateVote } = await import("@/lib/vote-toast");
       if (isDuplicateVoteMessage(msg)) {
         const existing = prevVote?.score ?? null;
         const avg = Number(prevPhoto?.photo?.avg_score ?? p.avg_score ?? 0);
