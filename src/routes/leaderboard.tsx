@@ -224,17 +224,13 @@ function LeaderboardPage() {
                 data-testid="member-leaderboard-card-content"
                 className="relative z-10 flex w-full flex-col items-center gap-2 min-w-0"
               >
-                {e.avatar_url ? (
-                  <img
-                    src={e.avatar_url}
-                    alt={e.display_name}
-                    className="h-16 w-16 rounded-full object-cover ring-2 ring-background"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground ring-2 ring-background">
-                    {e.display_name?.charAt(0)?.toUpperCase() || "?"}
-                  </div>
-                )}
+                <AvatarWithSkeleton
+                  url={e.avatar_url ?? null}
+                  name={e.display_name}
+                  className="h-16 w-16 ring-2 ring-background"
+                  fallbackTextClassName="text-lg"
+                />
+
                 <div className="min-w-0 w-full">
                   <div className="truncate font-semibold">{e.display_name}</div>
                   <div className="text-xs text-muted-foreground">
@@ -414,7 +410,60 @@ function PhotoLeaderboardSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
+function AvatarWithSkeleton({
+  url,
+  name,
+  className,
+  fallbackTextClassName,
+}: {
+  url: string | null;
+  name?: string | null;
+  className?: string;
+  fallbackTextClassName?: string;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const showImage = !!url && !errored;
+  const showShimmer = !!url && !loaded && !errored;
+  const initial = name?.charAt(0)?.toUpperCase() || "?";
+  return (
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden rounded-full bg-muted",
+        className,
+      )}
+    >
+      {showShimmer && <div className="absolute inset-0 shimmer" />}
+      {!showImage && (
+        <div
+          className={cn(
+            "flex h-full w-full items-center justify-center font-bold text-muted-foreground",
+            fallbackTextClassName,
+          )}
+        >
+          {initial}
+        </div>
+      )}
+      {showImage && (
+        <img
+          src={url!}
+          alt={name ?? ""}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+          className={cn(
+            "h-full w-full object-cover transition-opacity duration-300",
+            loaded ? "opacity-100" : "opacity-0",
+          )}
+        />
+      )}
+    </div>
+  );
+}
+
+
 function RankBadge({ rank }: { rank: number }) {
+
   return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
 }
 
@@ -505,17 +554,13 @@ function MyRankPanel({
     >
       <RankBadge rank={me.rank} />
       <div className="flex flex-1 items-center gap-3 min-w-0">
-        {me.avatar_url ? (
-          <img
-            src={me.avatar_url}
-            alt={me.display_name}
-            className="h-10 w-10 rounded-full object-cover ring-1 ring-border"
-          />
-        ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
-            {me.display_name?.charAt(0)?.toUpperCase() || "?"}
-          </div>
-        )}
+        <AvatarWithSkeleton
+          url={me.avatar_url ?? null}
+          name={me.display_name}
+          className="h-10 w-10 ring-1 ring-border"
+          fallbackTextClassName="text-sm"
+        />
+
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold">
             อันดับของคุณ · {me.display_name}
