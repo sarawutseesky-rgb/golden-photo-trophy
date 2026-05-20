@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth-context";
@@ -80,6 +80,7 @@ function buildFeedParams(tab: FeedTab, sort: FeedSort, tag: string | undefined, 
 function HomePage() {
   const { user } = useAuth();
   const { tab, sort, tag } = Route.useSearch();
+  const navigate = useNavigate();
   const params = buildFeedParams(tab, sort, tag, user?.id ?? null);
 
   return (
@@ -108,7 +109,26 @@ function HomePage() {
           params={params}
           enabled={tab !== "following" || !!user}
           emptyState={
-            !user ? (
+            tag ? (
+              <EmptyState
+                variant="generic"
+                title={`ไม่พบรูปสำหรับ #${tag}`}
+                description="ลองล้างตัวกรอง หรือเลือกแท็กอื่นเพื่อดูรูปเพิ่มเติม"
+                actions={[
+                  {
+                    kind: "button",
+                    label: "ล้างตัวกรอง",
+                    primary: true,
+                    onClick: () =>
+                      navigate({
+                        to: "/",
+                        search: (prev) => ({ ...prev, tag: undefined }),
+                      }),
+                  },
+                  { kind: "link", to: "/", label: "กลับไปหน้าฟีดหลัก" },
+                ]}
+              />
+            ) : !user ? (
               <EmptyState
                 variant="vote"
                 title="ยังไม่มีรูปให้ดูตอนนี้"
