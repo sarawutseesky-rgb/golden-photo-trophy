@@ -175,7 +175,7 @@ function LeaderboardPage() {
               key={e.user_id}
               ref={me?.user_id === e.user_id ? meRowRef : undefined}
               className={cn(
-                "relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-4 pt-8 pb-5 text-center transition-colors hover:bg-accent/40",
+                "relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-3 pt-10 pb-5 text-center transition-colors hover:bg-accent/40 sm:px-4 sm:pt-9 md:pt-8",
                 e.rank === 1 &&
                   "border-[var(--gold)]/60 bg-gradient-to-b from-[var(--gold)]/15 to-transparent shadow-[0_0_24px_-8px_var(--gold)]",
                 e.rank === 2 &&
@@ -186,7 +186,13 @@ function LeaderboardPage() {
                 me?.user_id === e.user_id && flash && "me-row-flash",
               )}
             >
-              <div className="absolute left-1.5 top-1.5">
+              <div
+                className="absolute"
+                style={{
+                  left: "clamp(0.25rem, 1.2vw, 0.5rem)",
+                  top: "clamp(0.25rem, 1.2vw, 0.5rem)",
+                }}
+              >
                 <RankBadge rank={e.rank} />
               </div>
               <Link
