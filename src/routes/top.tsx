@@ -37,7 +37,13 @@ function TopPage() {
         <h1 className="text-3xl font-bold tracking-tight">Top rated</h1>
         <p className="mt-1 text-muted-foreground">Sorted by average score (min 10 votes).</p>
       </div>
-      <InfinitePhotoFeed queryKey={["top"]} params={{ sort: "top" }} />
+      <InfinitePhotoFeed
+        queryKey={["top"]}
+        params={{ sort: "top" }}
+        renderLoading={() => (
+          <CollectionPageSkeleton titleWidth="160px" descWidth="300px" />
+        )}
+      />
     </div>
   );
 }

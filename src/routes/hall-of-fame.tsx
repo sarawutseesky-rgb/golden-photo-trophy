@@ -37,7 +37,13 @@ function HoFPage() {
         <h1 className="text-3xl font-bold tracking-tight">Hall of Fame</h1>
         <p className="mt-1 text-muted-foreground">Photos that earned 3★ or more.</p>
       </div>
-      <InfinitePhotoFeed queryKey={["hof"]} params={{ sort: "hof" }} />
+      <InfinitePhotoFeed
+        queryKey={["hof"]}
+        params={{ sort: "hof" }}
+        renderLoading={() => (
+          <CollectionPageSkeleton titleWidth="180px" descWidth="240px" />
+        )}
+      />
     </div>
   );
 }
