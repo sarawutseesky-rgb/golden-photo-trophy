@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isDuplicateVoteError } from "@/lib/votes.helpers";
@@ -32,14 +34,27 @@ export const removeVote = createServerFn({ method: "POST" })
   });
 
 export const getMyVote = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: { photo_id: string }) => d)
-  .handler(async ({ data, context }) => {
-    const { data: row } = await context.supabase
+  .handler(async ({ data }) => {
+    const authHeader = getRequestHeader("authorization");
+    if (!authHeader?.startsWith("Bearer ")) return { score: null };
+    const token = authHeader.slice(7);
+    if (!token) return { score: null };
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return { score: null };
+    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+    });
+    const { data: claims } = await supabase.auth.getClaims(token);
+    const userId = claims?.claims?.sub;
+    if (!userId) return { score: null };
+    const { data: row } = await supabase
       .from("votes")
       .select("score")
       .eq("photo_id", data.photo_id)
-      .eq("voter_id", context.userId)
+      .eq("voter_id", userId)
       .maybeSingle();
     return { score: row?.score ?? null };
   });
