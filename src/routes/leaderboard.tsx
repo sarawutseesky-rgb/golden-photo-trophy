@@ -152,7 +152,7 @@ function LeaderboardPage() {
       )}
 
       {isLoading ? (
-        <div className="py-12 text-center text-muted-foreground">Loading…</div>
+        <MemberLeaderboardSkeleton count={12} />
       ) : entries.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">
           ยังไม่มีโหวตในช่วงเวลานี้
