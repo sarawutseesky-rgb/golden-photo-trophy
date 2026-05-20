@@ -34,9 +34,10 @@ export function PhotoGridSkeleton({ count = 8 }: { count?: number }) {
         >
           {/* Image area with reserved bottom info strip (stars + score) */}
           <div className={`relative ${aspects[i % aspects.length]} shimmer`}>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/55 to-transparent px-2.5 py-2">
-              {/* Left: 5-star row + avg score + vote count — fixed heights to match real card */}
-              <span className="inline-flex items-center gap-1">
+            {/* Bottom strip — mirror PhotoCard: text-xs (line-height 1rem) + py-2 + gap-2 */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/55 to-transparent px-2.5 py-2 text-xs">
+              {/* Left: 5-star row + avg score + vote count — sized to match real <StarRow size={12}/> + tabular text */}
+              <span className="inline-flex h-4 items-center gap-1 font-semibold leading-none">
                 <span className="inline-flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, k) => (
                     <Star
@@ -47,20 +48,26 @@ export function PhotoGridSkeleton({ count = 8 }: { count?: number }) {
                     />
                   ))}
                 </span>
-                <span className="ml-1 inline-block h-3 w-6 rounded bg-white/40" />
-                <span className="ml-1 inline-block h-3 w-5 rounded bg-white/30" />
+                <span className="inline-block h-3 w-6 rounded bg-white/45" />
+                <span className="inline-block h-3 w-8 rounded bg-white/30" />
               </span>
-              {/* Right: eye + comment counters */}
-              <span className="flex items-center gap-2">
-                <span className="inline-block h-3 w-7 rounded bg-white/30" />
-                <span className="inline-block h-3 w-7 rounded bg-white/30" />
+              {/* Right: eye + comment counters (icon + number) */}
+              <span className="flex h-4 items-center gap-2 leading-none opacity-90">
+                <span className="inline-flex items-center gap-0.5">
+                  <span className="inline-block h-3 w-3 rounded-sm bg-white/35" />
+                  <span className="inline-block h-3 w-5 rounded bg-white/30" />
+                </span>
+                <span className="inline-flex items-center gap-0.5">
+                  <span className="inline-block h-3 w-3 rounded-sm bg-white/35" />
+                  <span className="inline-block h-3 w-5 rounded bg-white/30" />
+                </span>
               </span>
             </div>
           </div>
-          {/* Footer: title + author — matches real card's p-3 block */}
+          {/* Footer: title + author — matches real card's p-3 block (text-sm + text-xs) */}
           <div className="space-y-2 p-3">
-            <div className="h-4 w-3/4 rounded shimmer" />
-            <div className="h-3 w-1/2 rounded shimmer" />
+            <div className="h-[18px] w-3/4 rounded shimmer" />
+            <div className="h-4 w-1/2 rounded shimmer" />
           </div>
         </div>
       ))}
