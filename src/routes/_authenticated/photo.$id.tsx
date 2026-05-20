@@ -176,7 +176,56 @@ function PhotoDetail() {
     return () => window.removeEventListener("keydown", onKey);
   }, [adjacent?.prev?.id, adjacent?.next?.id, lightboxOpen, editOpen, navigate, switching]);
 
-  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Skeleton className="h-4 w-32 rounded-sm" />
+          <Skeleton className="h-4 w-24 rounded-sm" />
+        </div>
+        <div className="grid gap-8 md:grid-cols-[1fr_320px]">
+          <div className="space-y-4">
+            <Skeleton className="aspect-video w-full rounded-xl" />
+            <Skeleton className="h-8 w-2/3 rounded-sm" />
+            <Skeleton className="h-4 w-1/2 rounded-sm" />
+          </div>
+          <aside className="space-y-4">
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-32 rounded-sm" />
+                  <Skeleton className="h-3 w-20 rounded-sm" />
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Rating</div>
+              <div className="flex items-baseline gap-2" aria-busy="true">
+                <Skeleton className="h-8 w-12 rounded-sm" />
+                <Skeleton className="h-4 w-24 rounded-sm" />
+              </div>
+              <div className="mt-1 flex gap-1" aria-hidden="true">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Skeleton key={`avg-skel-${n}`} className="h-[18px] w-[18px] rounded-full" />
+                ))}
+              </div>
+              <VoteDistribution distribution={[]} loading={true} />
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+              <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Milestone stars</div>
+              <div className="flex gap-0.5" aria-hidden="true">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Skeleton key={`ms-skel-${n}`} className="h-[22px] w-[22px] rounded-full" />
+                ))}
+              </div>
+              <Skeleton className="h-3 w-full rounded-sm" />
+            </div>
+          </aside>
+        </div>
+      </div>
+    );
+  }
   if (!data?.photo) return <div className="py-12 text-center text-muted-foreground">Photo not found.</div>;
 
   const p = data.photo as any;
