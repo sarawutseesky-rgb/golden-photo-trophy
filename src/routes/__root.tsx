@@ -87,6 +87,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "description",
         content: "Upload photos, vote 1–5 stars, and earn milestone stars by holding the #1 spot.",
       },
+      { name: "theme-color", content: "#0F172A" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "SEESTAR" },
+      { name: "application-name", content: "SEESTAR" },
       { property: "og:title", content: "SEESTAR — Photo voting & star ranking" },
       { property: "og:description", content: "A photo community where members upload, vote 1–5 stars, and earn milestone stars by holding the #1 spot." },
       { property: "og:site_name", content: "SEESTAR" },
@@ -103,6 +109,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
     ],
     scripts: [
       {
