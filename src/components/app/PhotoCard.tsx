@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles, Loader2 } from "lucide-react";
+import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles, Loader2, CheckCircle2, CircleDashed } from "lucide-react";
 import { toast } from "sonner";
 import { castVote, getMyVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
@@ -54,7 +54,7 @@ export function PhotoCard({
   // Hydrate existing vote on mount / refresh so screen readers can announce "โหวตแล้ว"
   const fetchMyVote = useServerFn(getMyVote);
   const isOwner = !!user && photo.user_id === user.id;
-  useQuery({
+  const myVoteQuery = useQuery({
     queryKey: ["my-vote", photo.id, user?.id ?? "anon"],
     queryFn: async () => {
       try {
@@ -73,6 +73,8 @@ export function PhotoCard({
     staleTime: 60_000,
     retry: false,
   });
+  // True once we know the user's vote status (query resolved, or no query needed).
+  const voteKnown = !user || isOwner || myVoteQuery.isFetched;
 
   const focusQuick = (idx: number) => {
     const clamped = Math.max(0, Math.min(4, idx));
@@ -275,6 +277,25 @@ export function PhotoCard({
             <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-1.5 py-0.5 text-[10px] font-bold text-[var(--gold)] shadow backdrop-blur">
               ✨ {photo.milestone_stars}
             </span>
+          )}
+          {user && !isOwner && voteKnown && (
+            hasVoted ? (
+              <span
+                data-testid="vote-status-badge"
+                className="inline-flex items-center gap-1 rounded-md bg-[var(--gold)]/95 px-1.5 py-0.5 text-[10px] font-bold text-background shadow"
+                aria-label={`คุณโหวตแล้ว ${myScore} ดาว`}
+              >
+                <CheckCircle2 className="h-3 w-3" /> โหวตแล้ว · {myScore}★
+              </span>
+            ) : (
+              <span
+                data-testid="vote-status-badge"
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--gold)]/70 bg-background/85 px-1.5 py-0.5 text-[10px] font-bold text-[var(--gold)] shadow backdrop-blur"
+                aria-label="คุณยังไม่ได้โหวตรูปนี้"
+              >
+                <CircleDashed className="h-3 w-3" /> ยังไม่ได้โหวต
+              </span>
+            )
           )}
         </div>
         {/* Milestone star row top-right (compact) */}
