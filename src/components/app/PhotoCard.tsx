@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles } from "lucide-react";
+import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { castVote, getMyVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
