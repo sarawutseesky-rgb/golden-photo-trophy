@@ -62,9 +62,20 @@ export function SpotlightHero() {
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/30 to-transparent sm:bg-gradient-to-tr sm:from-background/70 sm:via-background/10 lg:bg-gradient-to-r" />
-          <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--gold)]/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-background shadow-lg sm:left-3 sm:top-3 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs">
+          <div className="absolute left-2 top-2 inline-flex min-w-[88px] items-center gap-1 rounded-full bg-[var(--gold)]/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-background shadow-lg sm:left-3 sm:top-3 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs">
             <Crown className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-            {held ? "#1 Now" : "Top Rated"}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={held ? "held" : "toprated"}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.25 }}
+                className="inline-block"
+              >
+                {held ? "#1 Now" : "Top Rated"}
+              </motion.span>
+            </AnimatePresence>
           </div>
         </Link>
 
