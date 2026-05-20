@@ -278,6 +278,25 @@ export function PhotoCard({
               ✨ {photo.milestone_stars}
             </span>
           )}
+          {user && !isOwner && voteKnown && (
+            hasVoted ? (
+              <span
+                data-testid="vote-status-badge"
+                className="inline-flex items-center gap-1 rounded-md bg-[var(--gold)]/95 px-1.5 py-0.5 text-[10px] font-bold text-background shadow"
+                aria-label={`คุณโหวตแล้ว ${myScore} ดาว`}
+              >
+                <CheckCircle2 className="h-3 w-3" /> โหวตแล้ว · {myScore}★
+              </span>
+            ) : (
+              <span
+                data-testid="vote-status-badge"
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--gold)]/70 bg-background/85 px-1.5 py-0.5 text-[10px] font-bold text-[var(--gold)] shadow backdrop-blur"
+                aria-label="คุณยังไม่ได้โหวตรูปนี้"
+              >
+                <CircleDashed className="h-3 w-3" /> ยังไม่ได้โหวต
+              </span>
+            )
+          )}
         </div>
         {/* Milestone star row top-right (compact) */}
         {photo.milestone_stars > 0 && (
