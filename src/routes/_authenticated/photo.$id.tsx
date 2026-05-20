@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
 import { applyOptimisticVote } from "@/lib/votes.helpers";
 import { isDuplicateVoteMessage, toastDuplicateVote, toastVoteSuccess } from "@/lib/vote-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
