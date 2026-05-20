@@ -465,6 +465,8 @@ function AvatarWithSkeleton({
 
 
 function RankBadge({ rank }: { rank: number }) {
+  return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
+}
 
 /**
  * Defensive wrapper that shows a shimmer placeholder over an inline icon
@@ -497,10 +499,6 @@ function IconShimmer({
       )}
     </span>
   );
-}
-
-
-  return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
 }
 
 function MemberCardBackground({ url }: { url: string | null }) {
