@@ -99,8 +99,8 @@ export function InfinitePhotoFeed({
         ))}
       </div>
       {query.hasNextPage && (
-        <div ref={sentinelRef} className="mt-4">
-          <PhotoGridSkeleton count={6} />
+        <div ref={sentinelRef} className="mt-4 min-h-[1px]">
+          {query.isFetchingNextPage && <PhotoGridSkeleton count={6} />}
         </div>
       )}
       {!query.hasNextPage && photos.length > PAGE_SIZE && (
