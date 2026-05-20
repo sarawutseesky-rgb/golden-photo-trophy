@@ -210,6 +210,26 @@ function PhotoDetail() {
                   <Skeleton key={`avg-skel-${n}`} className="h-[18px] w-[18px] rounded-full" />
                 ))}
               </div>
+              <div className="mt-2 inline-flex items-center gap-1.5" aria-hidden="true">
+                <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                <Skeleton className="h-3 w-12 rounded-sm" />
+                <Skeleton className="h-3 w-6 rounded-sm" />
+              </div>
+              {user && (
+                <div className="mt-3" aria-hidden="true">
+                  <Skeleton className="h-4 w-32 rounded-sm" />
+                  <div className="mt-1 flex gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Skeleton key={`qv-skel-${n}`} className="h-7 w-7 rounded-full" />
+                    ))}
+                  </div>
+                  <div className="mt-2 inline-flex items-center gap-1.5">
+                    <Skeleton className="h-3 w-10 rounded-sm" />
+                    <Skeleton className="h-3 w-8 rounded-sm" />
+                    <Skeleton className="h-3 w-10 rounded-sm" />
+                  </div>
+                </div>
+              )}
               <VoteDistribution distribution={[]} loading={true} />
             </div>
             <div className="rounded-xl border border-border bg-card p-4 space-y-2">
