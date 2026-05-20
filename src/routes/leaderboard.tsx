@@ -466,6 +466,40 @@ function AvatarWithSkeleton({
 
 function RankBadge({ rank }: { rank: number }) {
 
+/**
+ * Defensive wrapper that shows a shimmer placeholder over an inline icon
+ * (e.g. lucide SVG) until React has hydrated on the client. In practice
+ * lucide icons render synchronously with the DOM, but on very slow devices
+ * the first paint can occur before hydration completes — this prevents any
+ * perceived "pop-in" by reserving the icon's box with a shimmer overlay.
+ */
+function IconShimmer({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return (
+    <span
+      className={cn("relative inline-flex shrink-0 items-center justify-center", className)}
+    >
+      {children}
+      {!hydrated && (
+        <span
+          aria-hidden="true"
+          className={cn("pointer-events-none absolute inset-0 shimmer opacity-60", className)}
+        />
+      )}
+    </span>
+  );
+}
+
+
   return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
 }
 
