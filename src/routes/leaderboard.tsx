@@ -387,24 +387,24 @@ function PhotoLeaderboardSkeleton({ count = 8 }: { count?: number }) {
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1)
     return (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
-        <Medal className="h-5 w-5" />
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
+        <Medal className="h-4 w-4" />
       </div>
     );
   if (rank === 2)
     return (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-300/15 text-zinc-400">
-        <Medal className="h-5 w-5" />
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-300/15 text-zinc-400">
+        <Medal className="h-4 w-4" />
       </div>
     );
   if (rank === 3)
     return (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-700/15 text-amber-600">
-        <Medal className="h-5 w-5" />
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-700/15 text-amber-600">
+        <Medal className="h-4 w-4" />
       </div>
     );
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground tabular-nums">
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground tabular-nums">
       {rank}
     </div>
   );
