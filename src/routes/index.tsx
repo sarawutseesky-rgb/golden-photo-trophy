@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
 import { FeedFilterBar, type FeedTab, type FeedSort } from "@/components/app/FeedFilterBar";
 import { SpotlightHero } from "@/components/app/SpotlightHero";
+import { QuickStatsBar } from "@/components/app/QuickStatsBar";
 import { EmptyState } from "@/components/app/EmptyState";
 
 const feedSearchSchema = z.object({
@@ -88,6 +89,7 @@ function HomePage() {
         <p className="mt-1 text-muted-foreground">Vote 1–5 stars. Photos that hold #1 earn permanent milestone stars.</p>
       </div>
       <SpotlightHero />
+      <QuickStatsBar />
       <FeedFilterBar tab={tab} sort={sort} tag={tag} />
       <div id="feed-panel" role="tabpanel" aria-labelledby={`tab-${tab ?? "latest"}`}>
       {tab === "following" && !user ? (

@@ -273,7 +273,7 @@ export function PhotoCard({
         </div>
         {/* Quick-vote stars overlay (visible on hover) */}
         <div
-          className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100"
+          className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center justify-center gap-1.5 opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100"
           onMouseLeave={() => setHover(null)}
         >
           <div
@@ -325,6 +325,14 @@ export function PhotoCard({
               );
             })}
           </div>
+          {!hasVoted && !isOwner && !busy && (
+            <span
+              aria-hidden="true"
+              className="hidden rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground shadow backdrop-blur md:inline-block"
+            >
+              {hover != null ? `ให้ ${hover}★` : "แตะดาวเพื่อโหวต"}
+            </span>
+          )}
           <span
             role={errorMsg ? "alert" : "status"}
             aria-live={errorMsg ? "assertive" : "polite"}

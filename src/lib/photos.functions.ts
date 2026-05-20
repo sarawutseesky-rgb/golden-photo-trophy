@@ -435,3 +435,35 @@ export const deletePhoto = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const getCommunityStatsToday = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const iso = startOfDay.toISOString();
+
+    const [photosRes, votesRes, activeUploadersRes] = await Promise.all([
+      supabaseAdmin
+        .from("photos")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active")
+        .gte("created_at", iso),
+      supabaseAdmin
+        .from("votes")
+        .select("id", { count: "exact", head: true })
+        .gte("voted_at", iso),
+      supabaseAdmin
+        .from("photos")
+        .select("user_id")
+        .eq("status", "active")
+        .gte("created_at", iso),
+    ]);
+
+    const newPhotos = photosRes.count ?? 0;
+    const newVotes = votesRes.count ?? 0;
+    const activeUploaders = new Set(
+      (activeUploadersRes.data ?? []).map((r: any) => r.user_id).filter(Boolean),
+    ).size;
+
+    return { newPhotos, newVotes, activeUploaders };
+  });
