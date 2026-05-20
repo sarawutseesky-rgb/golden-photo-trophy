@@ -169,11 +169,15 @@ function LeaderboardPage() {
               </button>
             </div>
           )}
-          <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <ol
+            data-testid="member-leaderboard-grid"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+          >
           {entries.map((e: any) => (
             <li
               key={e.user_id}
               ref={me?.user_id === e.user_id ? meRowRef : undefined}
+              data-testid="member-leaderboard-card"
               className={cn(
                 "relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-3 pt-10 pb-5 text-center transition-colors hover:bg-accent/40 sm:px-4 sm:pt-9 md:pt-8",
                 e.rank === 1 &&
@@ -187,6 +191,7 @@ function LeaderboardPage() {
               )}
             >
               <div
+                data-testid="member-leaderboard-rank-badge"
                 className="absolute"
                 style={{
                   left: "clamp(0.25rem, 1.2vw, 0.5rem)",
@@ -198,6 +203,7 @@ function LeaderboardPage() {
               <Link
                 to="/profile/$id"
                 params={{ id: e.user_id }}
+                data-testid="member-leaderboard-card-content"
                 className="flex w-full flex-col items-center gap-2 min-w-0"
               >
                 {e.avatar_url ? (
