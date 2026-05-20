@@ -45,6 +45,47 @@ async function shotPng(loc: Locator): Promise<PNG> {
   return PNG.sync.read(buf);
 }
 
+/**
+ * Wait until the masonry grid for `tid` resolves to exactly `expectedCols`
+ * visible columns AND stays there for several consecutive samples. CSS
+ * `columns-*` is a layout-time property — during slow loads tiles can
+ * briefly stack in 1 column before the browser reflows. Asserting too
+ * early would flake; this waits for layout to settle.
+ *
+ * Column count is derived from distinct rounded x-origins of tile bounding
+ * boxes (rounded to the nearest 4px to absorb sub-pixel jitter).
+ */
+async function waitForStableColumns(
+  page: Page,
+  tid: string,
+  expectedCols: number,
+  { timeout = 15_000, stableSamples = 3, interval = 100 } = {},
+) {
+  const deadline = Date.now() + timeout;
+  let streak = 0;
+  let lastSeen = -1;
+  while (Date.now() < deadline) {
+    const xs = await page.getByTestId(tid).evaluateAll((els) =>
+      els
+        .map((el) => (el as HTMLElement).getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => Math.round(r.x / 4) * 4),
+    );
+    const cols = new Set(xs).size;
+    if (cols === expectedCols) {
+      streak += 1;
+      if (streak >= stableSamples) return;
+    } else {
+      streak = 0;
+    }
+    lastSeen = cols;
+    await page.waitForTimeout(interval);
+  }
+  throw new Error(
+    `Masonry columns for [data-testid=${tid}] did not stabilise at ${expectedCols} within ${timeout}ms (last seen=${lastSeen})`,
+  );
+}
+
 /** Resize PNG to (w,h) by nearest-neighbour padding/cropping so two PNGs can be diffed. */
 function fit(src: PNG, w: number, h: number): PNG {
   if (src.width === w && src.height === h) return src;
@@ -85,6 +126,7 @@ async function captureSkeleton(
   await expect
     .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
     .toBeGreaterThanOrEqual(cols);
+  await waitForStableColumns(page, SK_TILE_TID, cols);
   await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
     timeout: 15_000,
   });
@@ -108,6 +150,7 @@ async function captureReal(
   await expect
     .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
     .toBeGreaterThanOrEqual(cols);
+  await waitForStableColumns(page, CARD_TID, cols, { timeout: 20_000 });
   await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
     timeout: 20_000,
   });
