@@ -7,6 +7,12 @@ import { toast } from "sonner";
 import { castVote, getMyVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
 import { cn, normalizeDistribution } from "@/lib/utils";
+import {
+  formatVoteSummary,
+  isDuplicateVoteMessage,
+  toastDuplicateVote,
+  toastVoteSuccess,
+} from "@/lib/vote-toast";
 import { StarRow } from "./StarRow";
 
 export type FeedPhoto = {
@@ -168,9 +174,7 @@ export function PhotoCard({
 
     try {
       await vote({ data: { photo_id: photo.id, score } });
-      toast.success(`ให้ ${score}★ แล้ว`, {
-        description: `คะแนนเฉลี่ยใหม่ ${optimisticAvg.toFixed(2)} จาก ${optimisticCount} โหวต`,
-      });
+      toastVoteSuccess(score, optimisticAvg, optimisticCount);
       setConfirmed({ score, avg: optimisticAvg, count: optimisticCount });
       qc.invalidateQueries({ queryKey: ["feed"] });
       qc.invalidateQueries({ queryKey: ["feed-infinite"] });
@@ -186,31 +190,21 @@ export function PhotoCard({
       prevInfinite.forEach(([key, data]) => qc.setQueryData(key, data));
       qc.setQueryData(photoKey, prevPhoto);
       const msg = e?.message ?? "โหวตไม่สำเร็จ";
-      const isDuplicate = /already voted/i.test(String(msg));
+      const isDuplicate = isDuplicateVoteMessage(msg);
       if (isDuplicate) {
         // Refresh authoritative state so UI reflects the existing vote
         try {
           const res = await fetchMyVote({ data: { photo_id: photo.id } });
+          const curAvg = Number(photo.avg_score ?? 0);
+          const curCount = photo.vote_count ?? 0;
           if (res.score != null) {
             setMyScore(res.score);
             setHydratedFromServer(true);
-            setConfirmed({
-              score: res.score,
-              avg: Number(photo.avg_score ?? 0),
-              count: photo.vote_count ?? 0,
-            });
-            toast.info(`คุณโหวตรูปนี้ไปแล้ว ${res.score}★`, {
-              description: `คะแนนเฉลี่ยปัจจุบัน ${Number(photo.avg_score ?? 0).toFixed(2)} จาก ${photo.vote_count ?? 0} โหวต`,
-            });
-          } else {
-            toast.info("คุณโหวตรูปนี้ไปแล้ว", {
-              description: "หนึ่งบัญชีโหวตได้ครั้งเดียวต่อรูป",
-            });
+            setConfirmed({ score: res.score, avg: curAvg, count: curCount });
           }
+          toastDuplicateVote(res.score ?? null, curAvg, curCount);
         } catch {
-          toast.info("คุณโหวตรูปนี้ไปแล้ว", {
-            description: "หนึ่งบัญชีโหวตได้ครั้งเดียวต่อรูป",
-          });
+          toastDuplicateVote(null, Number(photo.avg_score ?? 0), photo.vote_count ?? 0);
         }
         qc.invalidateQueries({ queryKey: ["feed"] });
         qc.invalidateQueries({ queryKey: ["feed-infinite"] });
