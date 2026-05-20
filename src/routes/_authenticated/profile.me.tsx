@@ -225,26 +225,73 @@ function EditProfilePage() {
         </div>
 
         {/* Theme */}
-        <div className="rounded-lg border border-border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {theme === "dark" ? (
-                <Moon className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <Sun className="h-4 w-4 text-muted-foreground" />
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-medium">Appearance</p>
+            <p className="text-xs text-muted-foreground">Choose your preferred theme</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Light preview */}
+            <button
+              type="button"
+              onClick={() => setTheme("light")}
+              className={cn(
+                "relative rounded-lg border-2 p-3 text-left transition-colors",
+                theme === "light" ? "border-primary" : "border-border hover:border-muted-foreground/50"
               )}
-              <div>
-                <p className="text-sm font-medium">Appearance</p>
-                <p className="text-xs text-muted-foreground">
-                  {theme === "dark" ? "Dark mode" : "Light mode"}
-                </p>
+            >
+              <div className="space-y-2 rounded-md bg-[#faf8f5] p-2 shadow-sm">
+                <div className="h-1.5 w-8 rounded-full bg-[#e8e4dd]" />
+                <div className="h-1.5 w-full rounded-full bg-[#e8e4dd]" />
+                <div className="flex gap-1">
+                  <div className="h-6 w-6 rounded bg-[#e8e4dd]" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-1 w-10 rounded-full bg-[#e8e4dd]" />
+                    <div className="h-1 w-6 rounded-full bg-[#e8e4dd]" />
+                  </div>
+                </div>
               </div>
-            </div>
-            <Switch
-              checked={theme === "dark"}
-              onCheckedChange={toggleTheme}
-              aria-label="Toggle dark mode"
-            />
+              <div className="mt-2 flex items-center gap-2">
+                <div className={cn(
+                  "flex h-4 w-4 items-center justify-center rounded-full border",
+                  theme === "light" ? "border-primary bg-primary" : "border-muted-foreground"
+                )}>
+                  {theme === "light" && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                </div>
+                <span className="text-sm font-medium">Light</span>
+              </div>
+            </button>
+
+            {/* Dark preview */}
+            <button
+              type="button"
+              onClick={() => setTheme("dark")}
+              className={cn(
+                "relative rounded-lg border-2 p-3 text-left transition-colors",
+                theme === "dark" ? "border-primary" : "border-border hover:border-muted-foreground/50"
+              )}
+            >
+              <div className="space-y-2 rounded-md bg-[#0a0a1a] p-2 shadow-sm">
+                <div className="h-1.5 w-8 rounded-full bg-[#1e1e5a]" />
+                <div className="h-1.5 w-full rounded-full bg-[#1e1e5a]" />
+                <div className="flex gap-1">
+                  <div className="h-6 w-6 rounded bg-[#1e1e5a]" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-1 w-10 rounded-full bg-[#1e1e5a]" />
+                    <div className="h-1 w-6 rounded-full bg-[#1e1e5a]" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <div className={cn(
+                  "flex h-4 w-4 items-center justify-center rounded-full border",
+                  theme === "dark" ? "border-primary bg-primary" : "border-muted-foreground"
+                )}>
+                  {theme === "dark" && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                </div>
+                <span className="text-sm font-medium">Dark</span>
+              </div>
+            </button>
           </div>
         </div>
 
