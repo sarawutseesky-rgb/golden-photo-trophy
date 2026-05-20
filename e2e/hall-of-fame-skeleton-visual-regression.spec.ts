@@ -52,6 +52,44 @@ async function getStripSize(page: Page, parentTid: string, idx: number): Promise
   return { width: Math.round(box.width), height: Math.round(box.height) };
 }
 
+/**
+ * Wait until the masonry grid for `tid` resolves to exactly `expectedCols`
+ * visible columns AND stays stable across consecutive samples. CSS
+ * `columns-*` reflows during slow loads, so asserting immediately can
+ * flake (tiles briefly stack in 1 column before settling). Column count
+ * is derived from distinct rounded x-origins of tile bounding boxes.
+ */
+async function waitForStableColumns(
+  page: Page,
+  tid: string,
+  expectedCols: number,
+  { timeout = 15_000, stableSamples = 3, interval = 100 } = {},
+) {
+  const deadline = Date.now() + timeout;
+  let streak = 0;
+  let lastSeen = -1;
+  while (Date.now() < deadline) {
+    const xs = await page.getByTestId(tid).evaluateAll((els) =>
+      els
+        .map((el) => (el as HTMLElement).getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => Math.round(r.x / 4) * 4),
+    );
+    const cols = new Set(xs).size;
+    if (cols === expectedCols) {
+      streak += 1;
+      if (streak >= stableSamples) return;
+    } else {
+      streak = 0;
+    }
+    lastSeen = cols;
+    await page.waitForTimeout(interval);
+  }
+  throw new Error(
+    `Masonry columns for [data-testid=${tid}] did not stabilise at ${expectedCols} within ${timeout}ms (last seen=${lastSeen})`,
+  );
+}
+
 test.describe("Hall of Fame — Skeleton matches real card layout", () => {
   for (const bp of BREAKPOINTS) {
     for (const idx of tileIndices(bp.cols)) {
@@ -75,6 +113,7 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
         await expect
           .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, SK_TILE_TID, bp.cols);
         await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
           timeout: 15_000,
         });
@@ -85,6 +124,7 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
         await expect
           .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, CARD_TID, bp.cols, { timeout: 20_000 });
         await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
           timeout: 20_000,
         });
@@ -129,6 +169,7 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
         await expect
           .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, SK_TILE_TID, bp.cols);
         await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
           timeout: 15_000,
         });
@@ -144,6 +185,7 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
         await expect
           .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, CARD_TID, bp.cols, { timeout: 20_000 });
         await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
           timeout: 20_000,
         });
