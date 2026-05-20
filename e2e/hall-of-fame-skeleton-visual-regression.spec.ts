@@ -113,6 +113,7 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
         await expect
           .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, SK_TILE_TID, bp.cols);
         await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
           timeout: 15_000,
         });
@@ -123,6 +124,7 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
         await expect
           .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, CARD_TID, bp.cols, { timeout: 20_000 });
         await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
           timeout: 20_000,
         });
@@ -167,6 +169,7 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
         await expect
           .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, SK_TILE_TID, bp.cols);
         await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
           timeout: 15_000,
         });
@@ -182,6 +185,7 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
         await expect
           .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
           .toBeGreaterThanOrEqual(bp.cols);
+        await waitForStableColumns(page, CARD_TID, bp.cols, { timeout: 20_000 });
         await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
           timeout: 20_000,
         });
