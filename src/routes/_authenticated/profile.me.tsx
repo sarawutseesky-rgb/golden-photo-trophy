@@ -224,6 +224,30 @@ function EditProfilePage() {
           <div className="mt-1 text-right text-xs text-muted-foreground">{bio.length}/500</div>
         </div>
 
+        {/* Theme */}
+        <div className="rounded-lg border border-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {theme === "dark" ? (
+                <Moon className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Sun className="h-4 w-4 text-muted-foreground" />
+              )}
+              <div>
+                <p className="text-sm font-medium">Appearance</p>
+                <p className="text-xs text-muted-foreground">
+                  {theme === "dark" ? "Dark mode" : "Light mode"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={toggleTheme}
+              aria-label="Toggle dark mode"
+            />
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="flex items-center gap-3 pt-2">
           <button
