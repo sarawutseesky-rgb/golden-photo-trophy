@@ -66,7 +66,12 @@ function fit(src: PNG, w: number, h: number): PNG {
   return out;
 }
 
-async function captureSkeleton(page: Page, regionTid: string, idx: number) {
+async function captureSkeleton(
+  page: Page,
+  regionTid: string,
+  idx: number,
+  cols: number,
+) {
   await page.route("**/_serverFn/**", async (route) => {
     if (/photo|feed|hof/i.test(route.request().url())) {
       await new Promise((r) => setTimeout(r, 1500));
@@ -74,6 +79,12 @@ async function captureSkeleton(page: Page, regionTid: string, idx: number) {
     await route.continue();
   });
   await page.goto("/hall-of-fame");
+  // Layout sanity: the masonry must render at least `cols` skeleton tiles
+  // (one per visible column) before we sample any of them. If this fails,
+  // the grid collapsed or the breakpoint mapping drifted — fail loud.
+  await expect
+    .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
+    .toBeGreaterThanOrEqual(cols);
   await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
     timeout: 15_000,
   });
@@ -87,8 +98,16 @@ async function captureSkeleton(page: Page, regionTid: string, idx: number) {
   return png;
 }
 
-async function captureReal(page: Page, regionTid: string, idx: number) {
+async function captureReal(
+  page: Page,
+  regionTid: string,
+  idx: number,
+  cols: number,
+) {
   await page.goto("/?tab=latest&sort=new");
+  await expect
+    .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
+    .toBeGreaterThanOrEqual(cols);
   await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
     timeout: 20_000,
   });
@@ -107,8 +126,8 @@ test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
     test(`${bp.name} — tile #${idx + 1}: bottom strip matches real card envelope`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      const sk = await captureSkeleton(page, STRIP_TID, idx);
-      const real = await captureReal(page, STRIP_TID, idx);
+      const sk = await captureSkeleton(page, STRIP_TID, idx, bp.cols);
+      const real = await captureReal(page, STRIP_TID, idx, bp.cols);
 
       // ENVELOPE assertion — height pixel-exact, width within rounding.
       expect(
@@ -157,8 +176,8 @@ test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
     test(`${bp.name} — tile #${idx + 1}: footer block matches real card envelope`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
 
-      const sk = await captureSkeleton(page, FOOTER_TID, idx);
-      const real = await captureReal(page, FOOTER_TID, idx);
+      const sk = await captureSkeleton(page, FOOTER_TID, idx, bp.cols);
+      const real = await captureReal(page, FOOTER_TID, idx, bp.cols);
 
       // Footer height: skeleton may be ≤8px taller (placeholder vs line-box rounding),
       // never shorter (would cause an upward jump on swap).

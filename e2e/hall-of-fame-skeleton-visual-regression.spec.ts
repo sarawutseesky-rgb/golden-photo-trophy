@@ -69,7 +69,12 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
         });
         await page.goto("/hall-of-fame");
 
-        // Ensure at least (idx + 1) skeleton tiles are rendered.
+        // Layout sanity: the masonry must render at least `bp.cols` skeleton
+        // tiles (one per visible column) before we sample any of them.
+        // Catches collapsed grids and breakpoint-mapping drift.
+        await expect
+          .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
+          .toBeGreaterThanOrEqual(bp.cols);
         await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
           timeout: 15_000,
         });
@@ -77,7 +82,9 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
         await page.unroute("**/_serverFn/**");
 
         await page.goto("/?tab=latest&sort=new");
-        // Ensure at least (idx + 1) real cards exist before measuring.
+        await expect
+          .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
+          .toBeGreaterThanOrEqual(bp.cols);
         await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
           timeout: 20_000,
         });
@@ -119,6 +126,9 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
         });
         await page.goto("/hall-of-fame");
 
+        await expect
+          .poll(() => page.getByTestId(SK_TILE_TID).count(), { timeout: 15_000 })
+          .toBeGreaterThanOrEqual(bp.cols);
         await expect(page.getByTestId(SK_TILE_TID).nth(idx)).toBeVisible({
           timeout: 15_000,
         });
@@ -131,6 +141,9 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
         await page.unroute("**/_serverFn/**");
 
         await page.goto("/?tab=latest&sort=new");
+        await expect
+          .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
+          .toBeGreaterThanOrEqual(bp.cols);
         await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
           timeout: 20_000,
         });
