@@ -25,9 +25,11 @@ const FOOTER_TID = "photo-card-footer";
 const SK_TILE_TID = "photo-card-skeleton";
 const CARD_TID = "photo-card";
 
-// Indices of the tiles we sample. Checking the first three guards against
-// selector bugs that only ever pick up the first element on the page.
-const TILE_INDICES = [0, 1, 2] as const;
+// Indices of the tiles we sample. Covering 1–6 means every column of the
+// widest masonry layout (xl:columns-5) is hit at least once, so a selector
+// bug or layout regression that only affects a single column can't slip
+// through by hiding in an unsampled tile.
+const TILE_INDICES = [0, 1, 2, 3, 4, 5] as const;
 
 async function getStripSize(page: Page, parentTid: string, idx: number): Promise<Strip> {
   const handle = page
