@@ -169,13 +169,13 @@ function LeaderboardPage() {
               </button>
             </div>
           )}
-          <ol className="overflow-hidden rounded-xl border border-border bg-card">
+          <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {entries.map((e: any) => (
             <li
               key={e.user_id}
               ref={me?.user_id === e.user_id ? meRowRef : undefined}
               className={cn(
-                "flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-accent/40",
+                "flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-4 py-5 text-center transition-colors hover:bg-accent/40",
                 me?.user_id === e.user_id && "bg-[var(--gold)]/5",
                 me?.user_id === e.user_id && flash && "me-row-flash",
               )}
@@ -184,27 +184,27 @@ function LeaderboardPage() {
               <Link
                 to="/profile/$id"
                 params={{ id: e.user_id }}
-                className="flex flex-1 items-center gap-3 min-w-0"
+                className="flex w-full flex-col items-center gap-2 min-w-0"
               >
                 {e.avatar_url ? (
                   <img
                     src={e.avatar_url}
                     alt={e.display_name}
-                    className="h-10 w-10 rounded-full object-cover ring-1 ring-border"
+                    className="h-16 w-16 rounded-full object-cover ring-1 ring-border"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground">
                     {e.display_name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                 )}
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 w-full">
                   <div className="truncate font-semibold">{e.display_name}</div>
                   <div className="text-xs text-muted-foreground">
                     {e.total_photos} รูป · เฉลี่ย {e.avg_score.toFixed(2)}★
                   </div>
                 </div>
               </Link>
-              <div className="text-right">
+              <div className="text-center">
                 <div className="text-lg font-bold tabular-nums">
                   {e.total_votes.toLocaleString()}
                 </div>
