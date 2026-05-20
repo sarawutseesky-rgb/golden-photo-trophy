@@ -447,9 +447,11 @@ export function PhotoCard({
             {photo.title}
           </Link>
         </h3>
-        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-          by {photo.profiles?.display_name ?? "Anonymous"}
-        </p>
+        {(isOwner || hasVoted) && (
+          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+            by {photo.profiles?.display_name ?? "Anonymous"}
+          </p>
+        )}
         {showMilestoneTimeline && photo.milestone_stars > 0 && (() => {
           const achieved = Array.isArray(photo.milestone_achieved_at)
             ? photo.milestone_achieved_at
