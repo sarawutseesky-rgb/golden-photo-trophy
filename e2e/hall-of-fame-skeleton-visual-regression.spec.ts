@@ -12,9 +12,17 @@ import { test, expect, type Page } from "@playwright/test";
 type Strip = { width: number; height: number };
 
 const BREAKPOINTS = [
-  { name: "mobile", width: 390, height: 844 },
-  { name: "tablet", width: 768, height: 1024 },
-  { name: "desktop", width: 1280, height: 800 },
+  // `cols` mirrors PhotoGrid's MASONRY_COLS Tailwind breakpoints:
+  //   <640  → columns-1   (mobile)
+  //   ≥640  → columns-2   (sm)
+  //   ≥768  → columns-3   (md, tablet)
+  //   ≥1024 → columns-4   (lg)
+  //   ≥1280 → columns-5   (xl, desktop)
+  // We sample exactly `cols` tiles per breakpoint — one per visible column —
+  // so coverage scales with the layout instead of being a hand-picked guess.
+  { name: "mobile", width: 390, height: 844, cols: 1 },
+  { name: "tablet", width: 768, height: 1024, cols: 3 },
+  { name: "desktop", width: 1280, height: 800, cols: 5 },
 ] as const;
 
 // data-testid hooks defined on both PhotoCard and PhotoGridSkeleton so the
@@ -25,11 +33,9 @@ const FOOTER_TID = "photo-card-footer";
 const SK_TILE_TID = "photo-card-skeleton";
 const CARD_TID = "photo-card";
 
-// Indices of the tiles we sample. Covering 1–6 means every column of the
-// widest masonry layout (xl:columns-5) is hit at least once, so a selector
-// bug or layout regression that only affects a single column can't slip
-// through by hiding in an unsampled tile.
-const TILE_INDICES = [0, 1, 2, 3, 4, 5] as const;
+/** Indices 0..cols-1 — one tile per visible masonry column at this breakpoint. */
+const tileIndices = (cols: number): readonly number[] =>
+  Array.from({ length: cols }, (_, i) => i);
 
 async function getStripSize(page: Page, parentTid: string, idx: number): Promise<Strip> {
   const handle = page
@@ -48,7 +54,7 @@ async function getStripSize(page: Page, parentTid: string, idx: number): Promise
 
 test.describe("Hall of Fame — Skeleton matches real card layout", () => {
   for (const bp of BREAKPOINTS) {
-    for (const idx of TILE_INDICES) {
+    for (const idx of tileIndices(bp.cols)) {
       test(`${bp.name} (${bp.width}x${bp.height}) — tile #${idx + 1}: skeleton strip matches real card`, async ({
         page,
       }) => {
@@ -99,7 +105,7 @@ test.describe("Hall of Fame — Skeleton matches real card layout", () => {
 
 test.describe("Hall of Fame — Skeleton card footer matches real card footer", () => {
   for (const bp of BREAKPOINTS) {
-    for (const idx of TILE_INDICES) {
+    for (const idx of tileIndices(bp.cols)) {
       test(`${bp.name} — tile #${idx + 1}: footer block height matches real card`, async ({
         page,
       }) => {

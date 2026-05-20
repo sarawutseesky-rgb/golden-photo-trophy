@@ -17,9 +17,17 @@ import { PNG } from "pngjs";
 // causes a layout jump when real data swaps in.
 
 const BREAKPOINTS = [
-  { name: "mobile", width: 390, height: 844 },
-  { name: "tablet", width: 768, height: 1024 },
-  { name: "desktop", width: 1280, height: 800 },
+  // `cols` mirrors PhotoGrid's MASONRY_COLS Tailwind breakpoints:
+  //   <640  → columns-1   (mobile)
+  //   ≥640  → columns-2   (sm)
+  //   ≥768  → columns-3   (md, tablet)
+  //   ≥1024 → columns-4   (lg)
+  //   ≥1280 → columns-5   (xl, desktop)
+  // We sample exactly `cols` tiles per breakpoint — one per visible column —
+  // so coverage scales with the layout instead of being a hand-picked guess.
+  { name: "mobile", width: 390, height: 844, cols: 1 },
+  { name: "tablet", width: 768, height: 1024, cols: 3 },
+  { name: "desktop", width: 1280, height: 800, cols: 5 },
 ] as const;
 
 const STRIP_TID = "photo-card-bottom-strip";
@@ -27,10 +35,9 @@ const FOOTER_TID = "photo-card-footer";
 const SK_TILE_TID = "photo-card-skeleton";
 const CARD_TID = "photo-card";
 
-// Sample tiles 1–6 so every column of the widest masonry layout
-// (xl:columns-5) is covered at least once. A selector bug or per-column
-// layout regression can't slip through by hiding in an unsampled tile.
-const TILE_INDICES = [0, 1, 2, 3, 4, 5] as const;
+/** Indices 0..cols-1 — one tile per visible masonry column at this breakpoint. */
+const tileIndices = (cols: number): readonly number[] =>
+  Array.from({ length: cols }, (_, i) => i);
 
 async function shotPng(loc: Locator): Promise<PNG> {
   await loc.waitFor({ state: "visible", timeout: 20_000 });
@@ -96,7 +103,7 @@ async function captureReal(page: Page, regionTid: string, idx: number) {
 
 test.describe("Hall of Fame — Skeleton vs PhotoCard pixel diff", () => {
   for (const bp of BREAKPOINTS) {
-    for (const idx of TILE_INDICES) {
+    for (const idx of tileIndices(bp.cols)) {
     test(`${bp.name} — tile #${idx + 1}: bottom strip matches real card envelope`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
 
