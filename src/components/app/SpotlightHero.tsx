@@ -24,7 +24,7 @@ export function SpotlightHero() {
 
   if (isLoading) {
     return (
-      <div className="relative mb-6 h-48 animate-pulse overflow-hidden rounded-2xl border border-border bg-card md:h-64" />
+      <div className="relative mb-6 h-36 animate-pulse overflow-hidden rounded-2xl border border-border bg-card md:h-48" />
     );
   }
 
@@ -52,7 +52,7 @@ export function SpotlightHero() {
         <Link
           to="/photo/$id"
           params={{ id: photo.id }}
-          className="group relative block aspect-[4/3] overflow-hidden md:aspect-auto md:min-h-[280px]"
+          className="group relative block aspect-[3/2] overflow-hidden md:aspect-auto md:min-h-[190px]"
           aria-label={`Spotlight: ${photo.title}`}
         >
           <img
@@ -68,7 +68,7 @@ export function SpotlightHero() {
         </Link>
 
         {/* Content */}
-        <div className="flex flex-col justify-center gap-4 p-5 md:p-7">
+        <div className="flex flex-col justify-center gap-3 p-4 md:p-5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--gold)]">
             <Sparkles className="h-3.5 w-3.5" />
             {held ? "Spotlight · Holding #1" : "Spotlight · Top of the feed"}
