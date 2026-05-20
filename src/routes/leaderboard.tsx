@@ -192,15 +192,7 @@ function LeaderboardPage() {
             >
               {/* Background: top photo */}
               {e.top_photo_url && (
-                <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-                  <img
-                    src={e.top_photo_url}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover opacity-30 blur-[1px] transition-opacity duration-300 group-hover:opacity-45"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background/95" />
-                </div>
+                <MemberCardBackground url={e.top_photo_url} />
               )}
 
               {/* Large numeric rank in top-left */}
