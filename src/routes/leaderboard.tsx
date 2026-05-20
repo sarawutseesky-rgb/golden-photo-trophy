@@ -501,17 +501,13 @@ function MyRankPanel({
     >
       <RankBadge rank={me.rank} />
       <div className="flex flex-1 items-center gap-3 min-w-0">
-        {me.avatar_url ? (
-          <img
-            src={me.avatar_url}
-            alt={me.display_name}
-            className="h-10 w-10 rounded-full object-cover ring-1 ring-border"
-          />
-        ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
-            {me.display_name?.charAt(0)?.toUpperCase() || "?"}
-          </div>
-        )}
+        <AvatarWithSkeleton
+          url={me.avatar_url ?? null}
+          name={me.display_name}
+          className="h-10 w-10 ring-1 ring-border"
+          fallbackTextClassName="text-sm"
+        />
+
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold">
             อันดับของคุณ · {me.display_name}
