@@ -411,6 +411,7 @@ function PhotoLeaderboardSkeleton({ count = 8 }: { count?: number }) {
 }
 
 function RankBadge({ rank }: { rank: number }) {
+
   return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
 }
 
