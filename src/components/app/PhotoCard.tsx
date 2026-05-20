@@ -186,8 +186,41 @@ export function PhotoCard({
       prevInfinite.forEach(([key, data]) => qc.setQueryData(key, data));
       qc.setQueryData(photoKey, prevPhoto);
       const msg = e?.message ?? "โหวตไม่สำเร็จ";
-      toast.error(msg);
-      setErrorMsg(`โหวตไม่สำเร็จ: ${msg} กรุณาลองอีกครั้ง`);
+      const isDuplicate = /already voted/i.test(String(msg));
+      if (isDuplicate) {
+        // Refresh authoritative state so UI reflects the existing vote
+        try {
+          const res = await fetchMyVote({ data: { photo_id: photo.id } });
+          if (res.score != null) {
+            setMyScore(res.score);
+            setHydratedFromServer(true);
+            setConfirmed({
+              score: res.score,
+              avg: Number(photo.avg_score ?? 0),
+              count: photo.vote_count ?? 0,
+            });
+            toast.info(`คุณโหวตรูปนี้ไปแล้ว ${res.score}★`, {
+              description: `คะแนนเฉลี่ยปัจจุบัน ${Number(photo.avg_score ?? 0).toFixed(2)} จาก ${photo.vote_count ?? 0} โหวต`,
+            });
+          } else {
+            toast.info("คุณโหวตรูปนี้ไปแล้ว", {
+              description: "หนึ่งบัญชีโหวตได้ครั้งเดียวต่อรูป",
+            });
+          }
+        } catch {
+          toast.info("คุณโหวตรูปนี้ไปแล้ว", {
+            description: "หนึ่งบัญชีโหวตได้ครั้งเดียวต่อรูป",
+          });
+        }
+        qc.invalidateQueries({ queryKey: ["feed"] });
+        qc.invalidateQueries({ queryKey: ["feed-infinite"] });
+        qc.invalidateQueries({ queryKey: photoKey });
+        qc.invalidateQueries({ queryKey: ["my-vote", photo.id] });
+        setErrorMsg(null);
+      } else {
+        toast.error(msg);
+        setErrorMsg(`โหวตไม่สำเร็จ: ${msg} กรุณาลองอีกครั้ง`);
+      }
     } finally {
       setBusy(false);
     }
