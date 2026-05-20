@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
+import { ThemeProvider } from "@/lib/theme-context";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/app/Header";
 import { AppSidebar } from "@/components/app/AppSidebar";
@@ -135,6 +136,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en" className="scroll-pt-14">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('seestar-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}var r=document.documentElement;if(t==='light'){r.classList.add('light');}r.style.colorScheme=t;}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
         {children}
@@ -159,6 +165,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <AuthProvider>
         <SidebarProvider>
           <div className="min-h-screen flex w-full bg-background text-foreground">
@@ -174,6 +181,7 @@ function RootComponent() {
           <PhotosRealtimeBridge />
         </SidebarProvider>
       </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
