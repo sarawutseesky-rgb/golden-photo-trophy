@@ -14,6 +14,7 @@ import {
   toastVoteSuccess,
 } from "@/lib/vote-toast";
 import { StarRow } from "./StarRow";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type FeedPhoto = {
   id: string;
