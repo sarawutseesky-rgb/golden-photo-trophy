@@ -179,7 +179,7 @@ function LeaderboardPage() {
               ref={me?.user_id === e.user_id ? meRowRef : undefined}
               data-testid="member-leaderboard-card"
               className={cn(
-                "relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-3 pt-10 pb-5 text-center transition-colors hover:bg-accent/40 sm:px-4 sm:pt-9 md:pt-8",
+                "group relative isolate flex flex-col items-center gap-3 overflow-hidden rounded-xl border border-border bg-card px-3 pt-12 pb-5 text-center transition-colors hover:bg-accent/40 sm:px-4",
                 e.rank === 1 &&
                   "border-[var(--gold)]/60 bg-gradient-to-b from-[var(--gold)]/15 to-transparent shadow-[0_0_24px_-8px_var(--gold)]",
                 e.rank === 2 &&
@@ -190,11 +190,39 @@ function LeaderboardPage() {
                 me?.user_id === e.user_id && flash && "me-row-flash",
               )}
             >
+              {/* Background: top photo */}
+              {e.top_photo_url && (
+                <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+                  <img
+                    src={e.top_photo_url}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover opacity-30 blur-[1px] transition-opacity duration-300 group-hover:opacity-45"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background/95" />
+                </div>
+              )}
+
+              {/* Large numeric rank in top-left */}
+              <div
+                className={cn(
+                  "absolute left-2 top-1.5 z-10 select-none font-black leading-none tabular-nums",
+                  "text-2xl sm:text-3xl",
+                  e.rank === 1 && "text-[var(--gold)] drop-shadow-[0_0_8px_var(--gold)]",
+                  e.rank === 2 && "text-zinc-300",
+                  e.rank === 3 && "text-amber-600",
+                  e.rank > 3 && "text-foreground/70",
+                )}
+                aria-label={`อันดับ ${e.rank}`}
+              >
+                #{e.rank}
+              </div>
+
               <div
                 data-testid="member-leaderboard-rank-badge"
-                className="absolute"
+                className="absolute z-10"
                 style={{
-                  left: "clamp(0.25rem, 1.2vw, 0.5rem)",
+                  right: "clamp(0.25rem, 1.2vw, 0.5rem)",
                   top: "clamp(0.25rem, 1.2vw, 0.5rem)",
                 }}
               >
@@ -204,16 +232,16 @@ function LeaderboardPage() {
                 to="/profile/$id"
                 params={{ id: e.user_id }}
                 data-testid="member-leaderboard-card-content"
-                className="flex w-full flex-col items-center gap-2 min-w-0"
+                className="relative z-10 flex w-full flex-col items-center gap-2 min-w-0"
               >
                 {e.avatar_url ? (
                   <img
                     src={e.avatar_url}
                     alt={e.display_name}
-                    className="h-16 w-16 rounded-full object-cover ring-1 ring-border"
+                    className="h-16 w-16 rounded-full object-cover ring-2 ring-background"
                   />
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground ring-2 ring-background">
                     {e.display_name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                 )}
@@ -224,7 +252,7 @@ function LeaderboardPage() {
                   </div>
                 </div>
               </Link>
-              <div className="text-center">
+              <div className="relative z-10 text-center">
                 <div className="text-lg font-bold tabular-nums">
                   {e.total_votes.toLocaleString()}
                 </div>
