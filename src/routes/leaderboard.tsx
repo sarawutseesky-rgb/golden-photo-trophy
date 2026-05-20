@@ -175,12 +175,14 @@ function LeaderboardPage() {
               key={e.user_id}
               ref={me?.user_id === e.user_id ? meRowRef : undefined}
               className={cn(
-                "flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-4 py-5 text-center transition-colors hover:bg-accent/40",
+                "relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-4 py-5 text-center transition-colors hover:bg-accent/40",
                 me?.user_id === e.user_id && "bg-[var(--gold)]/5",
                 me?.user_id === e.user_id && flash && "me-row-flash",
               )}
             >
-              <RankBadge rank={e.rank} />
+              <div className="absolute left-2 top-2">
+                <RankBadge rank={e.rank} />
+              </div>
               <Link
                 to="/profile/$id"
                 params={{ id: e.user_id }}
