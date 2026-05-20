@@ -186,7 +186,7 @@ function LeaderboardPage() {
                 me?.user_id === e.user_id && flash && "me-row-flash",
               )}
             >
-              <div className="absolute left-2 top-2">
+              <div className="absolute left-1.5 top-1.5">
                 <RankBadge rank={e.rank} />
               </div>
               <Link
