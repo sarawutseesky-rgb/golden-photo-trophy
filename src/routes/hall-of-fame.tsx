@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
+import { CollectionPageSkeleton } from "@/components/app/CollectionPageSkeleton";
 
 export const Route = createFileRoute("/hall-of-fame")({
   head: () => ({
