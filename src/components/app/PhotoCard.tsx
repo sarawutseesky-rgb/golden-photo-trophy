@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles } from "lucide-react";
+import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { castVote, getMyVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
@@ -286,7 +286,8 @@ export function PhotoCard({
             role="radiogroup"
             aria-label={voteGroupLabel}
             aria-disabled={hasVoted || busy || isOwner}
-            className="flex items-center gap-0.5 rounded-full bg-background/85 px-3 py-1.5 shadow-lg backdrop-blur"
+            aria-busy={busy}
+            className="relative flex items-center gap-0.5 rounded-full bg-background/85 px-3 py-1.5 shadow-lg backdrop-blur"
           >
             {[1, 2, 3, 4, 5].map((n) => {
               const filled = (hover ?? myScore ?? 0) >= n;
@@ -308,14 +309,19 @@ export function PhotoCard({
                     e.stopPropagation();
                     handleVote(n);
                   }}
-                  className="p-0.5 disabled:cursor-not-allowed"
+                  className={cn(
+                    "p-0.5 disabled:cursor-not-allowed",
+                    busy && "opacity-40",
+                  )}
                   aria-label={`ให้ ${n} จาก 5 ดาว`}
                   title={
                     isOwner
                       ? "โหวตรูปตัวเองไม่ได้"
-                      : hasVoted
-                        ? `คุณให้ ${myScore}★ แล้ว`
-                        : `ให้ ${n} ดาว`
+                      : busy
+                        ? "กำลังบันทึกโหวต..."
+                        : hasVoted
+                          ? `คุณให้ ${myScore}★ แล้ว`
+                          : `ให้ ${n} ดาว`
                   }
                 >
                   <Star
@@ -330,8 +336,24 @@ export function PhotoCard({
                 </button>
               );
             })}
+            {busy && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-background/60 backdrop-blur-sm"
+              >
+                <Loader2 className="h-4 w-4 animate-spin text-[var(--gold)]" />
+              </span>
+            )}
           </div>
-          {!hasVoted && !isOwner && !busy && (
+          {busy ? (
+            <span
+              aria-hidden="true"
+              className="inline-flex items-center gap-1 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--gold)] shadow backdrop-blur"
+            >
+              <Loader2 className="h-3 w-3 animate-spin" />
+              กำลังบันทึก {myScore}★
+            </span>
+          ) : !hasVoted && !isOwner && (
             <span
               aria-hidden="true"
               className="hidden rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground shadow backdrop-blur md:inline-block"
