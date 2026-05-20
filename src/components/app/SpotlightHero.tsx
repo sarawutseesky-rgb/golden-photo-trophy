@@ -47,12 +47,12 @@ export function SpotlightHero() {
     >
       <div className="absolute inset-0 -z-10 opacity-30 [background:radial-gradient(circle_at_20%_30%,var(--gold)_0%,transparent_45%),radial-gradient(circle_at_85%_70%,var(--gold)_0%,transparent_40%)]" />
 
-      <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         {/* Image */}
         <Link
           to="/photo/$id"
           params={{ id: photo.id }}
-          className="group relative block aspect-[3/2] overflow-hidden md:aspect-auto md:min-h-[190px]"
+          className="group relative block aspect-[3/2] overflow-hidden sm:aspect-[16/9] lg:aspect-auto lg:min-h-[190px]"
           aria-label={`Spotlight: ${photo.title}`}
         >
           <img
