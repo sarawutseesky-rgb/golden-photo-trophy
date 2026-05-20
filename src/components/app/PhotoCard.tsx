@@ -14,6 +14,7 @@ import {
   toastVoteSuccess,
 } from "@/lib/vote-toast";
 import { StarRow } from "./StarRow";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type FeedPhoto = {
   id: string;
@@ -290,10 +291,21 @@ export function PhotoCard({
           <span
             className="inline-flex items-center gap-1 font-semibold"
             aria-label={`คะแนนเฉลี่ย ${Number(photo.avg_score).toFixed(1)} จาก 5 ดาว`}
+            aria-busy={busy}
           >
-            <StarRow count={Math.round(Number(photo.avg_score))} size={12} />
-            <span className="tabular-nums">{Number(photo.avg_score).toFixed(1)}</span>
-            <span className="opacity-75">· {photo.vote_count}</span>
+            {busy ? (
+              <>
+                <Skeleton className="h-3 w-[68px] rounded-sm bg-white/30" />
+                <Skeleton className="h-3 w-6 rounded-sm bg-white/30" />
+                <Skeleton className="h-3 w-6 rounded-sm bg-white/30" />
+              </>
+            ) : (
+              <>
+                <StarRow count={Math.round(Number(photo.avg_score))} size={12} />
+                <span className="tabular-nums">{Number(photo.avg_score).toFixed(1)}</span>
+                <span className="opacity-75">· {photo.vote_count}</span>
+              </>
+            )}
           </span>
           <span className="flex items-center gap-2 opacity-90">
             <span className="inline-flex items-center gap-0.5">
@@ -316,7 +328,13 @@ export function PhotoCard({
             aria-busy={busy}
             className="relative flex items-center gap-0.5 rounded-full bg-background/85 px-3 py-1.5 shadow-lg backdrop-blur"
           >
-            {[1, 2, 3, 4, 5].map((n) => {
+            {busy ? (
+              [1, 2, 3, 4, 5].map((n) => (
+                <span key={`quick-skel-${n}`} className="p-0.5" aria-hidden="true">
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                </span>
+              ))
+            ) : [1, 2, 3, 4, 5].map((n) => {
               const filled = (hover ?? myScore ?? 0) >= n;
               const checked = myScore === n;
               return (
