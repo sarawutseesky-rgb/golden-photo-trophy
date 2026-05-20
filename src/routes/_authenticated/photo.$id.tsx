@@ -15,6 +15,7 @@ import { THRESHOLDS_HOURS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
 import { applyOptimisticVote } from "@/lib/votes.helpers";
+import { isDuplicateVoteMessage, toastDuplicateVote, toastVoteSuccess } from "@/lib/vote-toast";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { ClientOnly } from "@tanstack/react-router";
@@ -230,7 +231,12 @@ function PhotoDetail() {
     const t0 = performance.now();
     try {
       await vote({ data: { photo_id: id, score } });
-      toast.success(`ให้ ${score}★ แล้ว`);
+      {
+        const cur = qc.getQueryData<any>(photoKey);
+        const avg = Number(cur?.photo?.avg_score ?? p.avg_score ?? 0);
+        const count = Number(cur?.photo?.vote_count ?? p.vote_count ?? 0);
+        toastVoteSuccess(score, avg, count);
+      }
       qc.invalidateQueries({ queryKey: photoKey });
       qc.invalidateQueries({ queryKey: voteKey });
       if (debug) {
@@ -248,7 +254,17 @@ function PhotoDetail() {
       qc.setQueryData(voteKey, prevVote);
       prevFeeds.forEach(([key, data]) => qc.setQueryData(key, data));
       prevInfinite.forEach(([key, data]) => qc.setQueryData(key, data));
-      toast.error(e.message ?? "โหวตไม่สำเร็จ");
+      const msg = e?.message ?? "โหวตไม่สำเร็จ";
+      if (isDuplicateVoteMessage(msg)) {
+        const existing = prevVote?.score ?? null;
+        const avg = Number(prevPhoto?.photo?.avg_score ?? p.avg_score ?? 0);
+        const count = Number(prevPhoto?.photo?.vote_count ?? p.vote_count ?? 0);
+        toastDuplicateVote(existing, avg, count);
+        qc.invalidateQueries({ queryKey: photoKey });
+        qc.invalidateQueries({ queryKey: voteKey });
+      } else {
+        toast.error(msg);
+      }
       if (debug) logDebug(`vote ${score}★ (rollback)`, Number(prevPhoto?.photo?.avg_score ?? 0), Number(prevPhoto?.photo?.vote_count ?? 0));
     } finally {
       setBusy(false);
