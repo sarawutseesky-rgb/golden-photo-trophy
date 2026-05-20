@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bell, Star, Upload, LogOut, User, Shield, PanelLeft } from "lucide-react";
+import { Bell, Star, Upload, LogOut, User, Shield, PanelLeft, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 import { useServerFn } from "@tanstack/react-start";
 import { unreadCount } from "@/lib/notifications.functions";
 import { checkAdmin } from "@/lib/profile.functions";
@@ -17,6 +18,7 @@ export function Header() {
   const [count, setCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const palette = useCommandPalette();
+  const { theme, toggle: toggleTheme } = useTheme();
 
   useEffect(() => {
     if (!user) return;
@@ -81,6 +83,15 @@ export function Header() {
             className="rounded-md p-2 hover:bg-muted sm:hidden"
           >
             <Search className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "โหมดกลางวัน" : "โหมดกลางคืน"}
+            className="rounded-md p-2 hover:bg-muted"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           {user ? (
             <>
