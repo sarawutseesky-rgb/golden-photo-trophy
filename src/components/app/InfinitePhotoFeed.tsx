@@ -5,6 +5,7 @@ import { listFeed } from "@/lib/photos.functions";
 import { PhotoCard, type FeedPhoto } from "./PhotoCard";
 import { PhotoGridSkeleton } from "./PhotoGrid";
 import { EmptyState } from "./EmptyState";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
 
