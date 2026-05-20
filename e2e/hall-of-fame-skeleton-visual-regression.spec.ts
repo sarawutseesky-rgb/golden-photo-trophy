@@ -141,6 +141,9 @@ test.describe("Hall of Fame — Skeleton card footer matches real card footer", 
         await page.unroute("**/_serverFn/**");
 
         await page.goto("/?tab=latest&sort=new");
+        await expect
+          .poll(() => page.getByTestId(CARD_TID).count(), { timeout: 20_000 })
+          .toBeGreaterThanOrEqual(bp.cols);
         await expect(page.getByTestId(CARD_TID).nth(idx)).toBeVisible({
           timeout: 20_000,
         });
