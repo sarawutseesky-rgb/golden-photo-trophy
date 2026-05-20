@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles, Loader2 } from "lucide-react";
+import { Star, Eye, MessageCircle, Trophy, Flame, Sparkles, Loader2, CheckCircle2, CircleDashed } from "lucide-react";
 import { toast } from "sonner";
 import { castVote, getMyVote } from "@/lib/votes.functions";
 import { useAuth } from "@/lib/auth-context";
@@ -54,7 +54,7 @@ export function PhotoCard({
   // Hydrate existing vote on mount / refresh so screen readers can announce "โหวตแล้ว"
   const fetchMyVote = useServerFn(getMyVote);
   const isOwner = !!user && photo.user_id === user.id;
-  useQuery({
+  const myVoteQuery = useQuery({
     queryKey: ["my-vote", photo.id, user?.id ?? "anon"],
     queryFn: async () => {
       try {
@@ -73,6 +73,8 @@ export function PhotoCard({
     staleTime: 60_000,
     retry: false,
   });
+  // True once we know the user's vote status (query resolved, or no query needed).
+  const voteKnown = !user || isOwner || myVoteQuery.isFetched;
 
   const focusQuick = (idx: number) => {
     const clamped = Math.max(0, Math.min(4, idx));
