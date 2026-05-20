@@ -417,6 +417,33 @@ function PhotoLeaderboardSkeleton({ count = 8 }: { count?: number }) {
 }
 
 function RankBadge({ rank }: { rank: number }) {
+  return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
+}
+
+function MemberCardBackground({ url }: { url: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+      {!loaded && (
+        <div className="absolute inset-0 shimmer opacity-40" />
+      )}
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+        className={cn(
+          "h-full w-full object-cover blur-[1px] transition-opacity duration-500 group-hover:opacity-45",
+          loaded ? "opacity-30" : "opacity-0",
+        )}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background/95" />
+    </div>
+  );
+}
+
+function RankBadgeInner({ rank }: { rank: number }) {
   if (rank === 1)
     return (
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
