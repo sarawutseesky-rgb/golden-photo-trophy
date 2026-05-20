@@ -69,11 +69,6 @@ export function SpotlightHero() {
 
         {/* Content */}
         <div className="flex flex-col justify-center gap-3 p-4 md:p-5">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--gold)]">
-            <Sparkles className="h-3.5 w-3.5" />
-            {held ? "Spotlight · Holding #1" : "Spotlight · Top of the feed"}
-          </div>
-
           <h2 className="text-2xl font-bold leading-tight tracking-tight md:text-3xl">
             <Link to="/photo/$id" params={{ id: photo.id }} className="hover:text-[var(--gold)]">
               {photo.title}
