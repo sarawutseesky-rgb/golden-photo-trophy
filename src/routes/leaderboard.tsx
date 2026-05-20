@@ -347,16 +347,16 @@ function SkeletonRow({ index = 0 }: { index?: number }) {
         <div className="h-[18px] w-2/3 rounded shimmer" />
         <div className="h-[14px] w-1/3 rounded shimmer" />
       </div>
-      <div className="flex w-[72px] shrink-0 flex-col items-end gap-1.5">
+      <div className="flex w-20 shrink-0 flex-col items-end gap-1.5">
         <div className="flex h-7 items-center justify-end gap-1">
-          <div className="h-5 w-10 rounded shimmer" />
+          <div className="h-5 w-12 rounded shimmer" />
           <Star
             className="h-4 w-4 text-[var(--gold)]/30"
             strokeWidth={1.5}
             aria-hidden="true"
           />
         </div>
-        <div className="h-3 w-14 rounded shimmer" />
+        <div className="h-3 w-16 rounded shimmer" />
       </div>
     </li>
   );
