@@ -412,6 +412,50 @@ function PhotoLeaderboardSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
+function MemberCardSkeleton({ index = 0 }: { index?: number }) {
+  return (
+    <li
+      aria-hidden="true"
+      style={{ animationDelay: `${index * 50}ms` }}
+      className="relative isolate flex flex-col items-center gap-3 overflow-hidden rounded-xl border border-border bg-card px-3 pt-12 pb-5 text-center sm:px-4"
+    >
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-muted/40" />
+        <div className="absolute inset-0 shimmer opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background/95" />
+      </div>
+      <div className="absolute left-2 top-1.5 z-10 h-7 w-10 rounded shimmer" />
+      <div className="absolute right-2 top-1.5 z-10 h-7 w-7 rounded-full shimmer" />
+      <div className="relative z-10 flex w-full flex-col items-center gap-2 min-w-0">
+        <div className="h-16 w-16 rounded-full shimmer ring-2 ring-background" />
+        <div className="w-full space-y-1.5">
+          <div className="mx-auto h-4 w-2/3 rounded shimmer" />
+          <div className="mx-auto h-3 w-1/2 rounded shimmer" />
+        </div>
+      </div>
+      <div className="relative z-10 flex flex-col items-center gap-1">
+        <div className="h-5 w-12 rounded shimmer" />
+        <div className="h-3 w-10 rounded shimmer" />
+      </div>
+    </li>
+  );
+}
+
+function MemberLeaderboardSkeleton({ count = 12 }: { count?: number }) {
+  return (
+    <ol
+      data-testid="member-leaderboard-grid"
+      aria-busy="true"
+      aria-label="กำลังโหลดอันดับสมาชิก"
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <MemberCardSkeleton key={i} index={i} />
+      ))}
+    </ol>
+  );
+}
+
 function AvatarWithSkeleton({
   url,
   name,
