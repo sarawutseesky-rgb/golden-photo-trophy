@@ -5,6 +5,7 @@ import { listFeed } from "@/lib/photos.functions";
 import { PhotoCard, type FeedPhoto } from "./PhotoCard";
 import { PhotoGridSkeleton } from "./PhotoGrid";
 import { EmptyState } from "./EmptyState";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
 
@@ -80,7 +81,14 @@ export function InfinitePhotoFeed({
 
   return (
     <div>
-      <div className="columns-1 gap-4 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 min-[2200px]:columns-7 min-[2800px]:columns-8 [&>*]:mb-4">
+      <div
+        className={cn(
+          "columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 min-[2200px]:columns-7 min-[2800px]:columns-8",
+          "gap-3 sm:gap-4 xl:gap-5 2xl:gap-6",
+          "[column-fill:_balance] [&>*]:mb-3 sm:[&>*]:mb-4 xl:[&>*]:mb-5 2xl:[&>*]:mb-6",
+          "[&>*]:break-inside-avoid [&>*]:[-webkit-column-break-inside:avoid]",
+        )}
+      >
         {photos.map((p) => (
           <PhotoCard key={p.id} photo={p} showMilestoneTimeline={showMilestoneTimeline} />
         ))}
