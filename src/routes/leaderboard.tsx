@@ -465,7 +465,22 @@ function AvatarWithSkeleton({
 
 
 function RankBadge({ rank }: { rank: number }) {
-  return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  if (rank <= 0) return null;
+  return (
+    <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center">
+      <RankBadgeInner rank={rank} />
+      {!hydrated && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-full shimmer opacity-60"
+        />
+      )}
+    </span>
+  );
 }
 
 /**
