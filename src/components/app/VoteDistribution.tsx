@@ -1,8 +1,11 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { normalizeDistribution } from "@/lib/utils";
 
 interface VoteDistributionProps {
   /** Raw distribution array `[c1★, c2★, c3★, c4★, c5★]` from the server. */
   distribution: unknown;
+  /** True while a vote request is in flight — renders skeleton placeholders. */
+  busy?: boolean;
 }
 
 /**
@@ -10,7 +13,7 @@ interface VoteDistributionProps {
  * Rendered on the photo detail page and exercised by the
  * `VoteDistribution.test.tsx` UI tests.
  */
-export function VoteDistribution({ distribution }: VoteDistributionProps) {
+export function VoteDistribution({ distribution, busy }: VoteDistributionProps) {
   const dist = normalizeDistribution(distribution);
   const total = dist.reduce((a, b) => a + b, 0) || 1;
 
@@ -20,6 +23,7 @@ export function VoteDistribution({ distribution }: VoteDistributionProps) {
       role="list"
       aria-label="การกระจายคะแนนโหวต 1 ถึง 5 ดาว"
       data-testid="vote-distribution"
+      aria-busy={busy}
     >
       {[5, 4, 3, 2, 1].map((s) => {
         const c = dist[s - 1] ?? 0;
@@ -29,24 +33,32 @@ export function VoteDistribution({ distribution }: VoteDistributionProps) {
             key={s}
             role="listitem"
             data-testid={`vote-dist-row-${s}`}
-            aria-label={`${s} ดาว: ${c} โหวต`}
+            aria-label={busy ? undefined : `${s} ดาว: ${c} โหวต`}
             className="flex items-center gap-2 text-xs"
           >
             <span className="w-4 text-muted-foreground">{s}★</span>
             <div className="h-1.5 flex-1 overflow-hidden rounded bg-muted">
-              <div
-                data-testid={`vote-dist-bar-${s}`}
-                data-percent={pct.toFixed(2)}
-                className="h-full bg-[var(--gold)]"
-                style={{ width: `${pct}%` }}
-              />
+              {busy ? (
+                <Skeleton className="h-full w-full rounded-sm" />
+              ) : (
+                <div
+                  data-testid={`vote-dist-bar-${s}`}
+                  data-percent={pct.toFixed(2)}
+                  className="h-full bg-[var(--gold)]"
+                  style={{ width: `${pct}%` }}
+                />
+              )}
             </div>
-            <span
-              data-testid={`vote-dist-count-${s}`}
-              className="w-6 text-right text-muted-foreground"
-            >
-              {c}
-            </span>
+            {busy ? (
+              <Skeleton className="h-3 w-6 rounded-sm" />
+            ) : (
+              <span
+                data-testid={`vote-dist-count-${s}`}
+                className="w-6 text-right text-muted-foreground"
+              >
+                {c}
+              </span>
+            )}
           </div>
         );
       })}
