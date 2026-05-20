@@ -24,7 +24,7 @@ export function SpotlightHero() {
 
   if (isLoading) {
     return (
-      <div className="relative mb-6 h-48 animate-pulse overflow-hidden rounded-2xl border border-border bg-card md:h-64" />
+      <div className="relative mb-6 h-36 animate-pulse overflow-hidden rounded-2xl border border-border bg-card md:h-48" />
     );
   }
 
