@@ -190,10 +190,8 @@ function LeaderboardPage() {
                 me?.user_id === e.user_id && flash && "me-row-flash",
               )}
             >
-              {/* Background: top photo */}
-              {e.top_photo_url && (
-                <MemberCardBackground url={e.top_photo_url} />
-              )}
+              {/* Background: top photo (with skeleton placeholder for uniform height) */}
+              <MemberCardBackground url={e.top_photo_url ?? null} />
 
               {/* Large numeric rank in top-left */}
               <div
@@ -420,24 +418,28 @@ function RankBadge({ rank }: { rank: number }) {
   return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
 }
 
-function MemberCardBackground({ url }: { url: string }) {
+function MemberCardBackground({ url }: { url: string | null }) {
   const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const showShimmer = !url || (!loaded && !errored);
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-      {!loaded && (
-        <div className="absolute inset-0 shimmer opacity-40" />
+      {/* Always-on muted base so the card never collapses */}
+      <div className="absolute inset-0 bg-muted/40" />
+      {showShimmer && <div className="absolute inset-0 shimmer opacity-40" />}
+      {url && !errored && (
+        <img
+          src={url}
+          alt=""
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+          className={cn(
+            "h-full w-full object-cover blur-[1px] transition-opacity duration-500 group-hover:opacity-45",
+            loaded ? "opacity-30" : "opacity-0",
+          )}
+        />
       )}
-      <img
-        src={url}
-        alt=""
-        loading="lazy"
-        onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
-        className={cn(
-          "h-full w-full object-cover blur-[1px] transition-opacity duration-500 group-hover:opacity-45",
-          loaded ? "opacity-30" : "opacity-0",
-        )}
-      />
       <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background/95" />
     </div>
   );
