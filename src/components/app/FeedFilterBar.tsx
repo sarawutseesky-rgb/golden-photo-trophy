@@ -157,14 +157,16 @@ export function FeedFilterBar({
                   <Link
                     to="/"
                     search={{ tab: "latest", sort: "new" }}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    aria-label="Reset filters"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[var(--gold)]/50 bg-[var(--gold)]/10 px-3 py-1.5 text-sm font-semibold text-foreground transition hover:bg-[var(--gold)]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="ล้างทั้งหมด (แท็บ, การเรียง, แท็ก)"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Reset</span>
+                    <span>ล้างทั้งหมด</span>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={6}>ล้างตัวกรองทั้งหมด</TooltipContent>
+                <TooltipContent side="top" sideOffset={6}>
+                  รีเซ็ตแท็บ, การเรียง และแท็กกลับสู่ค่าเริ่มต้น
+                </TooltipContent>
               </Tooltip>
             )}
 
