@@ -86,7 +86,9 @@ function LeaderboardPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold">
-            <Trophy className="h-7 w-7 text-[var(--gold)]" />
+            <IconShimmer className="h-7 w-7">
+              <Trophy className="h-7 w-7 text-[var(--gold)]" />
+            </IconShimmer>
             {mode === "members" ? "อันดับสมาชิก" : "อันดับภาพถ่าย"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -463,8 +465,40 @@ function AvatarWithSkeleton({
 
 
 function RankBadge({ rank }: { rank: number }) {
-
   return rank > 0 ? <RankBadgeInner rank={rank} /> : null;
+}
+
+/**
+ * Defensive wrapper that shows a shimmer placeholder over an inline icon
+ * (e.g. lucide SVG) until React has hydrated on the client. In practice
+ * lucide icons render synchronously with the DOM, but on very slow devices
+ * the first paint can occur before hydration completes — this prevents any
+ * perceived "pop-in" by reserving the icon's box with a shimmer overlay.
+ */
+function IconShimmer({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return (
+    <span
+      className={cn("relative inline-flex shrink-0 items-center justify-center", className)}
+    >
+      {children}
+      {!hydrated && (
+        <span
+          aria-hidden="true"
+          className={cn("pointer-events-none absolute inset-0 shimmer opacity-60", className)}
+        />
+      )}
+    </span>
+  );
 }
 
 function MemberCardBackground({ url }: { url: string | null }) {
@@ -498,19 +532,25 @@ function RankBadgeInner({ rank }: { rank: number }) {
   if (rank === 1)
     return (
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
-        <Medal className="h-4 w-4" />
+        <IconShimmer className="h-4 w-4 rounded-full">
+          <Medal className="h-4 w-4" />
+        </IconShimmer>
       </div>
     );
   if (rank === 2)
     return (
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-300/15 text-zinc-400">
-        <Medal className="h-4 w-4" />
+        <IconShimmer className="h-4 w-4 rounded-full">
+          <Medal className="h-4 w-4" />
+        </IconShimmer>
       </div>
     );
   if (rank === 3)
     return (
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-700/15 text-amber-600">
-        <Medal className="h-4 w-4" />
+        <IconShimmer className="h-4 w-4 rounded-full">
+          <Medal className="h-4 w-4" />
+        </IconShimmer>
       </div>
     );
   return (
