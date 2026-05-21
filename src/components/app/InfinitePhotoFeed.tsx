@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listFeed } from "@/lib/photos.functions";
@@ -8,6 +8,52 @@ import { EmptyState } from "./EmptyState";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
+
+const ROW_BASE = 8; // px — matches gridAutoRows
+
+function MasonryItem({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [span, setSpan] = useState(40);
+
+  const recalc = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Read intrinsic content height (children fully rendered, including loaded image)
+    const h = el.firstElementChild?.getBoundingClientRect().height ?? el.getBoundingClientRect().height;
+    if (!h) return;
+    // gap is handled by CSS grid, just span based on content height
+    const next = Math.max(1, Math.ceil(h / ROW_BASE));
+    setSpan((prev) => (Math.abs(prev - next) > 1 ? next : prev));
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    recalc();
+    const ro = new ResizeObserver(() => recalc());
+    ro.observe(el);
+    // Recalc when any inner image finishes loading
+    const imgs = el.querySelectorAll("img");
+    const handlers: Array<() => void> = [];
+    imgs.forEach((img) => {
+      if (!img.complete) {
+        const h = () => recalc();
+        img.addEventListener("load", h, { once: true });
+        handlers.push(() => img.removeEventListener("load", h));
+      }
+    });
+    return () => {
+      ro.disconnect();
+      handlers.forEach((fn) => fn());
+    };
+  }, [recalc]);
+
+  return (
+    <div ref={ref} style={{ gridRowEnd: `span ${span}` }} className="min-w-0">
+      {children}
+    </div>
+  );
+}
 
 type FeedParams = {
   sort?: "new" | "top" | "hof" | "trending" | "votes";
@@ -34,6 +80,7 @@ export function InfinitePhotoFeed({
 }) {
   const fn = useServerFn(listFeed);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
 
   const query = useInfiniteQuery({
     queryKey: ["feed-infinite", ...queryKey],
@@ -87,14 +134,17 @@ export function InfinitePhotoFeed({
   return (
     <div>
       <div
+        ref={gridRef}
         className={cn(
-          "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+          "masonry-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
           "gap-3 sm:gap-4 xl:gap-5 2xl:gap-6",
-          "items-start",
         )}
+        style={{ gridAutoRows: "8px", gridAutoFlow: "row dense" }}
       >
         {photos.map((p) => (
-          <PhotoCard key={p.id} photo={p} showMilestoneTimeline={showMilestoneTimeline} />
+          <MasonryItem key={p.id}>
+            <PhotoCard photo={p} showMilestoneTimeline={showMilestoneTimeline} />
+          </MasonryItem>
         ))}
       </div>
       {query.hasNextPage && (
