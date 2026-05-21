@@ -91,6 +91,12 @@ export const listRecentUsers = createServerFn({ method: "GET" })
     if (authErr) throw new Error(authErr.message);
 
     const map = new Map(authList.users.map((u) => [u.id, u]));
+    // Pull admin roles in bulk
+    const { data: roleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .eq("role", "admin");
+    const adminSet = new Set((roleRows ?? []).map((r) => r.user_id));
     const users = (profiles ?? []).map((p) => {
       const u = map.get(p.id);
       const meta = (u?.user_metadata ?? {}) as Record<string, unknown>;
@@ -105,8 +111,117 @@ export const listRecentUsers = createServerFn({ method: "GET" })
         meta_full_name: (meta.full_name as string) ?? (meta.name as string) ?? null,
         meta_avatar_url: (meta.avatar_url as string) ?? (meta.picture as string) ?? null,
         last_sign_in_at: u?.last_sign_in_at ?? null,
+        is_admin: adminSet.has(p.id),
       };
     });
 
     return { users };
+  });
+
+export const listAdminPhotos = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        status: z.enum(["all", "active", "removed"]).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+      })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const limit = data.limit ?? 60;
+    let q = context.supabase
+      .from("photos")
+      .select("id, title, image_url, status, avg_score, vote_count, view_count, user_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    const { data: photos, error } = await q;
+    if (error) throw new Error(error.message);
+    return { photos: photos ?? [] };
+  });
+
+export const setPhotoStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ photo_id: z.string().uuid(), status: z.enum(["active", "removed"]) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase
+      .from("photos")
+      .update({ status: data.status })
+      .eq("id", data.photo_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deletePhotoHard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ photo_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("photos").delete().eq("id", data.photo_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const listAdminComments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(200).optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const limit = data.limit ?? 60;
+    const { data: rows, error } = await context.supabase
+      .from("comments")
+      .select("id, content, created_at, user_id, photo_id, profiles!comments_user_id_fkey(display_name, avatar_url), photos!comments_photo_id_fkey(title, image_url)")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) {
+      // Fallback without FK aliases (in case relationships aren't named)
+      const { data: simple, error: e2 } = await context.supabase
+        .from("comments")
+        .select("id, content, created_at, user_id, photo_id")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (e2) throw new Error(e2.message);
+      return { comments: simple ?? [] };
+    }
+    return { comments: rows ?? [] };
+  });
+
+export const deleteComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ comment_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("comments").delete().eq("id", data.comment_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setUserAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ user_id: z.string().uuid(), make_admin: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.make_admin) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: data.user_id, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw new Error(error.message);
+    } else {
+      // Prevent self-demotion
+      if (data.user_id === context.userId) throw new Error("ไม่สามารถถอดสิทธิ์ admin ของตัวเองได้");
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.user_id)
+        .eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
   });

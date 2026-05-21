@@ -30,7 +30,7 @@ function SignupPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Check your email to confirm your account.");
-    navigate({ to: "/login" });
+    navigate({ to: "/login", search: { redirect: undefined } });
   };
 
   const signInWithGoogle = async () => {
@@ -139,6 +139,7 @@ function SignupPage() {
               มีบัญชีอยู่แล้ว?{" "}
               <Link
                 to="/login"
+                search={{ redirect: undefined }}
                 className="font-medium text-amber-500 underline-offset-4 decoration-amber-500/30 hover:underline"
               >
                 เข้าสู่ระบบ

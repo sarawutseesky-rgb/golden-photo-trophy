@@ -125,7 +125,7 @@ export function Header() {
             </>
           ) : (
             <>
-              <Link to="/login" className="rounded-md px-3 py-1.5 text-sm hover:bg-muted">
+              <Link to="/login" search={{ redirect: undefined }} className="rounded-md px-3 py-1.5 text-sm hover:bg-muted">
                 Login
               </Link>
               <Link
