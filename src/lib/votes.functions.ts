@@ -14,10 +14,10 @@ export const castVote = createServerFn({ method: "POST" })
       .from("votes")
       .insert({ photo_id: data.photo_id, voter_id: context.userId, score: data.score });
     if (error) {
-      if (isDuplicateVoteError(error)) throw new Error("You already voted on this photo");
+      if (isDuplicateVoteError(error)) return { ok: false as const, duplicate: true as const };
       throw new Error(error.message);
     }
-    return { ok: true };
+    return { ok: true as const, duplicate: false as const };
   });
 
 export const removeVote = createServerFn({ method: "POST" })
