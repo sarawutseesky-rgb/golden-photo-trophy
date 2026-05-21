@@ -215,10 +215,10 @@ export function ChatWidget() {
               )}
             </div>
 
-            {isLoading && messages.length === 1 && (
+            {isLoading && messages.length === 0 && (
               <p className="text-center text-xs text-muted-foreground">กำลังโหลด…</p>
             )}
-            {!isLoading && messages.length === 1 && (
+            {!isLoading && messages.length === 0 && (
               <p className="text-center text-xs text-muted-foreground py-8">
                 ยังไม่มีข้อความ — เริ่มทักทายกันได้เลย!
               </p>
