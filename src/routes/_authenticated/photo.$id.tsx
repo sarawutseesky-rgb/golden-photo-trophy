@@ -11,6 +11,8 @@ import { incrementPhotoView } from "@/lib/follows.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
 import { VoteDistribution } from "@/components/app/VoteDistribution";
+import { ExifInfo } from "@/components/app/ExifInfo";
+import { ShareButtons } from "@/components/app/ShareButtons";
 import { THRESHOLDS_HOURS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
@@ -588,6 +590,12 @@ function PhotoDetail() {
               ))}
             </div>
           )}
+          <div className="mt-4">
+            <ShareButtons
+              url={typeof window !== "undefined" ? window.location.href : `https://photostarshot.com/photo/${id}`}
+              title={p.title}
+            />
+          </div>
         </div>
 
         <section>
