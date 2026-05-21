@@ -7,7 +7,7 @@ import { normalizeDistribution } from "@/lib/utils";
 const PHOTO_BASE_SELECT = `
   id, user_id, title, description, tags, image_url, width, height,
   avg_score, vote_count, view_count, current_rank, rank_one_since,
-  milestone_stars, milestone_achieved_at, status, created_at
+  milestone_stars, milestone_achieved_at, status, created_at, exif
 `;
 
 const SCHEMA_CACHE_ERROR = "Could not query the database for the schema cache. Retrying.";
@@ -346,6 +346,19 @@ export const createPhoto = createServerFn({ method: "POST" })
         image_url: z.string().url(),
         width: z.number().int().positive().optional(),
         height: z.number().int().positive().optional(),
+        exif: z
+          .object({
+            make: z.string().max(100).optional(),
+            model: z.string().max(100).optional(),
+            lens: z.string().max(150).optional(),
+            focal_length: z.number().min(0).max(2000).optional(),
+            aperture: z.number().min(0).max(100).optional(),
+            shutter_speed: z.string().max(30).optional(),
+            iso: z.number().int().min(0).max(1_000_000).optional(),
+            taken_at: z.string().optional(),
+          })
+          .nullable()
+          .optional(),
       })
       .parse(d),
   )
@@ -361,6 +374,7 @@ export const createPhoto = createServerFn({ method: "POST" })
         image_url: data.image_url,
         width: data.width,
         height: data.height,
+        exif: data.exif ?? null,
       })
       .select("id")
       .single();
