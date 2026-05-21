@@ -68,12 +68,12 @@ export function ChatWidget() {
     if (!open || !topSentinelRef.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[1];
+        const entry = entries[0];
         if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
           fetchNextPage();
         }
       },
-      { root: scrollRef.current, threshold: 1.0 },
+      { root: scrollRef.current, threshold: 0.1 },
     );
     observer.observe(topSentinelRef.current);
     return () => observer.disconnect();
