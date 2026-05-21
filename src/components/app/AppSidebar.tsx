@@ -7,8 +7,6 @@ import {
   Shield,
   PanelLeft,
   RefreshCw,
-  LayoutDashboard,
-  Users as UsersIcon,
   Star,
   Users,
 } from "lucide-react";
