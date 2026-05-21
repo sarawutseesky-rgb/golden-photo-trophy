@@ -113,7 +113,7 @@ export function ChatWidget() {
 
   // Realtime subscription
   useEffect(() => {
-    if (!open) return;
+    if (!open || !user) return;
     const channel = supabase
       .channel("chat-messages-rt")
       .on(
