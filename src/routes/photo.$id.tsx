@@ -61,7 +61,12 @@ function PhotoDetail() {
     queryKey: ["photo-adjacent", id],
     queryFn: () => fetchAdjacent({ data: { id } }),
   });
-  const { data: myVote, isLoading: myVoteLoading } = useQuery({
+  const {
+    data: myVote,
+    isLoading: myVoteLoading,
+    isFetching: myVoteFetching,
+    refetch: refetchMyVote,
+  } = useQuery({
     queryKey: ["my-vote", id, user?.id],
     queryFn: async () => {
       try {
@@ -73,6 +78,8 @@ function PhotoDetail() {
     },
     enabled: !!user,
     retry: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const [hover, setHover] = useState<number | null>(null);
