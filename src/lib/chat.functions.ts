@@ -23,19 +23,27 @@ async function attachProfiles(rows: { id: string; user_id: string; content: stri
 }
 
 export const listChatMessages = createServerFn({ method: "GET" })
-  .inputValidator((input: { limit?: number }) =>
-    z.object({ limit: z.number().int().min(1).max(100).optional() }).parse(input ?? {}),
+  .inputValidator((input: { limit?: number; cursor?: string }) =>
+    z.object({
+      limit: z.number().int().min(1).max(100).optional(),
+      cursor: z.string().datetime().optional(),
+    }).parse(input ?? {}),
   )
   .handler(async ({ data }) => {
     const limit = data.limit ?? 50;
-    const { data: rows, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("chat_messages")
       .select("id, user_id, content, created_at")
       .order("created_at", { ascending: false })
       .limit(limit);
+    if (data.cursor) {
+      query = query.lt("created_at", data.cursor);
+    }
+    const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     const enriched = await attachProfiles(rows ?? []);
-    return { messages: enriched.reverse() };
+    const nextCursor = rows && rows.length === limit ? rows[rows.length - 1].created_at : undefined;
+    return { messages: enriched, nextCursor };
   });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
