@@ -869,23 +869,14 @@ function PhotoDetail() {
           )}
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              toast.success("Link copied");
-            }}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
-          >
-            <Share2 className="h-3.5 w-3.5" /> Share
-          </button>
-          <button
-            onClick={handleReport}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
-          >
-            <Flag className="h-3.5 w-3.5" /> Report
-          </button>
-        </div>
+        <ExifInfo exif={p.exif} />
+
+        <button
+          onClick={handleReport}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
+        >
+          <Flag className="h-3.5 w-3.5" /> Report
+        </button>
         </aside>
       </div>
       {lightboxOpen && (
