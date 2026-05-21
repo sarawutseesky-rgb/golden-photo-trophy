@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bell, Star, Upload, LogOut, User, Shield, PanelLeft, Sun, Moon } from "lucide-react";
+import { Bell, Star, Upload, LogOut, User, Shield, PanelLeft, Sun, Moon, HelpCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { useServerFn } from "@tanstack/react-start";
@@ -61,6 +61,12 @@ export function Header() {
           </Link>
           <Link to="/hall-of-fame" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Hall of Fame
+          </Link>
+          <Link to="/how-to-play" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+            <span className="inline-flex items-center gap-1">
+              <HelpCircle className="h-3.5 w-3.5" />
+              วิธีเล่น
+            </span>
           </Link>
           {isAdmin && (
             <Link to="/admin" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
