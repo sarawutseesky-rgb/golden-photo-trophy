@@ -347,6 +347,14 @@ function PhotoDetail() {
         const existing = prevVote?.score ?? null;
         const avg = Number(prevPhoto?.photo?.avg_score ?? p.avg_score ?? 0);
         const count = Number(prevPhoto?.photo?.vote_count ?? p.vote_count ?? 0);
+        console.warn("[handleVote] server reported duplicate vote", {
+          photo_id: id,
+          user_id: user.id,
+          existing_score: existing,
+          attempted_score: score,
+          cache_had_vote: prevVote?.score != null,
+          source: "photo-detail/server",
+        });
         toastDuplicateVote(existing, avg, count);
         qc.invalidateQueries({ queryKey: photoKey });
         qc.invalidateQueries({ queryKey: voteKey });
