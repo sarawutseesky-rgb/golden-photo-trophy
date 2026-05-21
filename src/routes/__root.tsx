@@ -20,6 +20,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { usePhotosRealtime } from "@/hooks/use-photos-realtime";
 import { installStaleBundleGuard } from "@/lib/stale-bundle-guard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
+import { ChatWidget } from "@/components/app/ChatWidget";
 
 function NotFoundComponent() {
   return (
@@ -220,6 +221,7 @@ function RootComponent() {
           <Toaster />
           <PhotosRealtimeBridge />
           <OnboardingTour />
+          <ChatWidget />
         </SidebarProvider>
       </AuthProvider>
       </ThemeProvider>
