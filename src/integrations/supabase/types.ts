@@ -142,6 +142,7 @@ export type Database = {
           created_at: string
           current_rank: number | null
           description: string | null
+          exif: Json | null
           height: number | null
           id: string
           image_url: string
@@ -162,6 +163,7 @@ export type Database = {
           created_at?: string
           current_rank?: number | null
           description?: string | null
+          exif?: Json | null
           height?: number | null
           id?: string
           image_url: string
@@ -182,6 +184,7 @@ export type Database = {
           created_at?: string
           current_rank?: number | null
           description?: string | null
+          exif?: Json | null
           height?: number | null
           id?: string
           image_url?: string

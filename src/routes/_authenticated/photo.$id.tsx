@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { Star, Share2, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2 } from "lucide-react";
+import { Star, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, getAdjacentPhotos, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
@@ -11,6 +11,8 @@ import { incrementPhotoView } from "@/lib/follows.functions";
 import { useAuth } from "@/lib/auth-context";
 import { StarRow } from "@/components/app/StarRow";
 import { VoteDistribution } from "@/components/app/VoteDistribution";
+import { ExifInfo } from "@/components/app/ExifInfo";
+import { ShareButtons } from "@/components/app/ShareButtons";
 import { THRESHOLDS_HOURS, nextMilestoneProgress } from "@/lib/milestone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, normalizeDistribution } from "@/lib/utils";
@@ -588,6 +590,12 @@ function PhotoDetail() {
               ))}
             </div>
           )}
+          <div className="mt-4">
+            <ShareButtons
+              url={typeof window !== "undefined" ? window.location.href : `https://photostarshot.com/photo/${id}`}
+              title={p.title}
+            />
+          </div>
         </div>
 
         <section>
@@ -861,23 +869,14 @@ function PhotoDetail() {
           )}
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              toast.success("Link copied");
-            }}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
-          >
-            <Share2 className="h-3.5 w-3.5" /> Share
-          </button>
-          <button
-            onClick={handleReport}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
-          >
-            <Flag className="h-3.5 w-3.5" /> Report
-          </button>
-        </div>
+        <ExifInfo exif={p.exif} />
+
+        <button
+          onClick={handleReport}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border py-2 text-xs hover:bg-muted"
+        >
+          <Flag className="h-3.5 w-3.5" /> Report
+        </button>
         </aside>
       </div>
       {lightboxOpen && (

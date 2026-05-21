@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
 import { createPhoto, getUploadQuota } from "@/lib/photos.functions";
 import { compressImage, getImageDims } from "@/lib/image-compress";
+import { extractExif } from "@/lib/exif";
 import { supabase } from "@/integrations/supabase/client";
 import { ImagePlus, UploadCloud, X, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 
@@ -47,6 +48,8 @@ function UploadPage() {
     if (!file || !user) return;
     setBusy(true);
     try {
+      // Extract EXIF from original file BEFORE compression (compression strips metadata)
+      const exif = await extractExif(file);
       const blob = await compressImage(file);
       const dims = await getImageDims(blob);
       const path = `${user.id}/${crypto.randomUUID()}.jpg`;
@@ -67,6 +70,7 @@ function UploadPage() {
           image_url: pub.publicUrl,
           width: dims.width,
           height: dims.height,
+          exif,
         },
       });
       toast.success("Photo uploaded!");
