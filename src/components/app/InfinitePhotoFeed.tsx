@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listFeed } from "@/lib/photos.functions";
@@ -34,6 +34,7 @@ export function InfinitePhotoFeed({
 }) {
   const fn = useServerFn(listFeed);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
 
   const query = useInfiniteQuery({
     queryKey: ["feed-infinite", ...queryKey],
@@ -87,14 +88,17 @@ export function InfinitePhotoFeed({
   return (
     <div>
       <div
+        ref={gridRef}
         className={cn(
-          "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+          "masonry-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
           "gap-3 sm:gap-4 xl:gap-5 2xl:gap-6",
-          "items-start",
         )}
+        style={{ gridAutoRows: "8px", gridAutoFlow: "row dense" }}
       >
         {photos.map((p) => (
-          <PhotoCard key={p.id} photo={p} showMilestoneTimeline={showMilestoneTimeline} />
+          <MasonryItem key={p.id}>
+            <PhotoCard photo={p} showMilestoneTimeline={showMilestoneTimeline} />
+          </MasonryItem>
         ))}
       </div>
       {query.hasNextPage && (
