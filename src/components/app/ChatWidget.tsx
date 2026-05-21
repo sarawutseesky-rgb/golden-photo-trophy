@@ -54,7 +54,7 @@ export function ChatWidget() {
       list({ data: { limit: 50, cursor: pageParam } }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    enabled: open,
+    enabled: open && !!user,
     staleTime: 10_000,
   });
 
