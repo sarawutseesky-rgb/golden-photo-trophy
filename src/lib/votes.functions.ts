@@ -9,14 +9,22 @@ export const castVote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ photo_id: z.string().uuid(), score: z.number().int().min(1).max(5) }).parse(d))
   .handler(async ({ data, context }) => {
-    // self-vote guarded by RLS and uniqueness guarded by table constraint
-    const { error } = await context.supabase
+    // Idempotent insert: rely on UNIQUE (photo_id, voter_id) — duplicates
+    // are silently ignored and reported back as { duplicate: true }.
+    // Self-vote is still blocked by RLS.
+    const { data: inserted, error } = await context.supabase
       .from("votes")
-      .insert({ photo_id: data.photo_id, voter_id: context.userId, score: data.score });
+      .upsert(
+        { photo_id: data.photo_id, voter_id: context.userId, score: data.score },
+        { onConflict: "photo_id,voter_id", ignoreDuplicates: true },
+      )
+      .select("id");
     if (error) {
       if (isDuplicateVoteError(error)) return { ok: false as const, duplicate: true as const };
       throw new Error(error.message);
     }
+    const duplicate = !inserted || inserted.length === 0;
+    if (duplicate) return { ok: false as const, duplicate: true as const };
     return { ok: true as const, duplicate: false as const };
   });
 
