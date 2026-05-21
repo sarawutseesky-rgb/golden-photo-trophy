@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { Star, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2 } from "lucide-react";
+import { Star, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, getAdjacentPhotos, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
@@ -535,30 +535,62 @@ function PhotoDetail() {
       </div>
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">
         <div className="space-y-4">
-        <button
-          type="button"
-          onClick={() => setLightboxOpen(true)}
-          className="group relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-black/40 focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
-          aria-label="เปิดดูรูปขนาดเต็ม"
-        >
-          <img
-            src={p.image_url}
-            alt={p.title}
-            className={cn(
-              "block h-auto max-h-[85vh] w-auto max-w-full object-contain transition group-hover:opacity-95",
-              switching && "opacity-40 blur-sm",
-            )}
-          />
+        <div className="group relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-black/40">
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            className="flex w-full items-center justify-center focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+            aria-label="เปิดดูรูปขนาดเต็ม"
+          >
+            <img
+              src={p.image_url}
+              alt={p.title}
+              className={cn(
+                "block h-auto max-h-[85vh] w-auto max-w-full object-contain transition group-hover:opacity-95",
+                switching && "opacity-40 blur-sm",
+              )}
+            />
+          </button>
           {switching && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
               <span className="text-sm font-medium text-foreground/90">กำลังโหลดภาพถัดไป…</span>
             </div>
           )}
-          <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-background/70 px-2 py-1 text-[10px] uppercase tracking-wide text-foreground/80 opacity-0 backdrop-blur transition group-hover:opacity-100">
-            คลิกเพื่อขยาย
-          </span>
-        </button>
+          {adjacent?.prev ? (
+            <Link
+              to="/photo/$id"
+              params={{ id: adjacent.prev.id }}
+              onClick={() => setSwitching(true)}
+              aria-label="ภาพก่อนหน้า"
+              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md bg-background/80 text-foreground shadow-md backdrop-blur transition hover:bg-background focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          ) : null}
+          {adjacent?.next ? (
+            <Link
+              to="/photo/$id"
+              params={{ id: adjacent.next.id }}
+              onClick={() => setSwitching(true)}
+              aria-label="ภาพถัดไป"
+              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md bg-background/80 text-foreground shadow-md backdrop-blur transition hover:bg-background focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+            >
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+          ) : null}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxOpen(true);
+            }}
+            aria-label="ขยายภาพเต็มจอ"
+            className="absolute bottom-2 right-2 z-10 inline-flex h-9 w-9 items-center justify-center rounded-md bg-background/80 text-foreground shadow-md backdrop-blur transition hover:bg-background focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </button>
+        </div>
         <div>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <h1 className="text-2xl font-bold">{p.title}</h1>
