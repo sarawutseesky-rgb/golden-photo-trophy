@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,6 +8,7 @@ import { getFollowStats, followUser, unfollowUser } from "@/lib/follows.function
 import { StarRow } from "@/components/app/StarRow";
 import { useAuth } from "@/lib/auth-context";
 import { EmptyState } from "@/components/app/EmptyState";
+import { FollowListDialog } from "@/components/app/FollowListDialog";
 
 export const Route = createFileRoute("/profile/$id")({
   head: ({ params }) => ({
@@ -43,6 +45,7 @@ function ProfilePage() {
   const statsFn = useServerFn(getFollowStats);
   const followFn = useServerFn(followUser);
   const unfollowFn = useServerFn(unfollowUser);
+  const [followListKind, setFollowListKind] = useState<"followers" | "following" | null>(null);
   const { data, isLoading } = useQuery({ queryKey: ["profile", id], queryFn: () => fn({ data: { id } }) });
   const { data: follow } = useQuery({
     queryKey: ["follow-stats", id, user?.id ?? null],
@@ -96,8 +99,22 @@ function ProfilePage() {
           <h1 className="text-2xl font-bold">{data.profile.display_name}</h1>
           {data.profile.bio && <p className="mt-1 text-sm text-muted-foreground">{data.profile.bio}</p>}
           <div className="mt-2 flex flex-wrap gap-4 text-sm">
-            <span><span className="font-bold">{follow?.followers ?? 0}</span> <span className="text-muted-foreground">Followers</span></span>
-            <span><span className="font-bold">{follow?.following ?? 0}</span> <span className="text-muted-foreground">Following</span></span>
+            <button
+              type="button"
+              onClick={() => setFollowListKind("followers")}
+              className="rounded-md px-1 -mx-1 hover:bg-accent/40 transition-colors"
+            >
+              <span className="font-bold">{follow?.followers ?? 0}</span>{" "}
+              <span className="text-muted-foreground">Followers</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFollowListKind("following")}
+              className="rounded-md px-1 -mx-1 hover:bg-accent/40 transition-colors"
+            >
+              <span className="font-bold">{follow?.following ?? 0}</span>{" "}
+              <span className="text-muted-foreground">Following</span>
+            </button>
           </div>
         </div>
         {!isSelf && user && (
@@ -155,6 +172,13 @@ function ProfilePage() {
           </div>
         )}
       </section>
+
+      <FollowListDialog
+        open={followListKind !== null}
+        onOpenChange={(o) => !o && setFollowListKind(null)}
+        userId={id}
+        kind={followListKind ?? "followers"}
+      />
     </div>
   );
 }
