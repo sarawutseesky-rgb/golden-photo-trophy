@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listFeed } from "@/lib/photos.functions";
@@ -34,6 +34,22 @@ export function InfinitePhotoFeed({
 }) {
   const fn = useServerFn(listFeed);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [cols, setCols] = useState(() => {
+    if (typeof window === "undefined") return 4;
+    const w = window.innerWidth;
+    if (w >= 1024) return 4;
+    if (w >= 768) return 3;
+    return 2;
+  });
+
+  useEffect(() => {
+    const onResize = () => {
+      const w = window.innerWidth;
+      setCols(w >= 1024 ? 4 : w >= 768 ? 3 : 2);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const query = useInfiniteQuery({
     queryKey: ["feed-infinite", ...queryKey],
@@ -84,17 +100,27 @@ export function InfinitePhotoFeed({
     );
   }
 
+  // Round-robin distribute newest-first across columns so the newest items
+  // always occupy the TOP row (left→right), while each column keeps a
+  // natural masonry flow with varied heights.
+  const columns: FeedPhoto[][] = Array.from({ length: cols }, () => []);
+  photos.forEach((p, i) => columns[i % cols].push(p));
+
   return (
     <div>
       <div
         className={cn(
-          "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+          "grid items-start",
           "gap-3 sm:gap-4 xl:gap-5 2xl:gap-6",
-          "items-start",
+          "grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
         )}
       >
-        {photos.map((p) => (
-          <PhotoCard key={p.id} photo={p} showMilestoneTimeline={showMilestoneTimeline} />
+        {columns.map((col, ci) => (
+          <div key={ci} className="flex flex-col gap-3 sm:gap-4 xl:gap-5 2xl:gap-6">
+            {col.map((p) => (
+              <PhotoCard key={p.id} photo={p} showMilestoneTimeline={showMilestoneTimeline} />
+            ))}
+          </div>
         ))}
       </div>
       {query.hasNextPage && (
