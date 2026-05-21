@@ -137,6 +137,13 @@ export function PhotoCard({
         avg: Number(photo.avg_score ?? 0),
         count: photo.vote_count ?? 0,
       });
+      console.warn("[PhotoCard.handleVote] short-circuit: duplicate vote in cache", {
+        photo_id: photo.id,
+        user_id: user.id,
+        cached_score: cachedVote.score,
+        attempted_score: score,
+        source: "photo-card/cache",
+      });
       toastDuplicateVote(
         cachedVote.score,
         Number(photo.avg_score ?? 0),
@@ -218,6 +225,13 @@ export function PhotoCard({
       const msg = e?.message ?? "โหวตไม่สำเร็จ";
       const isDuplicate = isDuplicateVoteMessage(msg);
       if (isDuplicate) {
+        console.warn("[PhotoCard.handleVote] server reported duplicate vote", {
+          photo_id: photo.id,
+          user_id: user.id,
+          attempted_score: score,
+          had_local_my_score: myScore != null,
+          source: "photo-card/server",
+        });
         // Refresh authoritative state so UI reflects the existing vote
         try {
           const res = await fetchMyVote({ data: { photo_id: photo.id } });

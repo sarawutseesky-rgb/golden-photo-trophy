@@ -21,12 +21,31 @@ export const castVote = createServerFn({ method: "POST" })
       .select("id");
     if (error) {
       if (isDuplicateVoteError(error)) {
+        console.warn("[castVote] duplicate vote (unique violation)", {
+          photo_id: data.photo_id,
+          user_id: context.userId,
+          score: data.score,
+          source: "pg_unique_violation",
+        });
         return { ok: false, duplicate: true } as { ok: false; duplicate: true };
       }
       throw new Error(error.message);
     }
     const duplicate = !inserted || inserted.length === 0;
-    if (duplicate) return { ok: false, duplicate: true } as { ok: false; duplicate: true };
+    if (duplicate) {
+      console.warn("[castVote] duplicate vote (upsert ignored)", {
+        photo_id: data.photo_id,
+        user_id: context.userId,
+        score: data.score,
+        source: "upsert_ignore_duplicates",
+      });
+      return { ok: false, duplicate: true } as { ok: false; duplicate: true };
+    }
+    console.info("[castVote] vote recorded", {
+      photo_id: data.photo_id,
+      user_id: context.userId,
+      score: data.score,
+    });
     return { ok: true, duplicate: false } as { ok: true; duplicate: false };
   });
 
