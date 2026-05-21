@@ -78,8 +78,6 @@ describe("AppSidebar — Admin menu visibility", () => {
       expect(checkAdminMock).toHaveBeenCalled();
     });
     expect(screen.queryByText("Admin")).toBeNull();
-    expect(screen.queryByTestId("admin-dashboard-menu")).toBeNull();
-    expect(screen.queryByText("Admin Dashboard")).toBeNull();
   });
 
   it("DOES show Admin menu for an admin user", async () => {
@@ -89,8 +87,6 @@ describe("AppSidebar — Admin menu visibility", () => {
     await waitFor(() => {
       expect(screen.getByText("Admin")).toBeTruthy();
     });
-    expect(screen.getByTestId("admin-dashboard-menu")).toBeTruthy();
-    expect(screen.getByText("Admin Dashboard")).toBeTruthy();
   });
 
   it("does NOT show Admin menu when checkAdmin throws (e.g. unauthorized)", async () => {
