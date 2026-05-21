@@ -193,7 +193,7 @@ export function AppSidebar() {
                     >
                       <Link
                         to="/stars/$n"
-                        params={{ n: String(n) }}
+                        params={{ n: String(n) as "1" | "2" | "3" | "4" | "5" }}
                         className={cn(
                           "flex items-center gap-2 transition-colors",
                           isActive(url)
