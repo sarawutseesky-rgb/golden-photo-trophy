@@ -802,9 +802,49 @@ function PhotoDetail() {
                       >
                         ยกเลิกโหวต
                       </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await refetchMyVote();
+                          const score = res.data?.score ?? null;
+                          toast.success(
+                            score != null
+                              ? `สถานะล่าสุด: คุณโหวตรูปนี้ ${score}★`
+                              : "สถานะล่าสุด: คุณยังไม่ได้โหวตรูปนี้",
+                          );
+                        }}
+                        disabled={myVoteFetching || busy}
+                        data-testid="refresh-vote-status"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                        aria-label="ตรวจสอบสถานะโหวตล่าสุด"
+                      >
+                        <RefreshCw className={cn("h-3 w-3", myVoteFetching && "animate-spin")} />
+                        รีเฟรชสถานะ
+                      </button>
                     </div>
                   ) : (
-                    <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await refetchMyVote();
+                          const score = res.data?.score ?? null;
+                          toast.success(
+                            score != null
+                              ? `สถานะล่าสุด: คุณโหวตรูปนี้ ${score}★`
+                              : "สถานะล่าสุด: คุณยังไม่ได้โหวตรูปนี้",
+                          );
+                        }}
+                        disabled={myVoteFetching || busy}
+                        data-testid="refresh-vote-status"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                        aria-label="ตรวจสอบสถานะโหวตล่าสุด"
+                      >
+                        <RefreshCw className={cn("h-3 w-3", myVoteFetching && "animate-spin")} />
+                        ตรวจสอบสถานะ
+                      </button>
+                    </div>
                   )}
                   <div
                     className="mt-1 flex gap-1"
