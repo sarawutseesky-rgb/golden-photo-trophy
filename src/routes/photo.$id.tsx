@@ -534,6 +534,7 @@ function PhotoDetail() {
         </div>
       </div>
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">
+        <div className="space-y-4">
         <div className="group relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-black/40">
           <button
             type="button"
