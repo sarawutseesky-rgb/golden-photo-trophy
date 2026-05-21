@@ -242,7 +242,7 @@ export function PhotoCard({
   return (
     <article
       data-testid="photo-card"
-      className="group break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg"
+      className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--gold)]/60 hover:shadow-lg"
     >
       <Link
         to="/photo/$id"
