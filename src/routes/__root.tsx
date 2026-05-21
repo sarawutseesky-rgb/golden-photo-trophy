@@ -167,6 +167,30 @@ function RootComponent() {
 
   useEffect(() => {
     installStaleBundleGuard();
+    // PWA service worker registration — production only, never in iframes/preview.
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      const isInIframe = (() => {
+        try {
+          return window.self !== window.top;
+        } catch {
+          return true;
+        }
+      })();
+      const host = window.location.hostname;
+      const isPreviewHost =
+        host.includes("id-preview--") ||
+        host.includes("lovableproject.com") ||
+        host.includes("lovable.app");
+      if (isInIframe || isPreviewHost) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          regs.forEach((r) => r.unregister());
+        });
+      } else {
+        navigator.serviceWorker.register("/sw.js").catch(() => {
+          /* ignore */
+        });
+      }
+    }
     const { data: sub } = supabase.auth.onAuthStateChange(() => {
       router.invalidate();
       queryClient.invalidateQueries();
