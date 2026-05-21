@@ -185,56 +185,58 @@ export function SpotlightHero() {
       {runnerUp && (
         <div
           aria-label="Runner-up #2"
-          className="flex flex-col gap-4 border-t border-border/60 bg-background/40 p-4 backdrop-blur sm:flex-row sm:items-center sm:gap-5 sm:p-5"
+          className="flex flex-col gap-4 border-t border-border/80 bg-background/60 p-5 backdrop-blur sm:flex-row sm:items-center sm:gap-6 sm:px-6"
         >
-          <Link
-            to="/photo/$id"
-            params={{ id: runnerUp.id }}
-            className="group relative block h-24 w-full overflow-hidden rounded-xl sm:h-20 sm:w-28 sm:flex-shrink-0"
-            aria-label={`Runner-up: ${runnerUp.title}`}
-          >
-            <img
-              src={runnerUp.image_url}
-              alt={runnerUp.title}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow">
-              <Medal className="h-3 w-3 text-[var(--gold)]" />
-              #2
-            </span>
-          </Link>
-
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Runner-up
-            </div>
+          <div className="flex min-w-0 flex-1 items-center gap-4">
             <Link
               to="/photo/$id"
               params={{ id: runnerUp.id }}
-              className="truncate text-base font-semibold leading-tight hover:text-[var(--gold)]"
+              className="group relative block h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg"
+              aria-label={`Runner-up: ${runnerUp.title}`}
             >
-              {runnerUp.title}
+              <img
+                src={runnerUp.image_url}
+                alt={runnerUp.title}
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <span className="absolute -left-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-md border border-border bg-background text-[10px] font-black text-[var(--gold)] shadow">
+                <Medal className="h-3 w-3" />
+              </span>
             </Link>
-            <div
-              className="flex items-center gap-1.5 text-xs text-muted-foreground"
-              aria-label={`คะแนนเฉลี่ย ${Number(runnerUp.avg_score).toFixed(2)} จาก 5 ดาว`}
-            >
-              <StarRow count={Math.round(Number(runnerUp.avg_score))} size={12} />
-              <span className="font-semibold text-foreground">
-                {Number(runnerUp.avg_score).toFixed(2)}
+
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gold)]">
+                Runner-up · #2
               </span>
-              <span>· {runnerUp.vote_count} votes</span>
-              <span className="mx-1">·</span>
-              <span className="truncate">
-                by {runnerUp.profiles?.display_name ?? "Anonymous"}
-              </span>
+              <Link
+                to="/photo/$id"
+                params={{ id: runnerUp.id }}
+                className="truncate text-lg font-bold leading-tight hover:text-[var(--gold)]"
+              >
+                {runnerUp.title}
+              </Link>
+              <div
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                aria-label={`คะแนนเฉลี่ย ${Number(runnerUp.avg_score).toFixed(2)} จาก 5 ดาว`}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <StarRow count={Math.round(Number(runnerUp.avg_score))} size={12} />
+                  <span className="font-semibold text-foreground">
+                    {Number(runnerUp.avg_score).toFixed(2)}
+                  </span>
+                  <span>· {runnerUp.vote_count} votes</span>
+                </span>
+                <span className="truncate">
+                  by {runnerUp.profiles?.display_name ?? "Anonymous"}
+                </span>
+              </div>
             </div>
           </div>
 
           <Link
             to="/photo/$id"
             params={{ id: runnerUp.id }}
-            className="group/cta2 inline-flex w-fit items-center gap-2 rounded-full border border-[var(--gold)]/60 bg-background/70 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--gold)]/10 hover:text-[var(--gold)] sm:flex-shrink-0"
+            className="group/cta2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background/70 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-foreground transition hover:border-[var(--gold)]/60 hover:bg-[var(--gold)]/10 hover:text-[var(--gold)] sm:w-auto sm:flex-shrink-0"
             aria-label={`View photo details for runner-up ${runnerUp.title}`}
           >
             View #2 photo details
