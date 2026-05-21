@@ -24,9 +24,8 @@ export const castVote = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
     const duplicate = !inserted || inserted.length === 0;
-    return { ok: !duplicate as const extends true ? true : boolean, duplicate } as
-      | { ok: true; duplicate: false }
-      | { ok: false; duplicate: true };
+    if (duplicate) return { ok: false as const, duplicate: true as const };
+    return { ok: true as const, duplicate: false as const };
   });
 
 export const removeVote = createServerFn({ method: "POST" })
