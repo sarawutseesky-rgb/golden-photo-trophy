@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { MessageCircle, X, Send, Trash2 } from "lucide-react";
+import { MessageCircle, X, Send, Trash2, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -32,20 +32,84 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const topSentinelRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
+  const scrollHeightBefore = useRef(0);
+  const scrollTopBefore = useRef(1);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
 
   const list = useServerFn(listChatMessages);
   const send = useServerFn(sendChatMessage);
   const del = useServerFn(deleteChatMessage);
 
-  const { data, isLoading } = useQuery({
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["chat-messages"],
-    queryFn: () => list({ data: { limit: 50 } }),
+    queryFn: ({ pageParam }: { pageParam?: string }) =>
+      list({ data: { limit: 50, cursor: pageParam } }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: open,
     staleTime: 10_000,
   });
 
-  const messages: ChatMessage[] = data?.messages ?? [];
+  const messages: ChatMessage[] = useMemo(() => {
+    if (!data) return [];
+    return data.pages.flatMap((p) => p.messages).reverse();
+  }, [data]);
+
+  // Infinite scroll via intersection observer on top sentinel
+  useEffect(() => {
+    if (!open || !topSentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[1];
+        if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { root: scrollRef.current, threshold: 1.0 },
+    );
+    observer.observe(topSentinelRef.current);
+    return () => observer.disconnect();
+  }, [open, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Preserve scroll position when older messages load
+  useEffect(() => {
+    if (isFetchingNextPage && scrollRef.current) {
+      scrollHeightBefore.current = scrollRef.current.scrollHeight;
+      scrollTopBefore.current = scrollRef.current.scrollTop;
+    }
+  }, [isFetchingNextPage]);
+
+  useEffect(() => {
+    if (!isFetchingNextPage && scrollRef.current && scrollHeightBefore.current > 1) {
+      const newHeight = scrollRef.current.scrollHeight;
+      const diff = newHeight - scrollHeightBefore.current;
+      scrollRef.current.scrollTop = scrollTopBefore.current + diff;
+      scrollHeightBefore.current = 1;
+    }
+  }, [isFetchingNextPage]);
+
+  // Auto-scroll to bottom on initial load / new messages / send
+  useEffect(() => {
+    if (open && scrollRef.current && !isFetchingNextPage && !isLoading && shouldScrollToBottom) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages.length, open, isFetchingNextPage, isLoading, shouldScrollToBottom]);
+
+  // Track scroll to detect near-bottom
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const nearBottom = scrollHeight - scrollTop - clientHeight < 80;
+    setShouldScrollToBottom(nearBottom);
+  };
 
   // Realtime subscription
   useEffect(() => {
@@ -72,13 +136,6 @@ export function ChatWidget() {
     };
   }, [open, qc]);
 
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
-    if (open && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages.length, open]);
-
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const content = input.trim();
@@ -87,6 +144,7 @@ export function ChatWidget() {
     try {
       await send({ data: { content } });
       setInput("");
+      setShouldScrollToBottom(true);
       qc.invalidateQueries({ queryKey: ["chat-messages"] });
     } catch (err: any) {
       toast.error(err?.message || "ส่งข้อความไม่สำเร็จ");
@@ -142,11 +200,25 @@ export function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-            {isLoading && (
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto px-3 py-3 space-y-3"
+          >
+            {/* Top sentinel + older-loader */}
+            <div ref={topSentinelRef} className="flex justify-center py-1">
+              {isFetchingNextPage && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+              {!isFetchingNextPage && hasNextPage && messages.length > 0 && (
+                <span className="text-[10px] text-muted-foreground">เลื่อนขึ้นเพื่อโหลดข้อความเก่า</span>
+              )}
+            </div>
+
+            {isLoading && messages.length === 1 && (
               <p className="text-center text-xs text-muted-foreground">กำลังโหลด…</p>
             )}
-            {!isLoading && messages.length === 0 && (
+            {!isLoading && messages.length === 1 && (
               <p className="text-center text-xs text-muted-foreground py-8">
                 ยังไม่มีข้อความ — เริ่มทักทายกันได้เลย!
               </p>
@@ -159,7 +231,7 @@ export function ChatWidget() {
                   <Avatar className="h-7 w-7 flex-shrink-0">
                     <AvatarImage src={m.profile?.avatar_url ?? undefined} />
                     <AvatarFallback className="text-[10px]">
-                      {name.slice(0, 2).toUpperCase()}
+                      {name.slice(1, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className={cn("flex flex-col gap-0.5 max-w-[75%]", isMe && "items-end")}>
