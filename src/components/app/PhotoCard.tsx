@@ -137,6 +137,13 @@ export function PhotoCard({
         avg: Number(photo.avg_score ?? 0),
         count: photo.vote_count ?? 0,
       });
+      console.warn("[PhotoCard.handleVote] short-circuit: duplicate vote in cache", {
+        photo_id: photo.id,
+        user_id: user.id,
+        cached_score: cachedVote.score,
+        attempted_score: score,
+        source: "photo-card/cache",
+      });
       toastDuplicateVote(
         cachedVote.score,
         Number(photo.avg_score ?? 0),
