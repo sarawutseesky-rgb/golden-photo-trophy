@@ -9,6 +9,52 @@ import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
 
+const ROW_BASE = 8; // px — matches gridAutoRows
+
+function MasonryItem({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [span, setSpan] = useState(40);
+
+  const recalc = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Read intrinsic content height (children fully rendered, including loaded image)
+    const h = el.firstElementChild?.getBoundingClientRect().height ?? el.getBoundingClientRect().height;
+    if (!h) return;
+    // gap is handled by CSS grid, just span based on content height
+    const next = Math.max(1, Math.ceil(h / ROW_BASE));
+    setSpan((prev) => (Math.abs(prev - next) > 1 ? next : prev));
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    recalc();
+    const ro = new ResizeObserver(() => recalc());
+    ro.observe(el);
+    // Recalc when any inner image finishes loading
+    const imgs = el.querySelectorAll("img");
+    const handlers: Array<() => void> = [];
+    imgs.forEach((img) => {
+      if (!img.complete) {
+        const h = () => recalc();
+        img.addEventListener("load", h, { once: true });
+        handlers.push(() => img.removeEventListener("load", h));
+      }
+    });
+    return () => {
+      ro.disconnect();
+      handlers.forEach((fn) => fn());
+    };
+  }, [recalc]);
+
+  return (
+    <div ref={ref} style={{ gridRowEnd: `span ${span}` }} className="min-w-0">
+      {children}
+    </div>
+  );
+}
+
 type FeedParams = {
   sort?: "new" | "top" | "hof" | "trending" | "votes";
   tag?: string;
