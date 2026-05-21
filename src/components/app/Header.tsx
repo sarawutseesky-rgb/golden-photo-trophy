@@ -62,9 +62,6 @@ export function Header() {
           <Link to="/hall-of-fame" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Hall of Fame
           </Link>
-          <Link to="/trending" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-            Trending
-          </Link>
           {isAdmin && (
             <Link to="/admin" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
               <span className="inline-flex items-center gap-1">

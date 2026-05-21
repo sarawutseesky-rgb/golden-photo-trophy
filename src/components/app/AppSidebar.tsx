@@ -3,7 +3,6 @@ import {
   Home,
   Trophy,
   Award,
-  TrendingUp,
   Shield,
   PanelLeft,
   RefreshCw,
@@ -34,7 +33,6 @@ const navItems = [
   { title: "Feed", url: "/", icon: Home },
   { title: "Top", url: "/top", icon: Trophy },
   { title: "Hall of Fame", url: "/hall-of-fame", icon: Award },
-  { title: "Trending", url: "/trending", icon: TrendingUp },
   { title: "Leaderboard", url: "/leaderboard", icon: Users },
 ];
 
