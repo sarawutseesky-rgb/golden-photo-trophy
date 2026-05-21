@@ -179,8 +179,7 @@ function RootComponent() {
       const host = window.location.hostname;
       const isPreviewHost =
         host.includes("id-preview--") ||
-        host.includes("lovableproject.com") ||
-        host.includes("lovable.app");
+        host.includes("lovableproject.com");
       if (isInIframe || isPreviewHost) {
         navigator.serviceWorker.getRegistrations().then((regs) => {
           regs.forEach((r) => r.unregister());
