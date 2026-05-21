@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { Star, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2 } from "lucide-react";
+import { Star, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, getAdjacentPhotos, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
