@@ -122,6 +122,28 @@ export function PhotoCard({
     if (!user) return toast.error("เข้าสู่ระบบเพื่อโหวต");
     if (isOwner) return toast.error("โหวตรูปตัวเองไม่ได้");
     if (hasVoted || busy) return;
+    // Defense in depth: also check the my-vote cache directly. Local
+    // `myScore` may lag a freshly hydrated cache, and we don't want to
+    // hit the server with a guaranteed-duplicate insert.
+    const cachedVote = qc.getQueryData<{ score: number | null }>([
+      "my-vote",
+      photo.id,
+      user.id,
+    ]);
+    if (cachedVote?.score != null) {
+      setMyScore(cachedVote.score);
+      setConfirmed({
+        score: cachedVote.score,
+        avg: Number(photo.avg_score ?? 0),
+        count: photo.vote_count ?? 0,
+      });
+      toastDuplicateVote(
+        cachedVote.score,
+        Number(photo.avg_score ?? 0),
+        photo.vote_count ?? 0,
+      );
+      return;
+    }
     setBusy(true);
     setMyScore(score);
     setErrorMsg(null);
