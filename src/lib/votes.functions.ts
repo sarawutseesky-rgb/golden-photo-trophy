@@ -20,12 +20,14 @@ export const castVote = createServerFn({ method: "POST" })
       )
       .select("id");
     if (error) {
-      if (isDuplicateVoteError(error)) return { ok: false as const, duplicate: true as const };
+      if (isDuplicateVoteError(error)) {
+        return { ok: false, duplicate: true } as { ok: false; duplicate: true };
+      }
       throw new Error(error.message);
     }
     const duplicate = !inserted || inserted.length === 0;
-    if (duplicate) return { ok: false as const, duplicate: true as const };
-    return { ok: true as const, duplicate: false as const };
+    if (duplicate) return { ok: false, duplicate: true } as { ok: false; duplicate: true };
+    return { ok: true, duplicate: false } as { ok: true; duplicate: false };
   });
 
 export const removeVote = createServerFn({ method: "POST" })
