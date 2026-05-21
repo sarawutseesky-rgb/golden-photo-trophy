@@ -225,6 +225,13 @@ export function PhotoCard({
       const msg = e?.message ?? "โหวตไม่สำเร็จ";
       const isDuplicate = isDuplicateVoteMessage(msg);
       if (isDuplicate) {
+        console.warn("[PhotoCard.handleVote] server reported duplicate vote", {
+          photo_id: photo.id,
+          user_id: user.id,
+          attempted_score: score,
+          had_local_my_score: myScore != null,
+          source: "photo-card/server",
+        });
         // Refresh authoritative state so UI reflects the existing vote
         try {
           const res = await fetchMyVote({ data: { photo_id: photo.id } });
