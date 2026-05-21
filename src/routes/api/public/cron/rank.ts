@@ -8,7 +8,14 @@ import {
 export const Route = createFileRoute("/api/public/cron/rank")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        // Require Supabase apikey header to prevent random callers from
+        // triggering the ranking job.
+        const apikey = request.headers.get("apikey");
+        const expected = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!expected || apikey !== expected) {
+          return new Response("Unauthorized", { status: 401 });
+        }
         const now = new Date();
 
         // Pull all active photos. We need every later-uploaded photo for the
