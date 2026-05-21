@@ -1,42 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { InfinitePhotoFeed } from "@/components/app/InfinitePhotoFeed";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// Trending was merged into /top. Redirect old links to the equivalent view:
+// Top photos in the last day, sorted by vote count.
 export const Route = createFileRoute("/trending")({
-  head: () => ({
-    meta: [
-      { title: "Trending — SEESTAR" },
-      { name: "description", content: "See which SEESTAR photos are drawing the most votes and engagement right now — refreshed continuously across the community." },
-      { property: "og:title", content: "Trending photos — SEESTAR" },
-      { property: "og:description", content: "See which SEESTAR photos are drawing the most votes and engagement right now across the community." },
-      { property: "og:url", content: "https://golden-photo-trophy.lovable.app/trending" },
-    ],
-    links: [
-      { rel: "canonical", href: "https://golden-photo-trophy.lovable.app/trending" },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "CollectionPage",
-          name: "Trending photos",
-          url: "https://golden-photo-trophy.lovable.app/trending",
-          description: "SEESTAR photos with the most engagement right now.",
-        }),
-      },
-    ],
-  }),
-  component: TrendingPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/top", search: { range: "day", sort: "votes" } });
+  },
 });
-
-function TrendingPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Trending</h1>
-        <p className="mt-1 text-muted-foreground">Photos drawing the most votes right now.</p>
-      </div>
-      <InfinitePhotoFeed queryKey={["trending"]} params={{ sort: "trending" }} />
-    </div>
-  );
-}
