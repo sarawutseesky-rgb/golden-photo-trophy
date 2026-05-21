@@ -100,7 +100,7 @@ export function FeedFilterBar({
                   <TooltipTrigger asChild>
                     <Link
                       to="/stars/$n"
-                      params={{ n: String(n) }}
+                      params={{ n: String(n) as "1" | "2" | "3" | "4" | "5" }}
                       role="tab"
                       id={`tab-stars-${n}`}
                       aria-controls="feed-panel"
