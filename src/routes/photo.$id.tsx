@@ -263,6 +263,14 @@ function PhotoDetail() {
     const voteKey = ["my-vote", id, user.id];
     const prevPhoto = qc.getQueryData<any>(photoKey);
     const prevVote = qc.getQueryData<any>(voteKey);
+    // Skip server roundtrip if cache says the user already voted on this photo.
+    // Avoids the "duplicate vote" error path entirely.
+    if (prevVote?.score != null) {
+      const avg = Number(prevPhoto?.photo?.avg_score ?? p.avg_score ?? 0);
+      const count = Number(prevPhoto?.photo?.vote_count ?? p.vote_count ?? 0);
+      toastDuplicateVote(prevVote.score, avg, count);
+      return;
+    }
     const prevFeeds = qc.getQueriesData<any>({ queryKey: ["feed"] });
     const prevInfinite = qc.getQueriesData<any>({ queryKey: ["feed-infinite"] });
 
