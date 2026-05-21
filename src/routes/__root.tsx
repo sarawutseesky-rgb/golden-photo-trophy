@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { usePhotosRealtime } from "@/hooks/use-photos-realtime";
 import { installStaleBundleGuard } from "@/lib/stale-bundle-guard";
+import { OnboardingTour } from "@/components/app/OnboardingTour";
 
 function NotFoundComponent() {
   return (
@@ -179,16 +180,23 @@ function RootComponent() {
       <AuthProvider>
         <SidebarProvider>
           <div className="min-h-screen flex w-full bg-background text-foreground">
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:shadow-lg"
+            >
+              ข้ามไปยังเนื้อหาหลัก
+            </a>
             <AppSidebar />
             <div className="flex-1 flex flex-col">
               <Header />
-              <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">
+              <main id="main-content" className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">
                 <Outlet />
               </main>
             </div>
           </div>
           <Toaster />
           <PhotosRealtimeBridge />
+          <OnboardingTour />
         </SidebarProvider>
       </AuthProvider>
       </ThemeProvider>

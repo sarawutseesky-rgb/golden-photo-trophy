@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
 import { createPhoto, getUploadQuota } from "@/lib/photos.functions";
+import { moderateImage } from "@/lib/moderation.functions";
 import { compressImage, getImageDims } from "@/lib/image-compress";
 import { extractExif } from "@/lib/exif";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,7 @@ function UploadPage() {
   const nav = useNavigate();
   const create = useServerFn(createPhoto);
   const fetchQuota = useServerFn(getUploadQuota);
+  const moderate = useServerFn(moderateImage);
 
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -56,6 +58,21 @@ function UploadPage() {
       const { error: upErr } = await supabase.storage.from("photos").upload(path, blob, { contentType: "image/jpeg" });
       if (upErr) throw new Error(upErr.message);
       const { data: pub } = supabase.storage.from("photos").getPublicUrl(path);
+
+      // AI moderation — block unsafe images before publishing
+      try {
+        const verdict = await moderate({ data: { image_url: pub.publicUrl } });
+        if (!verdict.safe) {
+          await supabase.storage.from("photos").remove([path]);
+          const reason = verdict.reason || "ตรวจพบเนื้อหาไม่เหมาะสม";
+          toast.error(`รูปไม่ผ่านการตรวจสอบ: ${reason}`);
+          setBusy(false);
+          return;
+        }
+      } catch {
+        // Moderation infra failure — fail open, allow upload
+      }
+
       const tagsArr = tags
         .split(",")
         .map((t) => t.trim())
