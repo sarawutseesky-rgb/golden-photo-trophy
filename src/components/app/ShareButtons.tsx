@@ -18,7 +18,11 @@ export function ShareButtons({ url, title }: Props) {
 
   const openShare = (href: string, name: string) => {
     if (typeof window === "undefined") return;
-    window.open(href, `share-${name}`, "noopener,noreferrer,width=600,height=600");
+    // Open in a new tab (not a sized popup) — Facebook's share_channel sets
+    // COOP headers that trigger ERR_BLOCKED_BY_RESPONSE when loaded inside a
+    // popup window opened with specific dimensions.
+    const w = window.open(href, "_blank", "noopener,noreferrer");
+    if (w) w.opener = null;
   };
 
   const copyLink = async () => {
