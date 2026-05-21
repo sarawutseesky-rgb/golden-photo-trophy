@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Star,
   Users,
+  HelpCircle,
 } from "lucide-react";
 
 import {
@@ -34,6 +35,7 @@ const navItems = [
   { title: "Top", url: "/top", icon: Trophy },
   { title: "Hall of Fame", url: "/hall-of-fame", icon: Award },
   { title: "Leaderboard", url: "/leaderboard", icon: Users },
+  { title: "วิธีเล่น", url: "/how-to-play", icon: HelpCircle },
 ];
 
 export function AppSidebar() {
