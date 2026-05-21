@@ -50,6 +50,39 @@ export const unfollowUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const listFollows = createServerFn({ method: "GET" })
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        kind: z.enum(["followers", "following"]),
+        limit: z.number().min(1).max(100).optional().default(50),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const col = data.kind === "followers" ? "following_id" : "follower_id";
+    const otherCol = data.kind === "followers" ? "follower_id" : "following_id";
+    const { data: rows, error } = await supabaseAdmin
+      .from("follows")
+      .select(`id, created_at, ${otherCol}`)
+      .eq(col, data.id)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (error) throw new Error(error.message);
+    const userIds = (rows ?? []).map((r: any) => r[otherCol]);
+    if (userIds.length === 0) return { users: [] };
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, avatar_url, bio")
+      .in("id", userIds);
+    const map = new Map((profiles ?? []).map((p) => [p.id, p]));
+    const users = userIds
+      .map((uid) => map.get(uid))
+      .filter((p): p is NonNullable<typeof p> => !!p);
+    return { users };
+  });
+
 export const incrementPhotoView = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ photo_id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
