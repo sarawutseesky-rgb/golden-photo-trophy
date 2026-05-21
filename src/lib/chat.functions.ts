@@ -23,15 +23,17 @@ async function attachProfiles(rows: { id: string; user_id: string; content: stri
 }
 
 export const listChatMessages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { limit?: number; cursor?: string }) =>
     z.object({
       limit: z.number().int().min(1).max(100).optional(),
       cursor: z.string().datetime().optional(),
     }).parse(input ?? {}),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
     const limit = data.limit ?? 50;
-    let query = supabaseAdmin
+    let query = supabase
       .from("chat_messages")
       .select("id, user_id, content, created_at")
       .order("created_at", { ascending: false })

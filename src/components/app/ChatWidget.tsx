@@ -54,7 +54,7 @@ export function ChatWidget() {
       list({ data: { limit: 50, cursor: pageParam } }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    enabled: open,
+    enabled: open && !!user,
     staleTime: 10_000,
   });
 
@@ -113,7 +113,7 @@ export function ChatWidget() {
 
   // Realtime subscription
   useEffect(() => {
-    if (!open) return;
+    if (!open || !user) return;
     const channel = supabase
       .channel("chat-messages-rt")
       .on(
@@ -200,69 +200,80 @@ export function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-3 py-3 space-y-3"
-          >
-            {/* Top sentinel + older-loader */}
-            <div ref={topSentinelRef} className="flex justify-center py-1">
-              {isFetchingNextPage && (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              )}
-              {!isFetchingNextPage && hasNextPage && messages.length > 0 && (
-                <span className="text-[10px] text-muted-foreground">เลื่อนขึ้นเพื่อโหลดข้อความเก่า</span>
-              )}
+          {!user ? (
+            <div className="flex-1 flex items-center justify-center px-4">
+              <div className="text-center text-sm text-muted-foreground">
+                <Link to="/login" className="text-primary hover:underline font-medium">
+                  เข้าสู่ระบบ
+                </Link>{" "}
+                เพื่อเข้าร่วมห้องแชต
+              </div>
             </div>
+          ) : (
+            <div
+              ref={scrollRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto px-3 py-3 space-y-3"
+            >
+              {/* Top sentinel + older-loader */}
+              <div ref={topSentinelRef} className="flex justify-center py-1">
+                {isFetchingNextPage && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+                {!isFetchingNextPage && hasNextPage && messages.length > 0 && (
+                  <span className="text-[10px] text-muted-foreground">เลื่อนขึ้นเพื่อโหลดข้อความเก่า</span>
+                )}
+              </div>
 
-            {isLoading && messages.length === 0 && (
-              <p className="text-center text-xs text-muted-foreground">กำลังโหลด…</p>
-            )}
-            {!isLoading && messages.length === 0 && (
-              <p className="text-center text-xs text-muted-foreground py-8">
-                ยังไม่มีข้อความ — เริ่มทักทายกันได้เลย!
-              </p>
-            )}
-            {messages.map((m) => {
-              const isMe = user?.id === m.user_id;
-              const name = m.profile?.display_name || "Member";
-              return (
-                <div key={m.id} className={cn("flex gap-2", isMe && "flex-row-reverse")}>
-                  <Avatar className="h-7 w-7 flex-shrink-0">
-                    <AvatarImage src={m.profile?.avatar_url ?? undefined} />
-                    <AvatarFallback className="text-[10px]">
-                      {name.slice(1, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={cn("flex flex-col gap-0.5 max-w-[75%]", isMe && "items-end")}>
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                      <span className="font-medium">{name}</span>
-                      <span>·</span>
-                      <span>{formatTime(m.created_at)}</span>
-                    </div>
-                    <div
-                      className={cn(
-                        "rounded-2xl px-3 py-1.5 text-sm break-words",
-                        isMe
-                          ? "bg-primary text-primary-foreground rounded-br-sm"
-                          : "bg-muted text-foreground rounded-bl-sm",
-                      )}
-                    >
-                      {m.content}
-                    </div>
-                    {isMe && (
-                      <button
-                        onClick={() => handleDelete(m.id)}
-                        className="text-[10px] text-muted-foreground hover:text-destructive flex items-center gap-1"
+              {isLoading && messages.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground">กำลังโหลด…</p>
+              )}
+              {!isLoading && messages.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground py-8">
+                  ยังไม่มีข้อความ — เริ่มทักทายกันได้เลย!
+                </p>
+              )}
+              {messages.map((m) => {
+                const isMe = user?.id === m.user_id;
+                const name = m.profile?.display_name || "Member";
+                return (
+                  <div key={m.id} className={cn("flex gap-2", isMe && "flex-row-reverse")}>
+                    <Avatar className="h-7 w-7 flex-shrink-0">
+                      <AvatarImage src={m.profile?.avatar_url ?? undefined} />
+                      <AvatarFallback className="text-[10px]">
+                        {name.slice(1, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={cn("flex flex-col gap-0.5 max-w-[75%]", isMe && "items-end")}>
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <span className="font-medium">{name}</span>
+                        <span>·</span>
+                        <span>{formatTime(m.created_at)}</span>
+                      </div>
+                      <div
+                        className={cn(
+                          "rounded-2xl px-3 py-1.5 text-sm break-words",
+                          isMe
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-muted text-foreground rounded-bl-sm",
+                        )}
                       >
-                        <Trash2 className="h-3 w-3" /> ลบ
-                      </button>
-                    )}
+                        {m.content}
+                      </div>
+                      {isMe && (
+                        <button
+                          onClick={() => handleDelete(m.id)}
+                          className="text-[10px] text-muted-foreground hover:text-destructive flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3 w-3" /> ลบ
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Composer */}
           <div className="border-t border-border p-2">
