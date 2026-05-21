@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { Star, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2, Maximize2 } from "lucide-react";
+import { Star, Flag, ArrowLeft, ArrowRight, CheckCircle2, Pencil, Trash2, X, Eye, Loader2, Maximize2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { getPhoto, getAdjacentPhotos, reportPhoto, updatePhoto, deletePhoto } from "@/lib/photos.functions";
 import { castVote, getMyVote, addComment, removeVote } from "@/lib/votes.functions";
@@ -61,7 +61,12 @@ function PhotoDetail() {
     queryKey: ["photo-adjacent", id],
     queryFn: () => fetchAdjacent({ data: { id } }),
   });
-  const { data: myVote, isLoading: myVoteLoading } = useQuery({
+  const {
+    data: myVote,
+    isLoading: myVoteLoading,
+    isFetching: myVoteFetching,
+    refetch: refetchMyVote,
+  } = useQuery({
     queryKey: ["my-vote", id, user?.id],
     queryFn: async () => {
       try {
@@ -73,6 +78,8 @@ function PhotoDetail() {
     },
     enabled: !!user,
     retry: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const [hover, setHover] = useState<number | null>(null);
@@ -795,9 +802,49 @@ function PhotoDetail() {
                       >
                         ยกเลิกโหวต
                       </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await refetchMyVote();
+                          const score = res.data?.score ?? null;
+                          toast.success(
+                            score != null
+                              ? `สถานะล่าสุด: คุณโหวตรูปนี้ ${score}★`
+                              : "สถานะล่าสุด: คุณยังไม่ได้โหวตรูปนี้",
+                          );
+                        }}
+                        disabled={myVoteFetching || busy}
+                        data-testid="refresh-vote-status"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                        aria-label="ตรวจสอบสถานะโหวตล่าสุด"
+                      >
+                        <RefreshCw className={cn("h-3 w-3", myVoteFetching && "animate-spin")} />
+                        รีเฟรชสถานะ
+                      </button>
                     </div>
                   ) : (
-                    <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-xs text-muted-foreground">แตะดาวเพื่อให้คะแนน</div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await refetchMyVote();
+                          const score = res.data?.score ?? null;
+                          toast.success(
+                            score != null
+                              ? `สถานะล่าสุด: คุณโหวตรูปนี้ ${score}★`
+                              : "สถานะล่าสุด: คุณยังไม่ได้โหวตรูปนี้",
+                          );
+                        }}
+                        disabled={myVoteFetching || busy}
+                        data-testid="refresh-vote-status"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                        aria-label="ตรวจสอบสถานะโหวตล่าสุด"
+                      >
+                        <RefreshCw className={cn("h-3 w-3", myVoteFetching && "animate-spin")} />
+                        ตรวจสอบสถานะ
+                      </button>
+                    </div>
                   )}
                   <div
                     className="mt-1 flex gap-1"
