@@ -268,6 +268,13 @@ function PhotoDetail() {
     if (prevVote?.score != null) {
       const avg = Number(prevPhoto?.photo?.avg_score ?? p.avg_score ?? 0);
       const count = Number(prevPhoto?.photo?.vote_count ?? p.vote_count ?? 0);
+      console.warn("[handleVote] short-circuit: duplicate vote in cache", {
+        photo_id: id,
+        user_id: user.id,
+        cached_score: prevVote.score,
+        attempted_score: score,
+        source: "photo-detail/cache",
+      });
       toastDuplicateVote(prevVote.score, avg, count);
       return;
     }
