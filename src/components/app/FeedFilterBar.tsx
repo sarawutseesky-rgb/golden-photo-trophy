@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, X, Flame, Sparkles, RotateCcw, Users, ArrowUpDown } from "lucide-react";
+import { ChevronDown, X, Flame, Sparkles, RotateCcw, Users, ArrowUpDown, UserPlus } from "lucide-react";
 import { getPopularTags } from "@/lib/photos.functions";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +23,7 @@ export type FeedSort = "new" | "score" | "votes";
 const TABS: { id: FeedTab; label: string; icon: any; tooltip: string }[] = [
   { id: "latest", label: "Latest", icon: Sparkles, tooltip: "ภาพล่าสุดที่อัปโหลด" },
   { id: "trending", label: "Trending", icon: Flame, tooltip: "ภาพกำลังมาแรง" },
+  { id: "following", label: "Following", icon: UserPlus, tooltip: "ภาพจากช่างภาพที่คุณติดตาม" },
 ];
 
 const SORT_LABELS: Record<FeedSort, string> = {
