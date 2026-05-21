@@ -143,50 +143,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-              {!isCheckingAdmin && isAdmin && (
-                <SidebarMenuItem data-testid="admin-dashboard-menu">
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive("/admin/dashboard")}
-                    tooltip={collapsed ? "Admin Dashboard" : undefined}
-                  >
-                    <Link
-                      to="/admin/dashboard"
-                      className={cn(
-                        "flex items-center gap-2 transition-colors",
-                        isActive("/admin/dashboard")
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <LayoutDashboard className="h-4 w-4 shrink-0" />
-                      <span>Admin Dashboard</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-              {!isCheckingAdmin && isAdmin && (
-                <SidebarMenuItem data-testid="admin-users-menu">
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive("/admin/users")}
-                    tooltip={collapsed ? "ผู้ใช้ล่าสุด" : undefined}
-                  >
-                    <Link
-                      to="/admin/users"
-                      className={cn(
-                        "flex items-center gap-2 transition-colors",
-                        isActive("/admin/users")
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <UsersIcon className="h-4 w-4 shrink-0" />
-                      <span>ผู้ใช้ล่าสุด</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
               {adminCheckError && (
                 <SidebarMenuItem data-testid="admin-retry">
                   <SidebarMenuButton
