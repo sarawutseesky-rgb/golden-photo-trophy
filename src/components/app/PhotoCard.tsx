@@ -176,7 +176,8 @@ export function PhotoCard({
     }
 
     try {
-      await vote({ data: { photo_id: photo.id, score } });
+      const res = await vote({ data: { photo_id: photo.id, score } });
+      if (res?.duplicate) throw new Error("You already voted on this photo");
       toastVoteSuccess(score, optimisticAvg, optimisticCount);
       setConfirmed({ score, avg: optimisticAvg, count: optimisticCount });
       qc.invalidateQueries({ queryKey: ["feed"] });
