@@ -302,7 +302,8 @@ function PhotoDetail() {
 
     const t0 = performance.now();
     try {
-      await vote({ data: { photo_id: id, score } });
+      const res = await vote({ data: { photo_id: id, score } });
+      if (res?.duplicate) throw new Error("You already voted on this photo");
       {
         const cur = qc.getQueryData<any>(photoKey);
         const avg = Number(cur?.photo?.avg_score ?? p.avg_score ?? 0);
