@@ -392,7 +392,7 @@ export const getUploadQuota = createServerFn({ method: "GET" })
       .select("*", { count: "exact", head: true })
       .eq("user_id", context.userId)
       .gte("created_at", start.toISOString());
-    return { used: count ?? 0, limit: 3 };
+    return { used: count ?? 0, limit: 2 };
   });
 
 export const reportPhoto = createServerFn({ method: "POST" })
