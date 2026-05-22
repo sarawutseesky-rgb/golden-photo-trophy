@@ -9,6 +9,7 @@ type BeforeInstallPromptEvent = Event & {
 
 const DISMISS_KEY = "seestar-install-dismissed-at";
 const DISMISS_DAYS = 7;
+const PILL_HIDE_KEY = "seestar-install-pill-hidden"; // sessionStorage
 
 function isStandalone() {
   if (typeof window === "undefined") return false;
@@ -51,21 +52,33 @@ export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIos, setShowIos] = useState(false);
   const [open, setOpen] = useState(false);
+  const [available, setAvailable] = useState(false);
+  const [pillHidden, setPillHidden] = useState(false);
+  const [iosReady, setIosReady] = useState(false);
 
   useEffect(() => {
     if (inPreviewOrIframe()) return;
     if (isStandalone()) return;
-    if (recentlyDismissed()) return;
+
+    try {
+      if (sessionStorage.getItem(PILL_HIDE_KEY) === "1") setPillHidden(true);
+    } catch {
+      /* ignore */
+    }
+
+    const dismissed = recentlyDismissed();
 
     const onBip = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
-      setOpen(true);
+      setAvailable(true);
+      if (!dismissed) setOpen(true);
     };
     window.addEventListener("beforeinstallprompt", onBip);
 
     const onInstalled = () => {
       setOpen(false);
+      setAvailable(false);
       setDeferred(null);
       try {
         localStorage.removeItem(DISMISS_KEY);
@@ -80,7 +93,9 @@ export function InstallPrompt() {
     if (isIos()) {
       iosTimer = setTimeout(() => {
         setShowIos(true);
-        setOpen(true);
+        setIosReady(true);
+        setAvailable(true);
+        if (!dismissed) setOpen(true);
       }, 4000);
     }
 
@@ -100,13 +115,30 @@ export function InstallPrompt() {
     }
   };
 
+  const hidePill = () => {
+    setPillHidden(true);
+    try {
+      sessionStorage.setItem(PILL_HIDE_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const reopen = () => {
+    if (isIos()) setShowIos(true);
+    setOpen(true);
+  };
+
   const install = async () => {
     if (!deferred) return;
     try {
       await deferred.prompt();
       const { outcome } = await deferred.userChoice;
       if (outcome === "dismissed") dismiss();
-      else setOpen(false);
+      else {
+        setOpen(false);
+        setAvailable(false);
+      }
     } catch {
       dismiss();
     } finally {
@@ -114,7 +146,34 @@ export function InstallPrompt() {
     }
   };
 
-  if (!open) return null;
+  if (!open) {
+    // Show persistent floating pill if install is available and user hasn't hidden it this session.
+    if (!available || pillHidden) return null;
+    if (isIos() && !iosReady) return null;
+    return (
+      <div className="fixed bottom-3 right-3 z-[80] sm:bottom-4 sm:right-4">
+        <div className="flex items-center gap-1 rounded-full border border-border bg-card/95 p-1 pl-3 shadow-lg backdrop-blur-md">
+          <button
+            type="button"
+            onClick={reopen}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground"
+            aria-label="ติดตั้งแอป SEESTAR"
+          >
+            <Download className="h-3.5 w-3.5 text-primary" />
+            ติดตั้งแอป
+          </button>
+          <button
+            type="button"
+            onClick={hidePill}
+            aria-label="ซ่อนชั่วคราว"
+            className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
