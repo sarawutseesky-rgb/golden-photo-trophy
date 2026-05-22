@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, Share, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -10,6 +11,54 @@ type BeforeInstallPromptEvent = Event & {
 const DISMISS_KEY = "seestar-install-dismissed-at";
 const DISMISS_DAYS = 7;
 const PILL_HIDE_KEY = "seestar-install-pill-hidden"; // sessionStorage
+const SESSION_ID_KEY = "seestar-install-session-id";
+
+type InstallEvent =
+  | "prompt_shown"
+  | "prompt_shown_ios"
+  | "install_clicked"
+  | "install_accepted"
+  | "install_dismissed"
+  | "later_clicked"
+  | "pill_hidden"
+  | "app_installed";
+
+function getSessionId() {
+  try {
+    let id = localStorage.getItem(SESSION_ID_KEY);
+    if (!id) {
+      id = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`);
+      localStorage.setItem(SESSION_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
+function detectPlatform(): string {
+  if (typeof window === "undefined") return "unknown";
+  const ua = window.navigator.userAgent;
+  if (/iphone|ipad|ipod/i.test(ua)) return "ios";
+  if (/android/i.test(ua)) return "android";
+  return "desktop";
+}
+
+async function logEvent(event: InstallEvent) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("install_events").insert({
+      event,
+      platform: detectPlatform(),
+      standalone: isStandalone(),
+      user_id: user?.id ?? null,
+      session_id: getSessionId(),
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
+    });
+  } catch {
+    /* ignore tracking failures */
+  }
+}
 
 function isStandalone() {
   if (typeof window === "undefined") return false;
@@ -72,7 +121,10 @@ export function InstallPrompt() {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
       setAvailable(true);
-      if (!dismissed) setOpen(true);
+      if (!dismissed) {
+        setOpen(true);
+        void logEvent("prompt_shown");
+      }
     };
     window.addEventListener("beforeinstallprompt", onBip);
 
@@ -80,6 +132,7 @@ export function InstallPrompt() {
       setOpen(false);
       setAvailable(false);
       setDeferred(null);
+      void logEvent("app_installed");
       try {
         localStorage.removeItem(DISMISS_KEY);
       } catch {
@@ -95,7 +148,10 @@ export function InstallPrompt() {
         setShowIos(true);
         setIosReady(true);
         setAvailable(true);
-        if (!dismissed) setOpen(true);
+        if (!dismissed) {
+          setOpen(true);
+          void logEvent("prompt_shown_ios");
+        }
       }, 4000);
     }
 
@@ -108,6 +164,7 @@ export function InstallPrompt() {
 
   const dismiss = () => {
     setOpen(false);
+    void logEvent("install_dismissed");
     try {
       localStorage.setItem(DISMISS_KEY, String(Date.now()));
     } catch {
@@ -117,6 +174,7 @@ export function InstallPrompt() {
 
   const hidePill = () => {
     setPillHidden(true);
+    void logEvent("pill_hidden");
     try {
       sessionStorage.setItem(PILL_HIDE_KEY, "1");
     } catch {
@@ -131,11 +189,14 @@ export function InstallPrompt() {
 
   const install = async () => {
     if (!deferred) return;
+    void logEvent("install_clicked");
     try {
       await deferred.prompt();
       const { outcome } = await deferred.userChoice;
-      if (outcome === "dismissed") dismiss();
-      else {
+      if (outcome === "dismissed") {
+        dismiss();
+      } else {
+        void logEvent("install_accepted");
         setOpen(false);
         setAvailable(false);
       }
@@ -215,7 +276,7 @@ export function InstallPrompt() {
                   <Plus className="h-3.5 w-3.5 text-primary" />
                 </p>
                 <div className="flex justify-end pt-1">
-                  <Button size="sm" variant="ghost" onClick={dismiss}>
+                  <Button size="sm" variant="ghost" onClick={() => { void logEvent("later_clicked"); dismiss(); }}>
                     เข้าใจแล้ว
                   </Button>
                 </div>
@@ -226,7 +287,7 @@ export function InstallPrompt() {
                   <Download className="mr-1.5 h-4 w-4" />
                   ติดตั้ง
                 </Button>
-                <Button size="sm" variant="ghost" onClick={dismiss}>
+                <Button size="sm" variant="ghost" onClick={() => { void logEvent("later_clicked"); dismiss(); }}>
                   ไว้ก่อน
                 </Button>
               </div>
