@@ -211,7 +211,7 @@ function RootComponent() {
               ข้ามไปยังเนื้อหาหลัก
             </a>
             <AppSidebar />
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 min-w-0 flex flex-col">
               <Header />
               <main id="main-content" className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">
                 <Outlet />
