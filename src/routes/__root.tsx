@@ -21,6 +21,7 @@ import { usePhotosRealtime } from "@/hooks/use-photos-realtime";
 import { installStaleBundleGuard } from "@/lib/stale-bundle-guard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ChatWidget } from "@/components/app/ChatWidget";
+import { InstallPrompt } from "@/components/app/InstallPrompt";
 
 function NotFoundComponent() {
   return (
@@ -222,6 +223,7 @@ function RootComponent() {
           <PhotosRealtimeBridge />
           <OnboardingTour />
           <ChatWidget />
+          <InstallPrompt />
         </SidebarProvider>
       </AuthProvider>
       </ThemeProvider>
