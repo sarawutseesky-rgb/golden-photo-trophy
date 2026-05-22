@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Star, Upload, Trophy, Sparkles } from "lucide-react";
 
-const STORAGE_KEY = "seestar_onboarded_v1";
+const STORAGE_KEY_USER = "seestar_onboarded_v1";
+const STORAGE_KEY_GUEST = "seestar_guest_tour_v1";
 
 type Step = {
   icon: React.ReactNode;
@@ -11,7 +13,7 @@ type Step = {
   body: string;
 };
 
-const STEPS: Step[] = [
+const USER_STEPS: Step[] = [
   {
     icon: <Star className="h-6 w-6 text-[var(--gold)]" />,
     title: "ยินดีต้อนรับสู่ SEESTAR ⭐",
@@ -38,26 +40,50 @@ const STEPS: Step[] = [
   },
 ];
 
+const GUEST_STEPS: Step[] = [
+  {
+    icon: <Star className="h-6 w-6 text-[var(--gold)]" />,
+    title: "1. โหวต 1–5 ดาว",
+    body:
+      "แตะดาวบนรูปที่ชอบเพื่อให้คะแนน ทุกโหวตช่วยดันให้ช่างภาพคนโปรดขึ้น #1 ได้",
+  },
+  {
+    icon: <Upload className="h-6 w-6 text-[var(--gold)]" />,
+    title: "2. อัปโหลดรูปของคุณ",
+    body:
+      "สมัครฟรีแล้วอัปได้วันละ 1 รูป ใส่ชื่อ + แท็ก เพื่อให้คนค้นเจอและโหวตให้ง่ายขึ้น",
+  },
+  {
+    icon: <Sparkles className="h-6 w-6 text-[var(--gold)]" />,
+    title: "3. เก็บดาว Milestone ถาวร",
+    body:
+      "รูปที่ทนทาน ไม่ถูกแซงตามช่วงเวลา (24ชม. / 7วัน / 30วัน / 90วัน / 180วัน) จะได้ดาวถาวรติดรูปไปตลอด",
+  },
+];
+
 export function OnboardingTour() {
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const isGuest = !loading && !user;
+  const STEPS = useMemo(() => (isGuest ? GUEST_STEPS : USER_STEPS), [isGuest]);
+  const storageKey = isGuest ? STORAGE_KEY_GUEST : STORAGE_KEY_USER;
 
   useEffect(() => {
-    if (loading || !user) return;
+    if (loading) return;
     try {
-      if (localStorage.getItem(STORAGE_KEY)) return;
+      if (localStorage.getItem(storageKey)) return;
       // Small delay so it doesn't appear at the same instant as the page paints
-      const t = setTimeout(() => setOpen(true), 600);
+      const t = setTimeout(() => setOpen(true), isGuest ? 1200 : 600);
       return () => clearTimeout(t);
     } catch {
       // localStorage unavailable — silently skip
     }
-  }, [user, loading]);
+  }, [loading, isGuest, storageKey]);
 
   const finish = () => {
     try {
-      localStorage.setItem(STORAGE_KEY, "1");
+      localStorage.setItem(storageKey, "1");
     } catch {
       // ignore
     }
@@ -119,6 +145,14 @@ export function OnboardingTour() {
               >
                 ถัดไป
               </button>
+            ) : isGuest ? (
+              <Link
+                to="/signup"
+                onClick={finish}
+                className="rounded-md bg-[var(--gold)] px-4 py-1.5 text-sm font-semibold text-background hover:opacity-90"
+              >
+                สมัครฟรี
+              </Link>
             ) : (
               <button
                 type="button"
