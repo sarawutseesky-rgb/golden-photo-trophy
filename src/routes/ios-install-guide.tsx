@@ -155,7 +155,7 @@ function IosInstallGuidePage() {
               </div>
             </div>
           ))}
-        </h2>
+        </div>
       </section>
 
       {/* Done check */}
