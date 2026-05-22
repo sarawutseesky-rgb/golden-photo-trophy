@@ -26,6 +26,7 @@ import { Route as AuthenticatedUploadRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
 import { Route as AuthenticatedProfileMeRouteImport } from './routes/_authenticated/profile.me'
+import { Route as AuthenticatedAdminInstallStatsRouteImport } from './routes/_authenticated/_admin/install-stats'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
 import { Route as ApiPublicCronRankRouteImport } from './routes/api/public/cron/rank'
 
@@ -113,6 +114,12 @@ const AuthenticatedProfileMeRoute = AuthenticatedProfileMeRouteImport.update({
   path: '/profile/me',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminInstallStatsRoute =
+  AuthenticatedAdminInstallStatsRouteImport.update({
+    id: '/install-stats',
+    path: '/install-stats',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -140,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/profile/$id': typeof ProfileIdRoute
   '/stars/$n': typeof StarsNRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
+  '/install-stats': typeof AuthenticatedAdminInstallStatsRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
@@ -159,6 +167,7 @@ export interface FileRoutesByTo {
   '/profile/$id': typeof ProfileIdRoute
   '/stars/$n': typeof StarsNRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
+  '/install-stats': typeof AuthenticatedAdminInstallStatsRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
@@ -181,6 +190,7 @@ export interface FileRoutesById {
   '/profile/$id': typeof ProfileIdRoute
   '/stars/$n': typeof StarsNRoute
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRoute
+  '/_authenticated/_admin/install-stats': typeof AuthenticatedAdminInstallStatsRoute
   '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
   '/api/public/cron/rank': typeof ApiPublicCronRankRoute
 }
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/profile/$id'
     | '/stars/$n'
     | '/admin'
+    | '/install-stats'
     | '/profile/me'
     | '/api/public/cron/rank'
   fileRoutesByTo: FileRoutesByTo
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/profile/$id'
     | '/stars/$n'
     | '/admin'
+    | '/install-stats'
     | '/profile/me'
     | '/api/public/cron/rank'
   id:
@@ -242,6 +254,7 @@ export interface FileRouteTypes {
     | '/profile/$id'
     | '/stars/$n'
     | '/_authenticated/_admin/admin'
+    | '/_authenticated/_admin/install-stats'
     | '/_authenticated/profile/me'
     | '/api/public/cron/rank'
   fileRoutesById: FileRoutesById
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileMeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/_admin/install-stats': {
+      id: '/_authenticated/_admin/install-stats'
+      path: '/install-stats'
+      fullPath: '/install-stats'
+      preLoaderRoute: typeof AuthenticatedAdminInstallStatsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin': {
       id: '/_authenticated/_admin/admin'
       path: '/admin'
@@ -403,10 +423,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminRoute: typeof AuthenticatedAdminAdminRoute
+  AuthenticatedAdminInstallStatsRoute: typeof AuthenticatedAdminInstallStatsRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminRoute: AuthenticatedAdminAdminRoute,
+  AuthenticatedAdminInstallStatsRoute: AuthenticatedAdminInstallStatsRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
