@@ -332,9 +332,17 @@ export function InstallPrompt() {
                   <span>2.</span> เลือก <span className="font-medium">Add to Home Screen</span>
                   <Plus className="h-3.5 w-3.5 text-primary" />
                 </p>
-                <div className="flex justify-end pt-1">
+                <div className="flex justify-end gap-2 pt-1">
+                  <Link
+                    to="/ios-install-guide"
+                    onClick={() => setOpen(false)}
+                    className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/10"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                    รายละเอียด
+                  </Link>
                   <Button size="sm" variant="ghost" onClick={later}>
-                    เข้าใจแล้ว
+                    ไว้ก่อน
                   </Button>
                 </div>
               </div>
