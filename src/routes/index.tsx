@@ -9,6 +9,7 @@ import { QuickStatsBar } from "@/components/app/QuickStatsBar";
 import { NearMilestoneShare } from "@/components/app/NearMilestoneShare";
 import { FeaturedPhotographer } from "@/components/app/FeaturedPhotographer";
 import { EmptyState } from "@/components/app/EmptyState";
+import { GuestHeroCTA } from "@/components/app/GuestHeroCTA";
 
 const feedSearchSchema = z.object({
   tab: fallback(
