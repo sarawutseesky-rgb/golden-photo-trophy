@@ -15,6 +15,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as IosInstallGuideRouteImport } from './routes/ios-install-guide'
 import { Route as HowToPlayRouteImport } from './routes/how-to-play'
 import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -58,6 +59,11 @@ const LoginRoute = LoginRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IosInstallGuideRoute = IosInstallGuideRouteImport.update({
+  id: '/ios-install-guide',
+  path: '/ios-install-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowToPlayRoute = HowToPlayRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/how-to-play': typeof HowToPlayRoute
+  '/ios-install-guide': typeof IosInstallGuideRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/how-to-play': typeof HowToPlayRoute
+  '/ios-install-guide': typeof IosInstallGuideRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/hall-of-fame': typeof HallOfFameRoute
   '/how-to-play': typeof HowToPlayRoute
+  '/ios-install-guide': typeof IosInstallGuideRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/'
     | '/hall-of-fame'
     | '/how-to-play'
+    | '/ios-install-guide'
     | '/leaderboard'
     | '/login'
     | '/signup'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/'
     | '/hall-of-fame'
     | '/how-to-play'
+    | '/ios-install-guide'
     | '/leaderboard'
     | '/login'
     | '/signup'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/hall-of-fame'
     | '/how-to-play'
+    | '/ios-install-guide'
     | '/leaderboard'
     | '/login'
     | '/signup'
@@ -264,6 +276,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   HallOfFameRoute: typeof HallOfFameRoute
   HowToPlayRoute: typeof HowToPlayRoute
+  IosInstallGuideRoute: typeof IosInstallGuideRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ios-install-guide': {
+      id: '/ios-install-guide'
+      path: '/ios-install-guide'
+      fullPath: '/ios-install-guide'
+      preLoaderRoute: typeof IosInstallGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-to-play': {
@@ -457,6 +477,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   HallOfFameRoute: HallOfFameRoute,
   HowToPlayRoute: HowToPlayRoute,
+  IosInstallGuideRoute: IosInstallGuideRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
@@ -471,3 +492,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
