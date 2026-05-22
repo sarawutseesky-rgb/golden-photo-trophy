@@ -12,6 +12,9 @@ const DISMISS_KEY = "seestar-install-dismissed-at";
 const DISMISS_DAYS = 7;
 const PILL_HIDE_KEY = "seestar-install-pill-hidden"; // sessionStorage
 const SESSION_ID_KEY = "seestar-install-session-id";
+const SHOWN_THIS_SESSION_KEY = "seestar-install-shown"; // sessionStorage
+const LATER_KEY = "seestar-install-later-at"; // localStorage
+const LATER_HOURS = 24; // after "ไว้ก่อน" wait this long before showing again
 
 type InstallEvent =
   | "prompt_shown"
@@ -86,6 +89,46 @@ function recentlyDismissed() {
   }
 }
 
+function recentlyLater() {
+  try {
+    const v = localStorage.getItem(LATER_KEY);
+    if (!v) return false;
+    const hours = (Date.now() - Number(v)) / (1000 * 60 * 60);
+    return hours < LATER_HOURS;
+  } catch {
+    return false;
+  }
+}
+
+function shownThisSession() {
+  try {
+    return sessionStorage.getItem(SHOWN_THIS_SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markShownThisSession() {
+  try {
+    sessionStorage.setItem(SHOWN_THIS_SESSION_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+function supportsPwaInstall() {
+  if (typeof window === "undefined") return false;
+  // Real Android/desktop support is signalled by beforeinstallprompt (handled live).
+  // iOS Safari (not in-app browsers, not Chrome iOS) supports Add to Home Screen.
+  if (isIos()) {
+    const ua = window.navigator.userAgent;
+    // Exclude in-app browsers (FB, Line, IG, etc.) and non-Safari iOS browsers.
+    const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios|opios|fbav|fban|line|instagram|micromessenger/i.test(ua);
+    return isSafari;
+  }
+  return true; // wait for beforeinstallprompt to confirm
+}
+
 function inPreviewOrIframe() {
   if (typeof window === "undefined") return true;
   const host = window.location.hostname;
@@ -108,6 +151,7 @@ export function InstallPrompt() {
   useEffect(() => {
     if (inPreviewOrIframe()) return;
     if (isStandalone()) return;
+    if (!supportsPwaInstall()) return;
 
     try {
       if (sessionStorage.getItem(PILL_HIDE_KEY) === "1") setPillHidden(true);
@@ -115,14 +159,15 @@ export function InstallPrompt() {
       /* ignore */
     }
 
-    const dismissed = recentlyDismissed();
+    const blocked = recentlyDismissed() || recentlyLater() || shownThisSession();
 
     const onBip = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
       setAvailable(true);
-      if (!dismissed) {
+      if (!blocked) {
         setOpen(true);
+        markShownThisSession();
         void logEvent("prompt_shown");
       }
     };
@@ -148,8 +193,9 @@ export function InstallPrompt() {
         setShowIos(true);
         setIosReady(true);
         setAvailable(true);
-        if (!dismissed) {
+        if (!blocked) {
           setOpen(true);
+          markShownThisSession();
           void logEvent("prompt_shown_ios");
         }
       }, 4000);
@@ -167,6 +213,16 @@ export function InstallPrompt() {
     void logEvent("install_dismissed");
     try {
       localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const later = () => {
+    setOpen(false);
+    void logEvent("later_clicked");
+    try {
+      localStorage.setItem(LATER_KEY, String(Date.now()));
     } catch {
       /* ignore */
     }
@@ -276,7 +332,7 @@ export function InstallPrompt() {
                   <Plus className="h-3.5 w-3.5 text-primary" />
                 </p>
                 <div className="flex justify-end pt-1">
-                  <Button size="sm" variant="ghost" onClick={() => { void logEvent("later_clicked"); dismiss(); }}>
+                  <Button size="sm" variant="ghost" onClick={later}>
                     เข้าใจแล้ว
                   </Button>
                 </div>
@@ -287,7 +343,7 @@ export function InstallPrompt() {
                   <Download className="mr-1.5 h-4 w-4" />
                   ติดตั้ง
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => { void logEvent("later_clicked"); dismiss(); }}>
+                <Button size="sm" variant="ghost" onClick={later}>
                   ไว้ก่อน
                 </Button>
               </div>
