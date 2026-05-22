@@ -86,8 +86,11 @@ function HomePage() {
   const navigate = useNavigate();
   const params = buildFeedParams(tab, sort, tag, user?.id ?? null);
 
+  const isGuest = !user;
+
   return (
     <div className="space-y-2">
+      {isGuest && <GuestHeroCTA />}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Latest shots</h1>
         <p className="mt-1 text-muted-foreground">Vote 1–5 stars. Photos that hold #1 earn permanent milestone stars.</p>
