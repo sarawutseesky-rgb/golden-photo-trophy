@@ -481,3 +481,112 @@ export const getCommunityStatsToday = createServerFn({ method: "GET" })
 
     return { newPhotos, newVotes, activeUploaders };
   });
+
+// ---------------------------------------------------------------------------
+// Near-milestone photos: photos close to earning their next milestone star.
+// Used on the homepage to drive "share to help your friend hit #1" CTAs.
+// ---------------------------------------------------------------------------
+const MILESTONE_THRESHOLDS_HOURS = [24, 168, 720, 2160, 4320] as const;
+
+export const getNearMilestonePhotos = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data: rows, error } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_BASE_SELECT)
+      .eq("status", "active")
+      .lt("milestone_stars", 5)
+      .gte("vote_count", 3)
+      .order("created_at", { ascending: false })
+      .limit(120);
+    if (error) return fallbackOnSchemaCache(error, { photos: [] });
+
+    const now = Date.now();
+    const HOUR_MS = 60 * 60 * 1000;
+    const candidates = (rows ?? [])
+      .map((p: any) => {
+        const stars = p.milestone_stars ?? 0;
+        const nextH = MILESTONE_THRESHOLDS_HOURS[stars];
+        if (!nextH) return null;
+        const ageH = (now - new Date(p.created_at).getTime()) / HOUR_MS;
+        const remainingH = nextH - ageH;
+        // Window: within 72h of next tier, not already past it
+        if (remainingH <= 0 || remainingH > 72) return null;
+        return { ...p, _remainingHours: remainingH, _nextHours: nextH };
+      })
+      .filter(Boolean) as any[];
+
+    candidates.sort((a, b) => a._remainingHours - b._remainingHours);
+    const top = candidates.slice(0, 6);
+    const enriched = await attachPhotoProfiles(top);
+    return { photos: enriched };
+  });
+
+// ---------------------------------------------------------------------------
+// Featured photographer of the week: pick the user whose photos earned the
+// most votes in the last 7 days. Returns their profile + top recent photos
+// and follower count for the homepage spotlight.
+// ---------------------------------------------------------------------------
+export const getFeaturedPhotographer = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Find candidates: active photos from the last 30 days with votes.
+    const { data: rows, error } = await supabaseAdmin
+      .from("photos")
+      .select("id, user_id, vote_count, avg_score, milestone_stars, created_at")
+      .eq("status", "active")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(300);
+    if (error) return fallbackOnSchemaCache(error, { profile: null, photos: [], stats: null, followers: 0 });
+    if (!rows || rows.length === 0) return { profile: null, photos: [], stats: null, followers: 0 };
+
+    // Score each photographer: weighted by votes + milestone stars + avg.
+    const scoreMap = new Map<string, number>();
+    for (const p of rows as any[]) {
+      if (!p.user_id) continue;
+      const total =
+        Number(p.vote_count ?? 0) * Number(p.avg_score ?? 0) +
+        Number(p.milestone_stars ?? 0) * 25;
+      scoreMap.set(p.user_id, (scoreMap.get(p.user_id) ?? 0) + total);
+    }
+    const ranked = Array.from(scoreMap.entries()).sort((a, b) => b[1] - a[1]);
+    const featuredId = ranked[0]?.[0];
+    if (!featuredId) return { profile: null, photos: [], stats: null, followers: 0 };
+
+    const [{ data: profile }, { data: topPhotos }, { count: followers }] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, avatar_url, bio")
+        .eq("id", featuredId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("photos")
+        .select("id, title, image_url, avg_score, vote_count, milestone_stars, created_at")
+        .eq("user_id", featuredId)
+        .eq("status", "active")
+        .order("avg_score", { ascending: false })
+        .order("vote_count", { ascending: false })
+        .limit(3),
+      supabaseAdmin
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", featuredId),
+    ]);
+
+    if (!profile) return { profile: null, photos: [], stats: null, followers: 0 };
+
+    const userRows = (rows as any[]).filter((p) => p.user_id === featuredId);
+    const stats = {
+      photos_this_week: userRows.length,
+      total_votes_this_week: userRows.reduce((s, p) => s + (p.vote_count ?? 0), 0),
+      milestone_stars_this_week: userRows.reduce((s, p) => s + (p.milestone_stars ?? 0), 0),
+    };
+
+    return {
+      profile,
+      photos: topPhotos ?? [],
+      stats,
+      followers: followers ?? 0,
+    };
+  });
