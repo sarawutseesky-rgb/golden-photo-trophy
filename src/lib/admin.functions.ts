@@ -225,3 +225,45 @@ export const setUserAdmin = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+export const getInstallStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data, error } = await context.supabase
+      .from("install_events")
+      .select("event, platform, standalone, session_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5000);
+    if (error) throw new Error(error.message);
+
+    const rows = data ?? [];
+    const totals: Record<string, number> = {};
+    const byPlatform: Record<string, Record<string, number>> = {};
+    const uniqueSessions = new Set<string>();
+    const installedSessions = new Set<string>();
+    const shownSessions = new Set<string>();
+    const clickedSessions = new Set<string>();
+
+    for (const r of rows) {
+      totals[r.event] = (totals[r.event] ?? 0) + 1;
+      const p = r.platform ?? "unknown";
+      byPlatform[p] = byPlatform[p] ?? {};
+      byPlatform[p][r.event] = (byPlatform[p][r.event] ?? 0) + 1;
+      if (r.session_id) {
+        uniqueSessions.add(r.session_id);
+        if (r.event === "prompt_shown" || r.event === "prompt_shown_ios") shownSessions.add(r.session_id);
+        if (r.event === "install_clicked") clickedSessions.add(r.session_id);
+        if (r.event === "app_installed" || r.event === "install_accepted") installedSessions.add(r.session_id);
+      }
+    }
+
+    return {
+      totals,
+      byPlatform,
+      uniqueSessions: uniqueSessions.size,
+      shownSessions: shownSessions.size,
+      clickedSessions: clickedSessions.size,
+      installedSessions: installedSessions.size,
+      recent: rows.slice(0, 50),
+    };
+  });
