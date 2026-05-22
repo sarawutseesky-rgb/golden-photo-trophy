@@ -36,7 +36,48 @@ const LightboxClient = lazy(async () => {
 });
 
 export const Route = createFileRoute("/photo/$id")({
-  head: () => ({ meta: [{ title: "Photo — SEESTAR" }] }),
+  loader: async ({ params }) => {
+    try {
+      const res = await getPhoto({ data: { id: params.id } });
+      return { photo: res?.photo ?? null };
+    } catch {
+      return { photo: null };
+    }
+  },
+  head: ({ params, loaderData }) => {
+    const photo = loaderData?.photo as
+      | { title?: string | null; description?: string | null; image_url?: string | null }
+      | null
+      | undefined;
+    const url = `https://photostarshot.com/photo/${params.id}`;
+    const title = photo?.title ? `${photo.title} — SEESTAR` : "Photo — SEESTAR";
+    const description =
+      (photo?.description && photo.description.trim()) ||
+      (photo?.title ? `ดูภาพ "${photo.title}" บน SEESTAR` : "ดูภาพและให้ดาวบน SEESTAR");
+    const image = photo?.image_url || undefined;
+    const meta: Array<Record<string, string>> = [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:url", content: url },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: image ? "summary_large_image" : "summary" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+    ];
+    if (image) {
+      meta.push(
+        { property: "og:image", content: image },
+        { property: "og:image:secure_url", content: image },
+        { name: "twitter:image", content: image },
+      );
+    }
+    return {
+      meta,
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: PhotoDetail,
 });
 
