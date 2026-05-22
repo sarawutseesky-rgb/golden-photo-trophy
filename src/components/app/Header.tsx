@@ -46,7 +46,7 @@ export function Header() {
     <header className="header-blur sticky top-0 z-40 border-b border-border/50">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <SidebarTrigger className="-ml-1 hidden md:inline-flex" />
+          <SidebarTrigger className="-ml-1" />
           <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <Star className="h-5 w-5 fill-[var(--gold)] text-[var(--gold)]" />
             <span>SEESTAR Ranking</span>
