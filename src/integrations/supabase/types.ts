@@ -95,6 +95,39 @@ export type Database = {
         }
         Relationships: []
       }
+      install_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          platform: string | null
+          session_id: string | null
+          standalone: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          platform?: string | null
+          session_id?: string | null
+          standalone?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          platform?: string | null
+          session_id?: string | null
+          standalone?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
