@@ -220,6 +220,54 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
     };
   });
 
+export const getSpotlightRotation = createServerFn({ method: "GET" })
+  .handler(async () => {
+    // Near-milestone candidate: photo currently held at #1 with most elapsed
+    // time toward next star. Falls back to top-rated if no one is held.
+    const { data: held, error: heldErr } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_BASE_SELECT)
+      .eq("status", "active")
+      .not("rank_one_since", "is", null)
+      .order("rank_one_since", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (heldErr)
+      return fallbackOnSchemaCache(heldErr, { nearMilestone: null, top: [], runnerUp: null, held: false });
+
+    let nearMilestone: any = held ?? null;
+    const isHeld = !!held;
+
+    // Top 10 by avg_score (active, at least 1 vote)
+    const { data: top10, error: topErr } = await supabaseAdmin
+      .from("photos")
+      .select(PHOTO_BASE_SELECT)
+      .eq("status", "active")
+      .gte("vote_count", 1)
+      .order("avg_score", { ascending: false })
+      .order("vote_count", { ascending: false })
+      .limit(10);
+    if (topErr)
+      return fallbackOnSchemaCache(topErr, { nearMilestone: null, top: [], runnerUp: null, held: false });
+
+    if (!nearMilestone) nearMilestone = (top10 ?? [])[0] ?? null;
+    const runnerUp = (top10 ?? []).find((p: any) => p.id !== nearMilestone?.id) ?? null;
+
+    const all = [nearMilestone, runnerUp, ...(top10 ?? [])].filter(Boolean) as any[];
+    // De-dupe before enrichment
+    const seen = new Set<string>();
+    const unique = all.filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true)));
+    const enriched = await attachPhotoProfiles(unique);
+    const byId = new Map(enriched.map((p: any) => [p.id, p]));
+
+    return {
+      nearMilestone: nearMilestone ? byId.get(nearMilestone.id) ?? null : null,
+      top: (top10 ?? []).map((p: any) => byId.get(p.id)).filter(Boolean),
+      runnerUp: runnerUp ? byId.get(runnerUp.id) ?? null : null,
+      held: isHeld,
+    };
+  });
+
 export const getPhoto = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
