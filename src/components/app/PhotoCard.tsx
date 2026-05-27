@@ -111,6 +111,8 @@ export function PhotoCard({
   const now = Date.now();
   const createdMs = photo.created_at ? new Date(photo.created_at).getTime() : 0;
   const isNew = createdMs > 0 && now - createdMs < 48 * 60 * 60 * 1000;
+  const isOlderThan24h = createdMs > 0 && now - createdMs >= 24 * 60 * 60 * 1000;
+  const canSeePoster = isOwner || (hasVoted && isOlderThan24h);
   const isRankOne = photo.current_rank === 1;
   const rankOneSinceMs = photo.rank_one_since ? new Date(photo.rank_one_since).getTime() : 0;
   const isRising =
@@ -484,9 +486,15 @@ export function PhotoCard({
             {photo.title}
           </Link>
         </h3>
-        {(isOwner || hasVoted) && (
+        {canSeePoster ? (
           <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
             by {photo.profiles?.display_name ?? "Anonymous"}
+          </p>
+        ) : (
+          <p className="mt-1 line-clamp-1 text-xs italic text-muted-foreground/70">
+            {hasVoted
+              ? "ชื่อผู้โพสต์จะแสดงหลังลงรูป 24 ชม."
+              : "โหวตเพื่อดูชื่อผู้โพสต์ (หลังโพสต์ 24 ชม.)"}
           </p>
         )}
         <div
