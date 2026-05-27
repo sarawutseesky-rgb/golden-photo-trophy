@@ -222,21 +222,18 @@ export const getTopTwoPhotos = createServerFn({ method: "GET" })
 
 export const getSpotlightRotation = createServerFn({ method: "GET" })
   .handler(async () => {
-    // Near-milestone candidate: photo currently held at #1 with most elapsed
-    // time toward next star. Falls back to top-rated if no one is held.
-    const { data: held, error: heldErr } = await supabaseAdmin
+    // Slot 1: a random active photo (any photo, no ranking constraints).
+    const { data: pool, error: poolErr } = await supabaseAdmin
       .from("photos")
       .select(PHOTO_BASE_SELECT)
       .eq("status", "active")
-      .not("rank_one_since", "is", null)
-      .order("rank_one_since", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (heldErr)
-      return fallbackOnSchemaCache(heldErr, { nearMilestone: null, top: [], runnerUp: null, held: false });
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (poolErr)
+      return fallbackOnSchemaCache(poolErr, { nearMilestone: null, top: [], runnerUp: null, held: false });
 
-    let nearMilestone: any = held ?? null;
-    const isHeld = !!held;
+    let nearMilestone: any =
+      pool && pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : null;
 
     // Top 10 by avg_score (active, at least 1 vote)
     const { data: top10, error: topErr } = await supabaseAdmin
@@ -264,7 +261,7 @@ export const getSpotlightRotation = createServerFn({ method: "GET" })
       nearMilestone: nearMilestone ? byId.get(nearMilestone.id) ?? null : null,
       top: (top10 ?? []).map((p: any) => byId.get(p.id)).filter(Boolean),
       runnerUp: runnerUp ? byId.get(runnerUp.id) ?? null : null,
-      held: isHeld,
+      held: false,
     };
   });
 
