@@ -1,9 +1,10 @@
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Crown, Medal, Sparkles, Star } from "lucide-react";
-import { getTopTwoPhotos } from "@/lib/photos.functions";
+import { getSpotlightRotation } from "@/lib/photos.functions";
 import { nextMilestoneProgress, THRESHOLDS_HOURS } from "@/lib/milestone";
 import { StarRow } from "./StarRow";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,7 @@ function formatHours(h: number) {
 }
 
 export function SpotlightHero() {
-  const fn = useServerFn(getTopTwoPhotos);
+  const fn = useServerFn(getSpotlightRotation);
   const { data, isLoading } = useQuery({
     queryKey: ["spotlight-top-two"],
     queryFn: () => fn(),
@@ -23,16 +24,45 @@ export function SpotlightHero() {
     staleTime: 30_000,
   });
 
+  // Build the rotation: [near-milestone, ...top10]. Each slot shows for 30 min,
+  // shared deterministically across all clients via Date.now() bucket.
+  const SLOT_MS = 30 * 60 * 1000;
+  const slots = useMemo(() => {
+    const list: any[] = [];
+    const near = data?.nearMilestone;
+    const top: any[] = data?.top ?? [];
+    if (near) list.push({ ...near, _kind: "near" as const });
+    top.forEach((p) => {
+      if (!list.find((x) => x.id === p.id)) list.push({ ...p, _kind: "top" as const });
+    });
+    return list;
+  }, [data]);
+
+  // Re-render every 30 min so the active slot advances
+  const [tick, setTick] = useState(() => Math.floor(Date.now() / SLOT_MS));
+  useEffect(() => {
+    const id = setInterval(() => setTick(Math.floor(Date.now() / SLOT_MS)), 30_000);
+    return () => clearInterval(id);
+  }, [SLOT_MS]);
+
+  const activeIndex = slots.length > 0 ? tick % slots.length : 0;
+  const active = slots[activeIndex];
+  const slotKind: "near" | "top" = active?._kind ?? "near";
+  const topRank =
+    slotKind === "top" && active
+      ? (data?.top ?? []).findIndex((p: any) => p.id === active.id) + 1
+      : 0;
+
   if (isLoading) {
     return (
       <div className="relative mb-6 h-36 animate-pulse overflow-hidden rounded-2xl border border-border bg-card md:h-48" />
     );
   }
 
-  const photo: any = data?.first;
-  const runnerUp: any = data?.second;
+  const photo: any = active;
+  const runnerUp: any = data?.runnerUp && data?.runnerUp.id !== photo?.id ? data?.runnerUp : null;
   if (!photo) return null;
-  const held: boolean = !!data?.held;
+  const held: boolean = !!data?.held && slotKind === "near";
 
   const prog = nextMilestoneProgress(photo.milestone_stars ?? 0, photo.created_at);
   const stars = photo.milestone_stars ?? 0;
@@ -63,17 +93,21 @@ export function SpotlightHero() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-background/30" />
           <div className="absolute left-2 top-2 inline-flex min-w-[88px] items-center gap-1 rounded-full bg-[var(--gold)]/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-background shadow-lg sm:left-3 sm:top-3 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs">
-            <Crown className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            {slotKind === "near" ? (
+              <Crown className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            ) : (
+              <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            )}
             <AnimatePresence mode="wait" initial={false}>
               <motion.span
-                key={held ? "held" : "toprated"}
+                key={slotKind === "near" ? (held ? "held" : "toprated") : `top-${topRank}`}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
                 transition={{ duration: 0.25 }}
                 className="inline-block"
               >
-                {held ? "#1 Now" : "Top Rated"}
+                {slotKind === "near" ? (held ? "#1 Now" : "Top Rated") : `Top 10 · #${topRank}`}
               </motion.span>
             </AnimatePresence>
           </div>
