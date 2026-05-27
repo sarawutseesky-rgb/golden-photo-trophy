@@ -107,7 +107,7 @@ export function SpotlightHero() {
                 transition={{ duration: 0.25 }}
                 className="inline-block"
               >
-                {slotKind === "near" ? (held ? "#1 Now" : "Top Rated") : `Top 10 · #${topRank}`}
+                {slotKind === "near" ? "Random Pick" : `Top 10 · #${topRank}`}
               </motion.span>
             </AnimatePresence>
           </div>
