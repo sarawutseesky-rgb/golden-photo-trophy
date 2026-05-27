@@ -301,6 +301,9 @@ function PhotoDetail() {
   const p = data.photo as any;
   const isOwner = user?.id === p.user_id;
   const hasVoted = myVote?.score != null;
+  const isOlderThan24h =
+    !!p.created_at && Date.now() - new Date(p.created_at).getTime() >= 24 * 60 * 60 * 1000;
+  const canSeePoster = isOwner || (hasVoted && isOlderThan24h);
   const normalizedDist = normalizeDistribution(data.distribution);
   const progress = nextMilestoneProgress(p.milestone_stars, p.created_at);
 
@@ -735,7 +738,7 @@ function PhotoDetail() {
 
         <aside className="space-y-4">
         <div className="rounded-xl border border-border bg-card p-4">
-          {hasVoted || isOwner ? (
+          {canSeePoster ? (
             <Link
               to="/profile/$id"
               params={{ id: p.user_id }}
@@ -758,7 +761,9 @@ function PhotoDetail() {
               <div>
                 <div className="font-semibold text-muted-foreground">ผู้โพสต์ที่ไม่เปิดเผย</div>
                 <div className="text-xs text-muted-foreground">
-                  โหวตเพื่อดูว่าใครเป็นเจ้าของภาพ
+                  {hasVoted
+                    ? "ชื่อผู้โพสต์จะเปิดเผยหลังลงรูป 24 ชม."
+                    : "โหวตเพื่อดูชื่อผู้โพสต์ (เปิดเผยหลังลงรูป 24 ชม.)"}
                 </div>
               </div>
             </div>
