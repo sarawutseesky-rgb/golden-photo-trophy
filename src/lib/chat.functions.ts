@@ -69,8 +69,20 @@ export const deleteChatMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { error } = await supabase.from("chat_messages").delete().eq("id", data.id);
+    const { supabase, userId } = context;
+    // Defence-in-depth: verify ownership server-side in addition to RLS.
+    // Admins are still allowed to moderate (admin check first).
+    const { data: adminRow } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    let query = supabase.from("chat_messages").delete().eq("id", data.id);
+    if (!adminRow) {
+      query = query.eq("user_id", userId);
+    }
+    const { error } = await query;
     if (error) throw new Error(error.message);
     return { ok: true };
   });
