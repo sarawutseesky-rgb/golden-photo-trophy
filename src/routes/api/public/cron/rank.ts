@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { timingSafeEqual } from "crypto";
 import {
   buildMaxLaterScoreMap,
   decideMilestone,
@@ -9,11 +10,22 @@ export const Route = createFileRoute("/api/public/cron/rank")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Require Supabase apikey header to prevent random callers from
-        // triggering the ranking job.
-        const apikey = request.headers.get("apikey");
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY;
-        if (!expected || apikey !== expected) {
+        // Require a server-only shared secret. Prefer CRON_SECRET, fall back
+        // to SUPABASE_SERVICE_ROLE_KEY (also server-only) for backward compat.
+        // Never accept the public anon key here.
+        const provided =
+          request.headers.get("x-cron-secret") ??
+          request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+          request.headers.get("apikey") ??
+          "";
+        const expected =
+          process.env.CRON_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+        if (!expected) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        const a = Buffer.from(provided);
+        const b = Buffer.from(expected);
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
           return new Response("Unauthorized", { status: 401 });
         }
         const now = new Date();

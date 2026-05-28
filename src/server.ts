@@ -127,7 +127,16 @@ summary{cursor:pointer}a,button.linkish{color:#fbbf24;background:none;border:0;p
 
 function handleDebugRoute(request: Request): Response {
   const url = new URL(request.url);
+  // Self-service enable is gated behind a server-only secret. Without
+  // SSR_DEBUG_SECRET configured, the ?on=1 toggle is disabled in production.
+  const debugSecret = process.env.SSR_DEBUG_SECRET;
+  const providedSecret =
+    url.searchParams.get("secret") ?? request.headers.get("x-ssr-debug-secret");
+  const secretOk = !!debugSecret && providedSecret === debugSecret;
   if (url.searchParams.get("on") === "1") {
+    if (!secretOk) {
+      return new Response("Not found", { status: 404 });
+    }
     const h = new Headers({ location: "/__ssr-debug" });
     h.append("set-cookie", "ssr_debug=1; Path=/; Max-Age=86400; SameSite=Lax");
     return new Response(null, { status: 302, headers: h });
@@ -136,6 +145,12 @@ function handleDebugRoute(request: Request): Response {
     const h = new Headers({ location: "/" });
     h.append("set-cookie", "ssr_debug=; Path=/; Max-Age=0; SameSite=Lax");
     return new Response(null, { status: 302, headers: h });
+  }
+  // All read endpoints (buffer view, JSON, clear) require either the cookie
+  // (already proven via secret) OR the secret on this request, OR explicit
+  // SSR_DEBUG=1 env. In production without the secret env, this returns 404.
+  if (!isDebugEnabled(request) && !secretOk) {
+    return new Response("Not found", { status: 404 });
   }
   if (url.searchParams.get("clear") === "1") {
     clearSsrErrorBuffer();
